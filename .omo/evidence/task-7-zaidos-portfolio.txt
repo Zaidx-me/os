@@ -1,0 +1,76 @@
+TASK 7 — Wallpaper engine (zaidos-portfolio)
+=============================================
+Status: DONE — all gates green
+
+Files created
+-------------
+- src/store/wallpaper.ts          zustand persist store, key "zaidos-wallpaper",
+                                  partialize -> {type}, merge guard vs invalid
+                                  persisted values, SSR-safe (createJSONStorage
+                                  factory), dev-only window.__zaidosWallpaper handle
+- src/components/wm/MatrixRain.tsx original Canvas-2D matrix rain: ~30fps frame
+                                  skip (FRAME_MS=33), visibilitychange pause,
+                                  reduced-motion single static frame, data-frames
+                                  counter, tokens read from globals.css
+- src/components/wm/Wallpaper.tsx  [data-testid="wallpaper"] + data-theme={type},
+                                  4 variants, motion/react AnimatePresence crossfade
+                                  (0.6s, 0 under reduced motion), gradient = motion
+                                  filter:hue-rotate (compositor), dark/light =
+                                  deterministic token-driven inline SVG
+- src/store/wallpaper.test.ts     6 unit tests (store default/persist-shape/
+                                  rehydrate/invalid-fallback + wrapper data-theme
+                                  flip + reduced-motion static frame)
+- e2e/wallpaper.spec.ts           4 tests x desktop+mobile projects
+
+Files modified
+--------------
+- src/app/page.tsx                placeholder bg div replaced with <Wallpaper/>
+                                  (z-0, behind all); mount comments 8/9/10 and
+                                  boot-screen/AnimatePresence/hydration gate intact
+
+Verification (node /tmp/node-v22.17.1-linux-arm64/bin)
+-------------------------------------------------------
+1) npx tsc --noEmit
+   RESULT: exit 0 (TSC_OK)
+
+2) npm run lint (eslint .)
+   RESULT: exit 0, 0 problems, 0 warnings
+
+3) npm run test:unit (vitest run)
+   RESULT: 8 files, 104 tests, 104 passed
+   (wallpaper.test.ts: 6/6 green; boot.test.tsx + smoke.test.tsx unaffected.
+    NOTE: during work the parallel task 12's uncommitted wm.test.ts broke the
+    full suite; own-scope runs were green throughout and the suite went
+    104/104 once task 12 committed.)
+
+4) npm run build (next build, Turbopack, Next 16.3.0)
+   RESULT: exit 0 — "Compiled successfully", 6 static pages generated
+   (proves SSR safety of the persist factory; store rehydration skipped
+    server-side)
+
+5) npx playwright test (full e2e, desktop + mobile projects)
+   Env: export LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l;
+        export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1;
+        export FONTCONFIG_FILE=/tmp/opencode/fonts.conf
+   RESULT: 14/14 passed (3 smoke + 4 wallpaper) x 2 projects, 31.8s
+   wallpaper.spec.ts assertions exercised:
+   - [data-testid="wallpaper"] present after Enter-skip of boot, data-theme=matrix
+   - data-frames counter climbs past 5 (rAF loop alive) and getImageData finds
+     green-dominant alpha>0 pixels (real canvas paint, both viewports)
+   - window.__zaidosWallpaper.setWallpaper("gradient") flips data-theme and
+     mounts gradient layer (crossfade)
+   - addInitScript-seeded localStorage rehydrates to data-theme="light" on reload
+   - emulateMedia reducedMotion: data-frames stays "1" across a 600ms window
+     (single static frame, no loop)
+
+Runtime QA (manual probe against live dev server)
+--------------------------------------------------
+- matrix canvas at 1440x900 after 1.5s: frames climbing ~31fps, 1,296,000
+  pixels with alpha, 93,075 green-dominant pixels — wallpaper paints.
+- no network requests for wallpaper assets (locally generated only).
+- prefers-reduced-motion: exactly 1 static frame, counter frozen.
+
+Commits
+-------
+f76837e feat(desktop): wallpaper engine with matrix/gradient/static variants
+f105688 test(e2e): fix wallpaper frame-counter poll and green-pixel scan

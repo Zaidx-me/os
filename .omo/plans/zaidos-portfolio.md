@@ -144,7 +144,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: boot -> [data-testid="desktop"] transition completes. failure: `page.emulateMedia({ reducedMotion: 'reduce' })` -> boot renders instantly, no timeout. Evidence .omo/evidence/task-6-zaidos-portfolio.txt
   Commit: Y | feat(boot): add skippable boot sequence with localStorage persistence
 
-- [ ] 7. Wallpaper engine
+- [x] 7. Wallpaper engine
   What to do / Must NOT do: src/store/wallpaper.ts (zustand persist) + src/components/wm/Wallpaper.tsx: renders active wallpaper behind windows. Types: `matrix` (canvas green rain ~30fps, pauses when tab hidden), `gradient` (CSS animated hue shift; static under reduced-motion), `dark` (static abstract SVG), `light` (light variant). Crossfade on change. src/components/wm/MatrixRain.tsx reusable canvas (also used by terminal `matrix`). MUST NOT load wallpapers from network; locally generated only; cap rAF loop with frame skip.
   Parallelization: Wave 2 | Blocked by: 2 | Blocks: 18,32,45
   References (executor has NO interview context - be exhaustive): Canvas 2D https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D ; matrix rain = ORIGINAL implementation, no copied code
