@@ -120,7 +120,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: validation passes for all 12 projects. failure: temporarily add duplicate project id -> test fails (validator runs). Evidence .omo/evidence/task-3-zaidos-portfolio.txt
   Commit: Y | feat(content): typed data layer for projects, skills, socials, wallpapers, articles
 
-- [ ] 4. Fonts + icon system
+- [x] 4. Fonts + icon system
   What to do / Must NOT do: next/font/google `JetBrains_Mono` (400,500,700) + `Inter` (400,500,700) in src/app/layout.tsx, CSS vars --font-mono/--font-sans; font-mono on terminal/waybar/launcher. NOTE: next/font/google downloads at build time — if the build environment is offline, download the woff2 files once and self-host via `next/font/local` (document which files were used). Install `lucide-react`. Create src/components/ui/AppIcon.tsx: rice-style SVG per appId (about, projects, skills, experience, resume, contact, articles, settings, terminal, chat, chess) using currentColor + src/components/ui/Icon.tsx lucide wrapper. Create src/app/icon.svg + apple-icon.png (ZaidOS mark: dark rounded square, green terminal prompt glyph). MUST NOT use emoji as app icons.
   Parallelization: Wave 1 | Blocked by: 1 | Blocks: 13,17-48
   References (executor has NO interview context - be exhaustive): next/font https://nextjs.org/docs/app/building-your-application/optimizing/fonts ; lucide https://lucide.dev ; icon.svg conventions https://nextjs.org/docs/app/api-reference/file-conventions/metadata-files/app-icons
