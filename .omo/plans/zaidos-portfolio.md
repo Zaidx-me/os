@@ -136,7 +136,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: unit + desktop Playwright smoke green. failure: deliberate failing assertion in smoke.test.tsx -> `npx playwright test` exits non-zero. Evidence .omo/evidence/task-5-zaidos-portfolio.txt
   Commit: Y | chore(ci): add Vitest + Playwright harness and CI pipeline
 
-- [ ] 6. Boot sequence screen
+- [x] 6. Boot sequence screen
   What to do / Must NOT do: src/store/boot.ts (zustand persist) + src/components/wm/BootScreen.tsx: first visit -> full-screen boot: "ZaidOS" logo, typed systemd-style logs ([ OK ] Started ZaidOS - the only OS cooler than your window manager / [ OK ] Mounted /dev/zaid on /home / [ OK ] Started Hyprland.web compositor), progress bar, auto-continue ~4s or any key/click skips; fade to desktop. localStorage `booted` skips on return (quick fade only). MUST NOT autoplay audio; MUST respect prefers-reduced-motion (instant, no animation). SSR hydration: BootScreen AND the whole desktop shell render behind a single `if (!mounted) return null` gate (useEffect) — every browser-only read (localStorage, matchMedia, innerWidth, ResizeObserver) happens after `mounted` flips; persisted stores (boot/wallpaper/settings/chat) are applied post-mount to avoid hydration mismatches.
   Parallelization: Wave 2 | Blocked by: 2 | Blocks: 8,9,44-48
   References (executor has NO interview context - be exhaustive): zustand persist https://zustand-docs.pmnd.rs/integrations/persisting-store-data ; Motion https://motion.dev/docs/react
