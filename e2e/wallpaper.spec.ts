@@ -22,25 +22,35 @@ test("default matrix wallpaper renders and paints green pixels", async ({
 
   // The rAF loop is running: the frame counter keeps climbing.
   await expect
-    .poll(() => canvas.getAttribute("data-frames"), { timeout: 3000 })
+    .poll(
+      async () =>
+        Number((await canvas.getAttribute("data-frames")) ?? "0"),
+      { timeout: 3000 },
+    )
     .toBeGreaterThan(5);
 
   // ~1s in, the canvas has actually painted: scan for a green-dominant pixel
-  // with visible alpha (bright head glyphs / accent trail cells).
-  const hasGreenPixels = await canvas.evaluate((el) => {
-    const c = el as HTMLCanvasElement;
-    const ctx = c.getContext("2d");
-    if (!ctx || c.width === 0 || c.height === 0) return false;
-    const data = ctx.getImageData(0, 0, c.width, c.height).data;
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i + 1];
-      const a = data[i + 3];
-      if (a > 0 && g > 120 && r < 100) return true;
-    }
-    return false;
-  });
-  expect(hasGreenPixels).toBe(true);
+  // with visible alpha (bright head glyphs / accent trail cells). Retried so
+  // a slow first paint (cold dev-server compile) can't flake the assertion.
+  await expect
+    .poll(
+      () =>
+        canvas.evaluate((el) => {
+          const c = el as HTMLCanvasElement;
+          const ctx = c.getContext("2d");
+          if (!ctx || c.width === 0 || c.height === 0) return false;
+          const data = ctx.getImageData(0, 0, c.width, c.height).data;
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const a = data[i + 3];
+            if (a > 0 && g > 120 && r < 100) return true;
+          }
+          return false;
+        }),
+      { timeout: 5000 },
+    )
+    .toBe(true);
 });
 
 test("store action switches data-theme with a crossfade", async ({ page }) => {
