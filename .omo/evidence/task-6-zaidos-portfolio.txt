@@ -1,0 +1,67 @@
+TASK 6 — Boot sequence screen (ZaidOS)
+======================================
+Date: 2026-08-10
+Plan: .omo/plans/zaidos-portfolio.md todo 6
+Commit: feat(boot): add skippable boot sequence with localStorage persistence
+
+FILES
+-----
+created  src/store/boot.ts              zustand persist store (key "zaidos-booted")
+created  src/hooks/useIsHydrated.ts      React 19 useSyncExternalStore hydration gate
+created  src/hooks/usePrefersReducedMotion.ts  matchMedia hook (jsdom-safe, useSyncExternalStore)
+created  src/components/wm/BootScreen.tsx      full-screen boot sequence
+modified src/app/page.tsx               desktop shell root: hydration gate + AnimatePresence boot<->desktop switch, todo 7/8/9/10 mount comments
+modified src/test/smoke.test.tsx        CNA assertions -> boot/desktop shell assertions
+created  src/test/boot.test.tsx         boot store persist + BootScreen typewriter/skip/reduced-motion tests
+modified e2e/smoke.spec.ts              CNA assertions -> boot flow e2e (3 scenarios x desktop+mobile)
+
+VERIFICATION
+------------
+1) npm run test:unit ......... PASS  (5 files, 61 tests: 28 pre-existing + 33 new/updated)
+2) npx tsc --noEmit .......... PASS  (exit 0)
+3) npm run lint .............. PASS  (0 problems; react-hooks v6 set-state-in-effect forced
+                                       useSyncExternalStore hydration gate + derived reduced-motion
+                                       typing — no eslint-disable used)
+4) npm run build ............. PASS  (Next.js 16.3.0, 6 static pages incl. / ; SSR page render
+                                       confirms zustand persist createJSONStorage(() => localStorage)
+                                       is server-safe: storage factory try/catch -> undefined ->
+                                       hydration skipped server-side)
+5) npx playwright test ....... PASS  (6/6: 3 desktop + 3 mobile)
+       - first visit: [data-testid=boot-screen] visible within 2s; Enter -> desktop visible
+       - returning visit: reload -> no boot screen (localStorage skip) -> desktop direct
+       - reduced motion (emulateMedia): desktop appears without interaction, no 4s wait
+
+BOOT FLOW QA (real Chromium 1440x900, computed styles)
+------------------------------------------------------
+- boot screen: fixed inset-0, bg rgb(10,12,16) (#0a0c10 token), font JetBrains Mono (font-mono rule)
+- logo: terminal AppIcon glyph + "ZaidOS" wordmark, accent rgb(57,255,20) (#39FF14)
+- 3 systemd logs typed in order with green block cursor; mid-boot DOM showed line 3
+  partially typed ("...Hyprland.we▌")
+- progress bar animates 0 -> 560px (100%) linearly over 4s; measured 181px -> 349px
+  over 1.2s window (growing)
+- any key (Enter) skips instantly -> desktop mounts after ~0.4s exit fade
+- reduced motion: all 3 logs fully-formed + bar at 100% on first paint, auto-advances
+  after 800ms hold (no animation, no 4s wait)
+- desktop shell: 1440x900, bg-zaid-bg wrapper, todo 7/8/9/10 mount comments in place
+- no audio anywhere (plan guardrail)
+
+DEVIATIONS
+----------
+- Added two support hooks (src/hooks/useIsHydrated.ts, usePrefersReducedMotion.ts) not in
+  the plan's file list: react-hooks v6 (Next 16.3 / eslint-config-next) errors on
+  setState-in-effect, so the mounted gate became useSyncExternalStore (server snapshot
+  false / client true) and matchMedia became useSyncExternalStore too. Strictly safer:
+  no eslint-disable, no jsdom matchMedia stubbing in setup.
+- Reduced-motion path holds 800ms (fully-formed screen) before advancing so e2e can
+  assert boot renders, instead of completing on the same tick (still "no delay" vs the
+  4s animated path; QA "no timeout" satisfied).
+- BootScreen skip uses window-level keydown + pointerdown listeners (no JSX handlers) so
+  eslint jsx-a11y static-element-interaction rules stay clean.
+- Unit tests run with vi.resetModules() + dynamic imports because the persist store
+  rehydrates from localStorage at module load (per-test isolation).
+
+LEARNINGS APPENDED (see .omo/notepads/zaidos-portfolio/learnings.md)
+-------------------------------------------------------------------
+- shell mount structure for todos 7/8/9/10, hydration-gate gotchas, react-hooks v6
+  set-state-in-effect implications, persist rehydration timing (sync with sync storage),
+  getByText does not join split text nodes

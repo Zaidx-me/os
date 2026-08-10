@@ -1,69 +1,101 @@
-import Image from "next/image";
+"use client";
 
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
+import BootScreen from "@/components/wm/BootScreen";
+import { useIsHydrated } from "@/hooks/useIsHydrated";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useBootStore } from "@/store/boot";
+
+/**
+ * ZaidOS desktop shell root (replaces the create-next-app landing page).
+ *
+ * Hydration gate: the ENTIRE shell (boot screen + desktop) renders behind
+ * `useIsHydrated()` — every browser-only read (localStorage via the
+ * persisted boot store, matchMedia, innerWidth, ResizeObserver) happens only
+ * after the client has hydrated, so SSR output and the first client render
+ * both emit nothing and persisted-store rehydration can never cause a
+ * hydration mismatch.
+ *
+ * Flow: first visit -> booted=false -> full <BootScreen/> sequence, whose
+ * completeBoot() flips the store -> desktop shell mounts. Returning visits
+ * rehydrate booted=true immediately -> desktop mounts with a quick fade
+ * overlay (no logs).
+ */
 export default function Home() {
+  const booted = useBootStore((s) => s.booted);
+  const hydrated = useIsHydrated();
+  // True when this visit STARTED already booted (returning visitor) — those
+  // get the quick fade overlay; first-visit boots get the full sequence and
+  // BootScreen's own exit fade covers the transition. Captured in a lazy
+  // initializer: the store rehydrates synchronously from localStorage at
+  // module load, before any interaction can call completeBoot, so this is
+  // the persisted value for the visit.
+  const [wasBootedAtMount] = useState(() => useBootStore.getState().booted);
+  const [flashDone, setFlashDone] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
+
+  // Safety net for the quick-fade overlay: even if the fade animation's
+  // completion callback never fires (hidden tab, disabled JS animations),
+  // unmount the overlay after 1s so it can never block the desktop.
+  useEffect(() => {
+    if (!(booted && wasBootedAtMount && !reducedMotion)) return;
+    const t = setTimeout(() => setFlashDone(true), 1000);
+    return () => clearTimeout(t);
+  }, [booted, wasBootedAtMount, reducedMotion]);
+
+  // SSR / hydration gate — nothing renders until the client has hydrated.
+  if (!hydrated) return null;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="relative h-dvh w-full overflow-hidden bg-zaid-bg">
+      <AnimatePresence mode="wait">
+        {!booted ? (
+          <BootScreen key="boot" />
+        ) : (
+          <motion.div
+            key="desktop"
+            data-testid="desktop"
+            className="relative h-full w-full overflow-hidden"
+            initial={reducedMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={
+              reducedMotion
+                ? { duration: 0 }
+                : { duration: 0.35, ease: "easeOut" }
+            }
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+            {/*
+              ---------------------------------------------------------------
+              ZaidOS desktop mount points — later wave-2 todos mount here:
+                TODO(todo 7)  Wallpaper     -> absolute inset-0 z-0 (behind all)
+                TODO(todo 8)  Waybar        -> fixed top-0 inset-x-0 z-40,
+                                               height var(--waybar-h)
+                TODO(todo 9)  WorkspaceView -> absolute inset-0 z-10 (window layer)
+                TODO(todo 10) DesktopIcons  -> absolute inset-0 z-20 (icon grid)
+              ---------------------------------------------------------------
+            */}
+            <div
+              className="h-full w-full bg-zaid-bg"
+              aria-hidden="true"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Returning-visitor quick fade: brief opaque overlay that dissolves to
+          reveal the desktop. First-visit boots skip it (BootScreen's exit
+          fade covers that transition). */}
+      {booted && wasBootedAtMount && !flashDone && !reducedMotion && (
+        <motion.div
+          data-testid="boot-flash"
+          className="pointer-events-none absolute inset-0 z-50 bg-zaid-bg"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          onAnimationComplete={() => setFlashDone(true)}
+        />
+      )}
     </div>
   );
 }
