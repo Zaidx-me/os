@@ -1,0 +1,64 @@
+Task 12 — Window manager store + hotkey service
+==============================================
+Date: 2026-08-10
+Status: PASS
+
+Files created
+-------------
+- src/store/wm.ts        — zustand WM store (windows/nextZ, open/close/focus/
+                           minimize/toggleMaximize/setBounds/setMode/
+                           reclampToViewport + pure clampWindowBounds/getViewport).
+                           NO workspace field, NO persist middleware.
+- src/store/wm.test.ts   — 24 Vitest tests (store invariants + orchestrator
+                           coherence across both stores).
+- src/lib/wm/actions.ts  — orchestrators openApp / closeWindow /
+                           moveWindowToWorkspace; re-exports clampWindowBounds.
+- src/lib/hotkeys.ts     — pure resolveHotkey + module-guarded initHotkeys,
+                           setModalOpen, isEditableTarget; Mod=Meta(Mac)/
+                           Ctrl+Alt elsewhere documented in header.
+- src/lib/hotkeys.test.ts— 13 Vitest tests (full combo map, wrong-modifier
+                           nulls, input/modal/contentEditable ignore rules,
+                           single-listener HMR guard).
+
+Acceptance mapping
+------------------
+- open/close/focus raises z; focus twice does NOT grow z unbounded
+  (focus() no-ops when already top; test asserts z + nextZ stable).
+- minimize preserves state (asserts x/y/w/h/z/title/mode/maximized intact).
+- toggleMaximize toggles (false -> true -> false).
+- setBounds clamps: pure clampWindowBounds({100,100},{vw:200,vh:200})
+  => {w:184, h:144} (viewport-capped minimums, NOT 360x240); store-level
+  setBounds(100,100) on a mocked 200x200 viewport yields the same.
+- focus() refuses cross-workspace windows (getWindowWs(id) !== activeWs).
+- closing the top window promotes the next-highest in the same workspace;
+  no dangling focus (workspaces focused falls to next window too).
+- hotkey map resolves Mod+1..5 and every listed combo on Mac AND Ctrl+Alt
+  platforms; plain/wrong-modifier keys resolve null.
+- Both store mutations always in the same synchronous handler
+  (openApp = openInWorkspace THEN wm.open; closeWindow = wm.close THEN
+  workspaces.closeWindow; moveWindowToWorkspace = moveWindow + raise/bounds).
+- wm.ts session-only: (useWmStore as {persist?}).persist === undefined.
+- Hotkey shell wiring intentionally deferred (page.tsx owned by parallel
+  task 7) — documented in hotkeys.ts header.
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+
+1. npm run test:unit
+   Test Files  8 passed (8)
+   Tests       104 passed (104)
+   (includes 37 new tests: 24 wm + 13 hotkeys)
+
+2. npx tsc --noEmit
+   exit 0, no diagnostics
+
+3. npm run lint
+   exit 0, 0 problems (one unused-var warning fixed before final run)
+
+4. npm run build
+   ✓ Compiled successfully; TypeScript clean; 6/6 static pages generated
+   exit 0
+
+Note: parallel task 7 modified e2e/wallpaper.spec.ts in the same worktree
+(mid-edit, uncommitted); task 12 scope was untouched and all gates passed.

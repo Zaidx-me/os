@@ -1,0 +1,305 @@
+import { create } from "zustand";
+import { useWorkspacesStore } from "./workspaces";
+
+/**
+ * Window manager store — per-window geometry, mode, and z-order.
+ *
+ * Workspace MEMBERSHIP is NOT stored here: a window's workspace lives ONLY in
+ * workspaces.ts (todo 9). Window objects have no `workspace` field — the join
+ * key between the two stores is the `win-<n>` id returned by
+ * workspaces.openInWorkspace.
+ *
+ * z-order semantics: `z` is a monotonic raise counter driven by `nextZ`. The
+ * top window of the ACTIVE workspace always satisfies z === nextZ. Focus/raise
+ * only ever applies within the ACTIVE workspace: focus() refuses windows whose
+ * owning workspace (read from the workspaces store) differs from `activeWs`.
+ * No cross-workspace raising — Mod+Tab cycling is therefore confined to the
+ * active workspace.
+ *
+ * Session-only: NEVER persisted (same rationale as workspaces.ts — a restored
+ * desktop session would place windows off-screen on smaller viewports). No
+ * persist middleware is wired here.
+ */
+
+/** Waybar height in px — the --waybar-h token from globals.css (2.5rem). */
+export const WAYBAR_H = 40;
+
+/** Minimum window size before viewport-capping (todo 13 resize handles). */
+export const MIN_WINDOW_W = 360;
+export const MIN_WINDOW_H = 240;
+
+/** Margin kept between a window and the viewport edges. */
+export const VIEWPORT_MARGIN = 16;
+
+/** Default open size until the app registry (todo 15) supplies defaultSize. */
+export const DEFAULT_WINDOW_SIZE = { w: 640, h: 480 } as const;
+
+/** SSR fallback viewport (window is undefined on the server). */
+export const DEFAULT_VIEWPORT = { vw: 1280, vh: 800 } as const;
+
+export type WindowMode = "tile" | "float";
+
+export interface WindowState {
+  id: string;
+  appId: string;
+  title: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  z: number;
+  minimized: boolean;
+  maximized: boolean;
+  mode: WindowMode;
+}
+
+/** Partial bounds update accepted by setBounds (undefined fields are kept). */
+export interface WindowBounds {
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+}
+
+export interface OpenWindowInput {
+  id: string;
+  appId: string;
+  title: string;
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  mode?: WindowMode;
+}
+
+export interface Viewport {
+  vw: number;
+  vh: number;
+}
+
+export function clamp(n: number, min: number, max: number): number {
+  return Math.min(Math.max(n, min), max);
+}
+
+/**
+ * Viewport-capped size clamp, applied by setBounds/open/reclampToViewport and
+ * (later) by the tile/snap math:
+ *   w = clamp(w, Math.min(360, vw-16), vw-16)
+ *   h = clamp(h, Math.min(240, vh-WAYBAR_H-16), vh-WAYBAR_H-16)
+ * On small viewports the MINIMUM itself is capped so a 200x200 viewport yields
+ * a 184x144 window (not 360x240).
+ */
+export function clampWindowBounds(
+  bounds: { w: number; h: number },
+  viewport: Viewport,
+): { w: number; h: number } {
+  const maxW = viewport.vw - VIEWPORT_MARGIN;
+  const maxH = viewport.vh - WAYBAR_H - VIEWPORT_MARGIN;
+  return {
+    w: clamp(bounds.w, Math.min(MIN_WINDOW_W, maxW), maxW),
+    h: clamp(bounds.h, Math.min(MIN_WINDOW_H, maxH), maxH),
+  };
+}
+
+/** Current client viewport; SSR-safe fallback (never undefined). */
+export function getViewport(): Viewport {
+  if (typeof window === "undefined") return DEFAULT_VIEWPORT;
+  return { vw: window.innerWidth, vh: window.innerHeight };
+}
+
+export interface WmStore {
+  windows: Record<string, WindowState>;
+  /** Next z to hand out — monotonic across the whole session. */
+  nextZ: number;
+
+  /** Opens a window (assumes workspaces.openInWorkspace already ran). */
+  open(input: OpenWindowInput): void;
+  /** Closes a window and, if it was on top, promotes the next-highest in its workspace. */
+  close(id: string): void;
+  /** Raises a window to the top of the ACTIVE workspace (restores it if minimized). */
+  focus(id: string): void;
+  /** Minimizes a window (state preserved; restore happens via focus()). */
+  minimize(id: string): void;
+  toggleMaximize(id: string): void;
+  setBounds(id: string, bounds: WindowBounds): void;
+  setMode(id: string, mode: WindowMode): void;
+  /** Re-clamps every window to the current viewport (ResizeObserver wiring, later todo). */
+  reclampToViewport(): void;
+}
+
+export function createInitialWmState(): {
+  windows: Record<string, WindowState>;
+  nextZ: number;
+} {
+  return { windows: {}, nextZ: 0 };
+}
+
+/** The next-highest-z window in `ws`, or null when the workspace is empty. */
+function topWindowInWs(
+  windows: Record<string, WindowState>,
+  ws: number | null,
+): WindowState | null {
+  let top: WindowState | null = null;
+  for (const win of Object.values(windows)) {
+    if (useWorkspacesStore.getState().getWindowWs(win.id) !== ws) continue;
+    if (top === null || win.z > top.z) top = win;
+  }
+  return top;
+}
+
+export const useWmStore = create<WmStore>((set) => ({
+  ...createInitialWmState(),
+
+  open: (input) => {
+    const vp = getViewport();
+    const { w, h } = clampWindowBounds(
+      { w: input.w ?? DEFAULT_WINDOW_SIZE.w, h: input.h ?? DEFAULT_WINDOW_SIZE.h },
+      vp,
+    );
+    // Center in the area below the waybar, keeping the viewport margin.
+    const x = input.x ?? Math.max(VIEWPORT_MARGIN, Math.round((vp.vw - w) / 2));
+    const y =
+      input.y ??
+      Math.max(
+        WAYBAR_H + VIEWPORT_MARGIN,
+        WAYBAR_H + Math.round((vp.vh - WAYBAR_H - h) / 2),
+      );
+    set((s) => ({
+      windows: {
+        ...s.windows,
+        [input.id]: {
+          id: input.id,
+          appId: input.appId,
+          title: input.title,
+          x,
+          y,
+          w,
+          h,
+          z: s.nextZ + 1,
+          minimized: false,
+          maximized: false,
+          mode: input.mode ?? "float",
+        },
+      },
+      nextZ: s.nextZ + 1,
+    }));
+  },
+
+  close: (id) => {
+    set((s) => {
+      const removed = s.windows[id];
+      if (removed === undefined) return s; // unknown window — safe no-op
+      const windows = { ...s.windows };
+      delete windows[id];
+      let nextZ = s.nextZ;
+      if (removed.z === s.nextZ) {
+        // The top window closed: promote the next-highest window in the same
+        // workspace so the top-z invariant (top window has z === nextZ) holds.
+        // Read the owning workspace BEFORE workspaces.closeWindow removes the
+        // id — the orchestrator must call wm.close first.
+        const owner = useWorkspacesStore.getState().getWindowWs(id);
+        const top = topWindowInWs(windows, owner);
+        if (top !== null) {
+          windows[top.id] = { ...top, z: s.nextZ + 1 };
+          nextZ = s.nextZ + 1;
+        }
+      }
+      return { windows, nextZ };
+    });
+  },
+
+  focus: (id) => {
+    const workspaces = useWorkspacesStore.getState();
+    if (workspaces.getWindowWs(id) !== workspaces.activeWs) {
+      return; // cross-workspace raise is forbidden
+    }
+    set((s) => {
+      const win = s.windows[id];
+      if (win === undefined) return s;
+      if (win.z === s.nextZ) {
+        // Already on top: restoring a minimized top window needs no re-raise.
+        return win.minimized
+          ? {
+              windows: {
+                ...s.windows,
+                [id]: { ...win, minimized: false },
+              },
+            }
+          : s;
+      }
+      return {
+        windows: {
+          ...s.windows,
+          [id]: { ...win, minimized: false, z: s.nextZ + 1 },
+        },
+        nextZ: s.nextZ + 1,
+      };
+    });
+  },
+
+  minimize: (id) => {
+    set((s) => {
+      const win = s.windows[id];
+      if (win === undefined) return s;
+      return { windows: { ...s.windows, [id]: { ...win, minimized: true } } };
+    });
+  },
+
+  toggleMaximize: (id) => {
+    set((s) => {
+      const win = s.windows[id];
+      if (win === undefined) return s;
+      return {
+        windows: {
+          ...s.windows,
+          [id]: { ...win, maximized: !win.maximized },
+        },
+      };
+    });
+  },
+
+  setBounds: (id, bounds) => {
+    set((s) => {
+      const win = s.windows[id];
+      if (win === undefined) return s;
+      const next = { ...win };
+      if (bounds.x !== undefined) next.x = bounds.x;
+      if (bounds.y !== undefined) next.y = bounds.y;
+      if (bounds.w !== undefined || bounds.h !== undefined) {
+        const { w, h } = clampWindowBounds(
+          { w: bounds.w ?? win.w, h: bounds.h ?? win.h },
+          getViewport(),
+        );
+        next.w = w;
+        next.h = h;
+      }
+      return { windows: { ...s.windows, [id]: next } };
+    });
+  },
+
+  setMode: (id, mode) => {
+    set((s) => {
+      const win = s.windows[id];
+      if (win === undefined) return s;
+      return { windows: { ...s.windows, [id]: { ...win, mode } } };
+    });
+  },
+
+  reclampToViewport: () => {
+    set((s) => {
+      const vp = getViewport();
+      const windows: Record<string, WindowState> = {};
+      let changed = false;
+      for (const [id, win] of Object.entries(s.windows)) {
+        const { w, h } = clampWindowBounds({ w: win.w, h: win.h }, vp);
+        if (w !== win.w || h !== win.h) {
+          changed = true;
+          windows[id] = { ...win, w, h };
+        } else {
+          windows[id] = win;
+        }
+      }
+      return changed ? { windows } : s;
+    });
+  },
+}));
