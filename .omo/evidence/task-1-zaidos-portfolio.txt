@@ -1,0 +1,124 @@
+TASK 1: Scaffold the Next.js 16 repo in /config/workspace/portfolio
+====================================================================
+Date: 2026-08-10
+Status: PASS (all acceptance criteria met)
+
+EXECUTION SUMMARY
+-----------------
+- create-next-app@16.3.0 rejected `--force` in-place ("The directory portfolio contains
+  files that could conflict: .omo/") -> fell back to the sanctioned temp-subdir strategy:
+  scaffolded into /tmp/opencode/zaidos-scaffold, then moved ALL generated files (incl.
+  dotfiles: .gitignore, eslint.config.mjs, next.config.ts, tsconfig.json, package.json,
+  postcss.config.mjs, AGENTS.md, CLAUDE.md) into the repo root. .omo/ left untouched (10 files, verified).
+- npm install in final location: 0 vulnerabilities.
+- git init; repo-local identity set (zaid <zaid@localhost>, required for commit).
+- All src/ subfolders created with .gitkeep so git tracks them:
+  src/app/ src/components/ src/components/ui/ src/components/wm/ src/components/apps/
+  src/lib/ src/lib/shell/ src/lib/chat/ src/content/ src/content/articles/
+  src/hooks/ src/store/ src/styles/ src/test/
+- npm scripts added: lint (eslint .), typecheck (tsc --noEmit),
+  test:unit (vitest run), test:e2e (playwright test). Vitest/Playwright packages are
+  intentionally NOT installed (todo 5).
+- .gitignore: default Next.js file covers `.env*` (=> .env, .env.local, .env*.local all
+  ignored). .omo/ is NOT ignored (verified git check-ignore exits 1 for .omo/evidence/.gitkeep).
+- Initial commit: bddf1c1 "chore(repo): scaffold Next.js 16 app with lint/typecheck/test scripts"
+
+TOOLCHAIN
+---------
+node v22.17.1 (aarch64, /tmp/node-v22.17.1-linux-arm64/bin)
+npm 10.9.2
+git 2.43.0
+
+SCAFFOLD (create-next-app@16.3.0 output, tail)
+------------------------------------------------
+> npx create-next-app@latest . --yes --force --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+npm warn exec The following package was not found and will be installed: create-next-app@16.3.0
+The directory portfolio contains files that could conflict:
+  .omo/
+Either try using a new directory name, or remove the files listed above.
+EXIT: 1   <- --force rejected by this create-next-app version; temp-subdir fallback used
+
+> npx create-next-app@latest /tmp/opencode/zaidos-scaffold --yes --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+Creating a new Next.js app in /tmp/opencode/zaidos-scaffold.
+Using npm.
+Initializing project with template: app-tw
+Installing dependencies: next, react, react-dom
+Installing devDependencies: @tailwindcss/postcss, @types/node, @types/react,
+  @types/react-dom, eslint, eslint-config-next, tailwindcss, typescript
+added 365 packages, audited 366 packages, found 0 vulnerabilities
+Generating route types... Types generated successfully
+Success! Created zaidos-scaffold at /tmp/opencode/zaidos-scaffold
+EXIT: 0
+
+npm install in /config/workspace/portfolio: 0 vulnerabilities, EXIT 0
+
+PACKAGE.JSON (final)
+--------------------
+name: zaidos (per plan decision D5 recommended repo name)
+scripts: dev=next dev | build=next build | start=next start | lint=eslint . |
+         typecheck=tsc --noEmit | test:unit=vitest run | test:e2e=playwright test
+deps: next 16.3.0, react 19.2.8, react-dom 19.2.8
+devDeps: @tailwindcss/postcss ^4, @types/node ^20, @types/react ^19, @types/react-dom ^19,
+         eslint ^9, eslint-config-next 16.3.0, tailwindcss ^4, typescript ^5
+
+GITIGNORE VERIFICATION
+----------------------
+$ git check-ignore .env.local        -> .env.local       EXIT 0  (ignored, correct)
+$ git check-ignore .env .env.production -> .env, .env.production EXIT 0
+$ git check-ignore .omo/evidence/.gitkeep -> EXIT 1       (NOT ignored, correct)
+
+ACCEPTANCE VERIFICATION (all pass)
+----------------------------------
+$ npm run build
+  ✓ Compiled successfully in 13.6s
+  ✓ Running TypeScript (4.4s)
+  ✓ Generating static pages (4/4)
+  Route (app): / (Static), /_not-found
+  BUILD_EXIT: 0
+
+$ npx tsc --noEmit
+  (no output) TSC_EXIT: 0
+
+$ npm run lint
+  (eslint .) LINT_EXIT: 0
+
+$ git status --porcelain | wc -l -> 0   (clean after initial commit)
+
+$ GIT_MASTER=1 git log --oneline -1
+  bddf1c1 chore(repo): scaffold Next.js 16 app with lint/typecheck/test scripts
+
+QA HAPPY PATH: dev server + HTTP smoke
+--------------------------------------
+$ setsid npm run dev (background, log /tmp/opencode/dev-server.log)
+  ▲ Next.js 16.3.0 (Turbopack)
+  - Local: http://localhost:3000
+  ✓ Ready in 597ms
+$ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 -> 200   (PASS)
+  dev server killed afterward (processes verified gone, curl 000)
+
+QA FAILURE PATH: typecheck is wired
+-----------------------------------
+Deleted the closing brace of RootLayout in src/app/layout.tsx:
+$ npx tsc --noEmit
+  src/app/layout.tsx(30,1): error TS1005: '}' expected.
+  TSC_FAIL_EXIT: 2   (non-zero, PASS)
+File restored; tsc re-verified EXIT 0.
+
+COMMITTED FILES (initial commit, 41 files, +7760 lines)
+-------------------------------------------------------
+Scaffold: .gitignore AGENTS.md CLAUDE.md README.md eslint.config.mjs next.config.ts
+          package.json package-lock.json postcss.config.mjs tsconfig.json public/* (5)
+          src/app/{layout.tsx,page.tsx,globals.css,favicon.ico}
+.omo (tracked on purpose): boulder.json, drafts/zaidos-portfolio.md,
+          plans/zaidos-portfolio.md, start-work/ledger.jsonl,
+          6x run-continuation/*.json, evidence/.gitkeep
+Empty dirs (via .gitkeep): src/components/ui, src/components/wm, src/components/apps,
+          src/lib/shell, src/lib/chat, src/content, src/content/articles, src/hooks,
+          src/store, src/styles, src/test
+
+NOTES
+-----
+- No app dependencies beyond create-next-app output were installed (no zustand/motion/
+  lucide/vitest/playwright - those arrive in later todos).
+- No product code created; scaffold + scripts + dirs + commit only.
+- next-env.d.ts is gitignored by the generated .gitignore (Next.js 16 regenerates it).
