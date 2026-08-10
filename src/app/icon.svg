@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- ZaidOS mark: dark rounded square + green terminal prompt glyph -->
+  <rect width="64" height="64" rx="14" fill="#0a0c10"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="12.5" fill="none" stroke="#2a2f3d" stroke-width="1.5"/>
+  <!-- prompt chevron -->
+  <path d="M18 26l9 8-9 8" fill="none" stroke="#39FF14" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- underscore cursor -->
+  <rect x="36" y="31" width="13" height="6" rx="3" fill="#39FF14"/>
+</svg>

@@ -1,0 +1,99 @@
+Task 4 — Fonts + icon system (ZaidOS portfolio)
+==============================================
+Date: 2026-08-10
+Owner: package.json owner this wave (also installed shared runtime deps)
+
+SHARED RUNTIME DEPS INSTALLED (todo 4 extended scope)
+-----------------------------------------------------
+- lucide-react ^1.31.0   (runtime dep; icon wrapper)
+- zustand     ^5.0.14    (runtime dep; used by todos 6/7/9/12 stores)
+- motion      ^13.1.0    (runtime dep; boot/window animations)
+All installed WITHOUT -D (runtime deps, not devDeps). Verified in
+package.json dependencies + package-lock.json committed.
+
+FONTS
+-----
+- Source: next/font/google — build environment HAS network access
+  (fonts.googleapis.com returned 200; npm registry 200), so the google
+  route was used and NO self-host/local fallback was needed.
+- Inter:         weights 400,500,700, subsets latin, variable "--font-sans"
+- JetBrains_Mono: weights 400,500,700, subsets latin, variable "--font-mono"
+- Verified against local Next docs (node_modules/next/dist/docs/...13-fonts.md
+  + font.md API ref): `variable` option + weight arrays supported in 16.3.0.
+  Weight arrays map to per-weight static instances in the css2 URL
+  (get-google-fonts-url.js: variants joined as wght@400;500;700).
+- Wiring: layout.tsx <html className="{inter.variable} {jetbrainsMono.variable}">
+  overrides the @theme fallback stacks in globals.css --font-sans/--font-mono
+  (class specificity beats :root), so font-sans/font-mono utilities and
+  body font-family resolve to the actually-loaded faces. globals.css @theme
+  tokens untouched (only the declared fallback stacks remained).
+- Kept: html lang="en" h-full antialiased, body min-h-full flex flex-col.
+- Removed: Geist / Geist_Mono (create-next-app default). Metadata block left
+  as-is — SEO owns root metadata in a later todo (34).
+- LayoutProps<"/"> signature preserved (Next 16 typed routes).
+
+ICON SYSTEM
+-----------
+- src/components/ui/Icon.tsx — thin typed wrapper around lucide-react:
+  exported ICONS map drives IconName union (autocomplete + type errors),
+  props = name + size (default 16) + LucideProps passthrough, aria-hidden
+  by default, currentColor theming (lucide default). ~56 icons curated for
+  the OS (waybar, launcher, window chrome, apps, terminal).
+- src/components/ui/AppIcon.tsx — custom rice-style SVG per appId for all
+  11 ids (about, projects, skills, experience, resume, contact, articles,
+  settings, terminal, chat, chess). Stroke-based thin geometric glyphs,
+  strokeWidth 1.5, round caps, currentColor, role="img" +
+  aria-label=<humanized label> (e.g. "Terminal"). NO emoji. Unknown ids get
+  a deterministic generic app tile (rect + center dot) — never throws.
+- src/components/ui/AppIcon.test.tsx — 4 tests: accessible name for
+  terminal ("Terminal"), fallback for unknown id (no throw + rect/circle
+  anatomy), all 11 appIds render, currentColor theming. Explicit
+  `import { describe, expect, it } from "vitest"` per repo convention.
+- lucide-react 1.x NOTE: brand icons (Github, Linkedin) REMOVED from the
+  package — they are undefined exports. Waybar social links (todo 8) must
+  use AtSign/Link or a custom brand glyph. Documented in Icon.tsx comment.
+
+APP ICONS (metadata)
+--------------------
+- src/app/icon.svg — ZaidOS mark: 64x64, dark rounded square #0a0c10
+  (rx 14) + hairline #2a2f3d border + green #39FF14 terminal prompt glyph
+  (chevron "M18 26l9 8-9 8" stroke 5 + underscore cursor rect 36,31 13x6).
+  No external assets. Replaces create-next-app default (repo only had
+  favicon.ico; favicon.ico left untouched — not in todo scope).
+- src/app/apple-icon.png — 512x512 PNG, same mark. Generation method:
+  `sharp` installed ad-hoc in /tmp/opencode/pnggen (NOT added to project
+  package.json), script render.mjs rasterized src/app/icon.svg via sharp's
+  librsvg input (density 300, resize 512x512) -> png. No imagemagick /
+  rsvg-convert / inkscape / PIL available in this sandbox; npm registry
+  reachable so sharp was installable. Verified with a node script reading
+  the PNG signature (89504e470d0a1a0a = VALID) + IHDR (512x512, bitDepth 8,
+  colorType 6 RGBA); 26,141 bytes. (No `file` binary in sandbox.)
+
+VERIFICATION RESULTS
+---------------------
+- npm run test:unit : PASS — 3 files, 28 tests (incl. 4 new AppIcon tests)
+- npx tsc --noEmit   : PASS
+- npm run lint       : PASS (0 errors)
+- npm run build      : PASS — Next.js 16.3.0, compiled in 4.1s, /icon.svg
+                       and /apple-icon.png listed as static routes
+- dev server curl    : /icon.svg -> 200, /apple-icon.png -> 200, / -> 200
+                       (body verified as the ZaidOS SVG, not a 404 page)
+
+DEVIATIONS
+----------
+- None material. google fonts route used (network available) instead of the
+  offline local-font fallback the todo anticipated.
+- `file` binary absent in sandbox — PNG validity proven by signature/IHDR
+  parse instead.
+- lucide-react 1.x brand-icon removal (Github/Linkedin) — documented,
+  affects waybar social links in todo 8.
+
+FILES
+-----
+- package.json + package-lock.json (deps added)
+- src/app/layout.tsx (fonts wired)
+- src/components/ui/Icon.tsx (new)
+- src/components/ui/AppIcon.tsx (new)
+- src/components/ui/AppIcon.test.tsx (new)
+- src/app/icon.svg (new)
+- src/app/apple-icon.png (new)
