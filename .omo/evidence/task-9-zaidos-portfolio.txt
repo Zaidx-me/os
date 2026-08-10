@@ -1,0 +1,68 @@
+TASK 9 — Workspace system (5 workspaces) — 2026-08-10
+=====================================================
+Plan: .omo/plans/zaidos-portfolio.md todo 9 (workspaces) + todo 12 (wm contract)
+Status: DONE — store + component stub + invariant tests committed
+
+FILES
+-----
+- src/store/workspaces.ts          zustand 5 store — SINGLE source of truth for
+                                   workspace membership. wm.ts windows (todo 12)
+                                   have NO workspace field.
+- src/components/wm/WorkspaceView.tsx  pure component, NOT mounted (todo 6 shell
+                                   mount happens in a later todo)
+- src/store/workspaces.test.ts     22 vitest tests (explicit vitest imports)
+- .omo/notepads/zaidos-portfolio/learnings.md  appended with store contract
+
+STORE CONTRACT (consumed by todo 8 waybar + todo 12 lib/wm/actions.ts)
+---------------------------------------------------------------------
+- WORKSPACE_IDS = [1,2,3,4,5] (const), WORKSPACE_LABELS = ["term","proj","web","soc","game"]
+- workspaceLabel(ws), isWorkspaceId(ws) guards
+- State: workspaces: Record<WorkspaceId, { windows: string[]; focused: string|null }>, activeWs
+- openInWorkspace(appId, ws?): string  -> win-<counter> monotonic id, defaults to activeWs,
+  pushes + focuses, returns id
+- closeWindow(id): removes ONLY from owning ws; focused window -> focus falls to the
+  window that followed it (or last remaining, or null)
+- moveWindow(id, ws): remove from old, append to new, focus in new; old ws focus falls
+  back when the moved window was focused; same-ws move never duplicates
+- focusNextInWs(ws): cycles focus within ws's ordered list (wraps), no-op when empty
+- setActive(ws), getWindowWs(id): WorkspaceId|null
+- Selectors: selectWorkspace(ws) -> {windows, focused} (stable ref), selectActiveWs
+- NEVER persisted: no persist middleware; test asserts store.persist === undefined
+
+CRITICAL INVARIANTS PROVEN BY TESTS (22/22 pass)
+------------------------------------------------
+1. window exists in EXACTLY ONE workspace at all times (no dup across ws, none in zero ws)
+   - expectExactlyOneWorkspace() helper asserts unique union + getWindowWs != null
+   - property-style test: mixed open/close/move/focus/setActive sequence holds invariant
+2. closeWindow removes from the owning workspace only (other ws untouched)
+3. closing the focused window -> focus falls to next remaining window (or null when empty)
+   - middle-window close: next window becomes focused
+   - last-window close: focus -> null
+   - closing non-focused window: focus untouched
+4. moveWindow relocates without duplication and updates focus in BOTH workspaces
+   - same-workspace move does not duplicate (regression guard)
+   - invalid target workspace / unknown window = safe no-ops
+5. focusNextInWs cycles within a workspace, no-op on empty ws
+6. WorkspaceView renders empty hint exactly: "Nothing here yet. Press Super+Space"
+   - renders ONLY active workspace's windows (data-testid="ws-window", key=id)
+7. no persistence middleware on the store
+
+VERIFICATION
+------------
+- npx vitest run src/store/workspaces.test.ts   -> 22 passed (1 file)
+- npm run build                                  -> exit 0 (compiled successfully)
+- npx tsc --noEmit                               -> only errors: src/test/boot.test.tsx
+                                                    (todo 6 parallel task, in flight — not this todo)
+- npm run lint                                   -> only errors: page.tsx / BootScreen.tsx /
+                                                    usePrefersReducedMotion.ts (todo 6, in flight)
+- npm run test:unit                              -> only failure: smoke.test.tsx (todo 6, in flight)
+
+NOTES
+-----
+- Parallel todo 6 (boot shell) was rewriting page.tsx/smoke.test.tsx while this task ran;
+  its files were uncommitted mid-edit during verification, so full-suite gates re-run
+  after todo 6 lands.
+- window-glass + hairline utilities referenced by WorkspaceView (keeps them in the CSS
+  bundle — see learnings T5 note about @utility tree-shaking).
+- Component rendered in tests via createElement() so the test file stays .ts (Vite/oxc
+  only transforms JSX inside .tsx files).
