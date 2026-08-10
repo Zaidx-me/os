@@ -152,7 +152,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: matrix wallpaper draws green pixels. failure: reduced-motion -> matrix renders a single static frame (frame-counter stub shows no loop). Evidence .omo/evidence/task-7-zaidos-portfolio.txt
   Commit: Y | feat(desktop): wallpaper engine with matrix/gradient/static variants
 
-- [ ] 8. Waybar (top bar)
+- [x] 8. Waybar (top bar)
   What to do / Must NOT do: src/components/wm/Waybar.tsx: fixed top bar height 2.5rem glass blur. Left: launcher button + 5 workspace pills (active = accent; click switches; tooltip names term/proj/web/soc/game). Right: live clock (updates/min) + date, tray with fake CPU%/RAM% canvas sparkline (oscillating demo values - must never sit stuck at 0%/100%; comment "demo values, not real metrics"), uptime (session), GitHub + LinkedIn icon links, power button -> shutdown easter-egg dialog (Reboot replay boot / Cancel / Log out anim). Hidden on mobile. MUST NOT read real system metrics.
   Parallelization: Wave 2 | Blocked by: 2,6 | Blocks: 11,16,44-48
   References (executor has NO interview context - be exhaustive): workspace store (todo 9) for pills; tokens --waybar-h; lucide icons; window taskbar integration is todo 16
