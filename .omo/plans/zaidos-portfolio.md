@@ -128,7 +128,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: test asserts AppIcon("terminal") renders <svg aria-label="Terminal">. failure: AppIcon("unknown-id") returns deterministic fallback icon, no throw. Evidence .omo/evidence/task-4-zaidos-portfolio.txt
   Commit: Y | feat(ui): add fonts, lucide wrapper, and custom app icon set
 
-- [ ] 5. Test harness + CI pipeline
+- [x] 5. Test harness + CI pipeline
   What to do / Must NOT do: Dev deps: vitest, @vitejs/plugin-react, jsdom, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, @playwright/test, @axe-core/playwright. vitest.config.ts (jsdom, globals, setupFiles src/test/setup.ts). playwright.config.ts: projects desktop (chromium 1440x900) + mobile (390x844), baseURL http://localhost:3000, webServer { command: 'npm run dev', reuseExistingServer: true } (an already-running dev server on 3000 is reused instead of failing the run). `npx playwright install chromium`. .github/workflows/ci.yml: on push/PR -> lint, typecheck, vitest, build, playwright (cache browsers). First smoke test src/test/smoke.test.tsx asserting landing renders. MUST NOT put e2e in npm `test` script; MUST NOT run e2e without build in CI.
   Parallelization: Wave 1 | Blocked by: 1 | Blocks: all QA across waves
   References (executor has NO interview context - be exhaustive): Vitest https://vitest.dev/guide/ ; Playwright https://playwright.dev/docs/intro ; GitHub Actions https://docs.github.com/en/actions
