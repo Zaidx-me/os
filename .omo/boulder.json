@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "active_work_id": "zaidos-portfolio",
+  "works": {
+    "zaidos-portfolio": {
+      "work_id": "zaidos-portfolio",
+      "active_plan": ".omo/plans/zaidos-portfolio.md",
+      "plan_name": "zaidos-portfolio",
+      "session_ids": ["codex:ses_0137909eeffeW93Q7xN50fefUP"],
+      "status": "active",
+      "worktree_path": null
+    }
+  }
+}
