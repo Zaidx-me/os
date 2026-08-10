@@ -1,0 +1,134 @@
+TASK 3 — Typed content data layer (zaidos-portfolio plan)
+==========================================================
+Date: 2026-08-10
+Executor: task-3 executor (implementation worker)
+Repo: /config/workspace/portfolio (Next.js 16.3.0, TypeScript 5, strict)
+
+STATUS: PASS
+
+1. DELIVERABLES
+---------------
+Created under src/content/ (all typed, single source of truth):
+
+- types.ts            Shared types: ProjectStatus/PROJECT_STATUSES, ProjectLinks, Project,
+                      SkillGroup/Skill, ExperienceEntry, Social, WallpaperType/
+                      WALLPAPER_TYPES, Wallpaper, Article
+- projects.ts         12 projects (featured-first): applicator, whatbot, maktaba,
+                      media-cleaner, pu-stacks, zesho, zenith-build, tower-defense,
+                      tank-arena, movies-api, kens-sunrise, zaidtech
+                      Fields: id, title, tagline, description, stack[], links{live?,
+                      repo?, article?, figma?}, status, featured
+- skills.ts           6 groups: Mobile, Frontend, Backend, AI & DevTools, Design, Systems
+                      (React Native, TypeScript, Node.js, Python, C++, FastAPI, Docker,
+                      Arch Linux, Hyprland all present, from GitHub profile README)
+- experience.ts       3 entries: BSIT 4th sem University of the Punjab Gujranwala (current),
+                      Graphic Design Intern Tech Bridge Consultancy (not current),
+                      Freelance Mobile + Shopify developer (current). periods left
+                      undefined (dates never published -> UI renders "-")
+- socials.ts          GitHub+LinkedIn zaidx-me; Instagram/Threads/Snapchat/Twitter zaidxme;
+                      Linktree linktr.ee/zaidx.me
+- site.ts             name ZaidOS, owner "Muhammad Zaid Yaseen", handle zaidx, accent
+                      #39FF14, roleLine from zaidx.me, bio in HIS voice (zaidx.me home bio
+                      + GitHub README personality; NOT the /uses template text),
+                      personalityChips (Chess London System / MMA / Urdu poetry /
+                      CachyOS + Hyprland ricing / C++/SFML games),
+                      contactEmail "hello@zaidx.me" flagged TODO (placeholder, never
+                      sent from; route reads CONTACT_TO_EMAIL env)
+- wallpapers.ts       4 wallpapers: animated-matrix, animated-gradient, dark-abstract,
+                      light-minimal (types map to engine variants matrix/gradient/dark/light)
+- articles.ts         4 articles with SAME slugs as zaidx.me/articles: building-whatsapp-
+                      gateway, building-offline-urdu-reader, designing-university-
+                      courseware-platform, ai-job-application-assistant (titles +
+                      descriptions verbatim from https://zaidx.me/articles)
+- validation.ts       Pure validators: validateProjects (unique ids, required fields
+                      non-empty, valid status enum, per-status link rules), validateArticles,
+                      validateWallpapers, validateSocials, validateExperience, validateAll
+- validation.test.ts  Vitest suite (describe/it/expect), pass + fail case per validator.
+                      NOTE: vitest is NOT installed yet - todo 5 owns the test harness
+                      (package.json). Test file written and ready; validator behavior is
+                      proven below via a compiled node check instead. The vitest import is
+                      guarded with @ts-ignore (lint-scoped) so `npx tsc --noEmit` stays
+                      green now and the directive becomes an inert no-op once vitest lands.
+- index.ts            Barrel export for the whole content layer
+
+2. FACT SOURCING (no invented facts)
+------------------------------------
+Fetched live 2026-08-10:
+- https://zaidx.me (home): 6 featured projects + bio + socials
+- https://zaidx.me/articles: 4 articles (slugs/titles/descriptions)
+- https://zaidx.me/projects/applicator + /projects/zesho: project detail facts
+- https://github.com/Zaidx-me?tab=repositories: 29 repos (whatbot, maktaba, applicator-
+  chrome, zenith-build, Tower-Defense, Tank_Arena, Media-Cleaner, movies-api, pustacks,
+  zesho, zaidtech, ...)
+- Repo READMEs: whatbot (NestJS/TS/Docker/MCP), maktaba (RN/Expo/Firebase/AsyncStorage,
+  3000+ books), applicator-chrome (NVIDIA API cover-letter generator), Media-Cleaner
+  (Kotlin, F-Droid + Play), pustacks ("Live on PUstacks", React/Tailwind/Vite + Decap CMS),
+  zenith-build (Next.js scaffold), Tower-Defense (SFML/CMake), Tank_Arena (SFML,
+  Battle City-inspired), zaidtech (HTML, README links zaidkaproject.netlify.app)
+- https://github.com/Zaidx-me/zaidx-me README: personality (zaid@archlinux, London System,
+  MMA, Urdu poetry, CachyOS+Hyprland, stack list, socials)
+
+Zesho note: the plan's parenthetical guessed "shop/ecommerce", but the authoritative
+zaidx.me /projects/zesho page + zesho repo (Expo/RN app) say it is a university
+resource-sharing platform ("Designing the future of education", tech lead on a major
+iteration). Facts won: zesho = university resource-sharing platform (open-source).
+
+3. URL VERIFICATION (curl, 2026-08-10)
+---------------------------------------
+200  https://pustacks.netlify.app        -> pu-stacks status=live (README + verified 200)
+200  https://applicator.netlify.app      -> applicator status=live
+200  https://whatbot.zaidx.me            -> whatbot status=live
+200  https://kens.netlify.app            -> kens-sunrise status=client
+404  https://zanith-build.vercel.app     -> zenith-build status=archived (no live link)
+404  https://zaidkaproject.netlify.app   -> zaidtech repo README link dead -> client w/o live link
+200  https://github.com/Zaidx-me/zenith-build (repo exists, used as the archived project's link)
+
+Statuses in data: live = applicator, whatbot, pu-stacks; open-source = maktaba,
+media-cleaner, zesho, tower-defense, tank-arena, movies-api; archived = zenith-build;
+client = kens-sunrise, zaidtech. Featured (6, matches zaidx.me home): applicator, whatbot,
+maktaba, media-cleaner, pu-stacks, zesho.
+
+Validation rules implemented:
+- live       -> links.live REQUIRED
+- client     -> links.live OR links.repo REQUIRED
+- open-source-> links.repo REQUIRED
+- archived   -> links.live FORBIDDEN (dead-link guard, zenith-build 404s)
+- in-progress-> at least one of live/repo/article/figma REQUIRED
+
+4. VERIFICATION (gates)
+------------------------
+HAPPY — `npx tsc --noEmit` ............... exit 0 (PASS)
+HAPPY — `npx eslint src/content/` ........ exit 0 (PASS)
+HAPPY — node check of compiled validators (vitest pending todo 5):
+  Compiled src/content (minus *.test.ts) to /tmp/opencode/task3/dist via
+  `npx tsc -p /tmp/opencode/task3/tsconfig.json` (module CommonJS) and ran
+  /tmp/opencode/task3/check.js. Result: ALL 17 CHECKS PASSED (exit 0), including:
+  - validateAll() valid on shipped data layer
+  - projects == 12, featured == [applicator, whatbot, maktaba, media-cleaner,
+    pu-stacks, zesho], zenith-build==archived, kens-sunrise+zaidtech==client,
+    zenith-build links.live == undefined
+  - articles == 4 with required slugs; wallpapers >= 4 with required ids
+  - socials handles/URLs exact; experience 3 entries with correct current flags
+  - site identity fields; skills 6 groups all non-empty incl. all 9 README skills
+  - FAIL cases: duplicate project id, live w/o live, open-source w/o repo,
+    archived WITH live, client w/o link, invalid status, duplicate article slug,
+    missing social url -> ALL rejected
+
+FAILURE (QA scenario) — temporarily duplicated project id in src/content/projects.ts
+(id 'applicator' appended a 2nd time), recompiled, ran:
+  node -e "validateProjects(projects)"
+  -> valid: false, errors: ["duplicate project id: \"applicator\""]  (validator caught it)
+  File then RESTORED to the 12-project set; re-verified: 17 checks pass again,
+  `npx tsc --noEmit` exit 0, `npx eslint src/content/` exit 0.
+
+5. NOTES / HANDOFFS
+-------------------
+- Vitest suite (validation.test.ts) will run under todo 5's harness: `npx vitest run
+  src/content/validation.test.ts`. The @ts-ignore import guard is intentionally scoped
+  with eslint-disable so lint passes now and the directive is inert after vitest install.
+- tsconfig note: src/content/validation.test.ts resolves once vitest's types exist
+  (todo 5); currently green via the guarded import.
+- Cross-worker: did NOT touch package.json, src/app, src/components, src/styles,
+  .omo/plans, .omo/drafts, .omo/boulder.json (owned by T2/T5/orchestrator).
+- Next todos blocked by this layer: 17-38, 44 (apps/terminal/chatbot/SEO import
+  from '@/content').
