@@ -1,0 +1,100 @@
+TASK 2: Design tokens + global styles (Tailwind v4 CSS-first)
+Repo: /config/workspace/portfolio
+Date: 2026-08-10
+Executor: task-2-executor
+
+================================================================
+DELIVERABLES
+================================================================
+1. Created src/styles/globals.css:
+   - @import "tailwindcss";
+   - @theme { ... } with ALL 13 tokens:
+     --color-zaid-bg #0a0c10
+     --color-zaid-surface #12141c
+     --color-zaid-surface2 #1a1e2a
+     --color-zaid-border #2a2f3d
+     --color-zaid-text #e6e9ef
+     --color-zaid-muted #8b93a7
+     --color-zaid-accent #39FF14
+     --color-zaid-accent2 #22d3ee
+     --color-zaid-danger #ef4444
+     --font-mono "JetBrains Mono"
+     --font-sans "Inter"
+     --radius-window 0.75rem
+     --gap-window 0.5rem
+     --waybar-h 2.5rem
+   - @layer base: body bg var(--color-zaid-bg), text var(--color-zaid-text);
+   - @layer base: ::selection accent bg + dark text; :focus-visible 2px accent
+     ring w/ 2px offset; custom scrollbar (webkit + firefox scrollbar-width,
+     thumb var(--color-zaid-border), track var(--color-zaid-surface2))
+   - @utility window-glass: color-mix(in srgb, var(--color-zaid-surface) 72%,
+     transparent) + backdrop-filter blur(16px)
+   - @utility hairline: 1px solid var(--color-zaid-border)
+2. src/app/layout.tsx: import "./globals.css" -> import "../styles/globals.css"
+   (Geist fonts untouched - todo 4 owns fonts)
+3. src/app/globals.css REMOVED (no longer referenced; import graph repointed)
+
+================================================================
+ACCEPTANCE CRITERIA (agent-executable)
+================================================================
+1. npm run build -> exit 0
+   RESULT: PASS. Final clean build (rm -rf .next && npm run build) exited 0.
+   Route (app): / and /_not-found both generated static.
+   Note: an intermediate build failed on src/content/validation.ts (TS2352)
+   which is the PARALLEL T3 worker's file (committed 3dd988f). T3 fixed it
+   concurrently; the final build passes with zero errors from my files.
+
+2. grep src/styles/globals.css shows @theme and --color-zaid-accent: #39FF14
+   RESULT: PASS
+   $ grep -n '@theme' src/styles/globals.css
+   -> 3:@theme {
+   $ grep -n -- '--color-zaid-accent: #39FF14' src/styles/globals.css
+   -> 11:  --color-zaid-accent: #39FF14;
+
+================================================================
+QA HAPPY PATH
+================================================================
+Tool: npm run build + dev server + curl + grep compiled CSS
+- curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 -> 200 PASS
+- Compiled CSS (.next/static/chunks/03q66tqxc1yuy.css) contains:
+  --color-zaid-accent:#39ff14  (all 9 color tokens, minified lowercase)
+  --font-mono:"JetBrains Mono", ui-monospace, ...
+  --radius-window:.75rem  --gap-window:.5rem  --waybar-h:2.5rem
+  body{background-color:var(--color-zaid-bg);color:var(--color-zaid-text);font-family:var(--font-sans)}
+  ::selection{background-color:var(--color-zaid-accent);color:var(--color-zaid-bg)}
+  :focus-visible{outline:2px solid var(--color-zaid-accent);outline-offset:2px}
+  scrollbar-width:thin (firefox) + webkit scrollbar rules present
+- Dev-served globals CSS module (.next/dev/static/chunks/src_styles_globals_css_*.css)
+  contains all zaid tokens (unminified form, e.g. zaid-accent: #39ff14).
+- window-glass / hairline utilities compile correctly when USED (verified via
+  temp Probe.tsx + next build):
+  .window-glass{background-color:color-mix(in srgb, var(--color-zaid-surface) 72%, transparent)}
+  .window-glass{-webkit-backdrop-filter:blur(16px)} + backdrop-filter:blur(16px)
+  .hairline{border:1px solid var(--color-zaid-border)}
+  (Tailwind v4 tree-shakes unused @utility rules by design - they exist as
+  first-class utilities and emit on first use by components.)
+
+================================================================
+QA FAILURE PATH
+================================================================
+Tool: grep compiled build CSS for nonexistent token class
+$ grep -c 'zaid-nope' .next/static/chunks/03q66tqxc1yuy.css
+-> 0  PASS (no bg-zaid-nope / zaid-nope utility exists in compiled output)
+
+================================================================
+TOKEN DISCIPLINE
+================================================================
+- No colors defined outside src/styles/globals.css. All color values live in
+  @theme tokens. Components use bg-zaid-*/text-zaid-*/border-zaid-* utilities
+  which resolve to these tokens.
+- layout.tsx change is the import path ONLY (no fonts/logic touched).
+- src/app/page.tsx NOT modified.
+
+================================================================
+FILES CHANGED
+================================================================
+A src/styles/globals.css        (new)
+M src/app/layout.tsx            (import repoint only)
+D src/app/globals.css           (removed default Tailwind globals)
+
+Commit: style(tokens): add Tailwind v4 design tokens and global rice styles
