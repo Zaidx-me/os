@@ -1,9 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment -- @ts-ignore is intentional: it is inert (never errors) once vitest lands in todo 5 */
-// @ts-ignore -- vitest is installed by todo 5 (test harness worker owns package.json);
-// until then this keeps `npx tsc --noEmit` green and validator behavior is proven via
-// .omo/evidence/task-3-zaidos-portfolio.txt (compiled node check).
 import { describe, expect, it } from 'vitest';
-/* eslint-enable @typescript-eslint/ban-ts-comment */
 
 import {
   validateAll,

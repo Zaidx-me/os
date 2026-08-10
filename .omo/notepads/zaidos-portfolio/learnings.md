@@ -1,0 +1,15 @@
+## Task 5 (test harness + CI) — 2026-08-10
+
+- Vitest 4 + @testing-library/react 16 + jsdom 29 + @playwright/test 1.62 installed as devDeps; npm scripts preserved verbatim (test:unit = `vitest run`, test:e2e = `playwright test`); package-lock.json is tracked so `npm ci` works in CI.
+- vitest globals typing: set `globals: true` in vitest.config.ts, but write tests with explicit `import { describe, expect, it } from 'vitest'` — keeps `tsc --noEmit` green without adding "vitest/globals" to tsconfig `types`. Same for jest-dom matchers: the `@testing-library/jest-dom/vitest` import in src/test/setup.ts augments vitest's Assertion types program-wide, so `toBeInTheDocument()` type-checks in any test.
+- vitest needs the `"@" -> ./src` alias configured in `resolve.alias` (Vite does NOT read tsconfig paths), and `**/e2e/**` must be in `test.exclude` or vitest tries to run Playwright specs.
+- `next/image` CANNOT render under jsdom: it needs IntersectionObserver (absent in jsdom 29 — verified). The unit smoke test mocks `next/image` to a plain `<img>`, stripping the `priority`/`fill`/`sizes` props (jsx-a11y/alt-text + @next/next/no-img-element + no-unused-vars disabled locally for the double — `require()` inside the mock factory is a lint ERROR, use JSX + eslint-disable instead).
+- Accessible-name gotcha: an `<img alt="Vercel logomark">` inside the "Deploy Now" link makes its accessible name "Vercel logomark Deploy Now" — match links with `/substring/` regex, not exact strings.
+- playwright.config.ts: `reuseExistingServer: true` reuses a running dev server on :3000 instead of failing (used in this sandbox); webServer runs `npm run dev` otherwise. Two chromium projects: desktop 1440x900, mobile (Pixel 5 UA) 390x844.
+- PLAYWRIGHT SANDBOX GOTCHA (docker, no root): `npx playwright install chromium` downloads binaries (INSTALLATION_COMPLETE present) but then FAILS host-requirement validation because the container has no browser system libs and no fonts. Do NOT "fix" playwright.config.ts for this — CI (ubuntu-latest) has everything. For local e2e runs instead export:
+    export LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l          # extracted .debs (glib,nss,nspr,atk,atspi,dbus,xcomposite,xdamage,xfixes,xrandr,gbm,xkbcommon,asound,drm,Xi,Xrender) from ports.ubuntu.com via apt-get -o Dir::State::lists=/tmp/opencode/aptlists download + dpkg-deb -x; iterate `ldd` until clean
+    export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1
+    export FONTCONFIG_FILE=/tmp/opencode/fonts.conf        # minimal fontconfig pointing at extracted DejaVu Sans (fonts-dejavu-core .deb); WITHOUT fonts, glyph boxes collapse to ~0 width and Playwright reports visible text as "hidden" (empty bounding box)
+  Chrome sandbox also needs `--no-sandbox` in some dockers; here plain headless shell launched fine as non-root.
+- CI workflow order matters: lint -> typecheck -> test:unit -> build -> playwright. e2e must NEVER run before build. Browser cache step uses actions/cache keyed on ~/.cache/ms-playwright + package-lock hash.
+- Tailwind v4 `@utility window-glass` tree-shakes when unused — it must be referenced or safelisted before a later todo uses it.
