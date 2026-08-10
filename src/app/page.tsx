@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import BootScreen from "@/components/wm/BootScreen";
+import Wallpaper from "@/components/wm/Wallpaper";
 import { useIsHydrated } from "@/hooks/useIsHydrated";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useBootStore } from "@/store/boot";
@@ -75,10 +76,7 @@ export default function Home() {
                 TODO(todo 10) DesktopIcons  -> absolute inset-0 z-20 (icon grid)
               ---------------------------------------------------------------
             */}
-            <div
-              className="h-full w-full bg-zaid-bg"
-              aria-hidden="true"
-            />
+            <Wallpaper />
           </motion.div>
         )}
       </AnimatePresence>
