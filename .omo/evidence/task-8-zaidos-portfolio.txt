@@ -1,0 +1,98 @@
+TASK 8 — Waybar top bar (zaidos-portfolio)
+============================================
+Status: DONE — all gates green
+
+Files created
+-------------
+- src/components/wm/Waybar.tsx     fixed top-0 inset-x-0 z-40, height var(--waybar-h)
+                                   (40px), window-glass blur, font-mono, `hidden
+                                   md:flex` root (CSS-only mobile hiding). LEFT:
+                                   launcher button (waybar-launcher, dispatches
+                                   window CustomEvent "zaidos:toggle-launcher" +
+                                   TODO(todo 11) comment) + 5 workspace pills
+                                   (waybar-pill-{1..5}, labels term/proj/web/soc/game,
+                                   active = accent bg + data-active="true" +
+                                   aria-pressed, title tooltip, click ->
+                                   setActive(ws)). RIGHT: HH:MM clock + date
+                                   (Aug 10) refreshed every 60s; uptime "up
+                                   0:05:23" 1s ticker; tray (waybar-tray) fake
+                                   CPU%/RAM% text + canvas sparkline
+                                   (waybar-spark, token colors read via
+                                   getComputedStyle with hex fallbacks, sin-based
+                                   oscillation + jitter clamped to [5,95] — never
+                                   stuck at 0/100, comment "demo values, not real
+                                   metrics"); GitHub (AtSign) + LinkedIn (Link)
+                                   links (lucide 1.x has NO brand icons); power
+                                   button (Power) -> power-menu dialog (Reboot ->
+                                   resetBoot replays boot via AnimatePresence,
+                                   Cancel, Log out -> 400ms fade overlay then
+                                   resetBoot, reduced-motion skips fade). ESC +
+                                   click-away close. jsdom-safe: getContext null
+                                   guard, guarded matchMedia, intervals cleared.
+- src/components/wm/Waybar.test.ts  9 unit tests (plain .ts, render(createElement)):
+                                   5 pills + labels/titles; active pill reflects
+                                   activeWs (data-active/aria-pressed); click pill 3
+                                   sets activeWs 3; clock HH:MM + date via
+                                   vi.setSystemTime; tray values parse as ints in
+                                   [0,100] and oscillate (3 samples differ); uptime
+                                   ticks 1/s; power menu open/Cancel close; Reboot
+                                   flips booted false; interval cleanup on unmount
+                                   (clearInterval spy). Canvas stubbed with the
+                                   no-op Proxy pattern (wallpaper.test.ts).
+- e2e/waybar.spec.ts               desktop describe: waybar visible after boot with
+                                   all 5 pills labeled; clock matches system time
+                                   within ±2 min (tolerates :00 rollover + 60s
+                                   refresh staleness); date + uptime + tray
+                                   /CPU \d+%/ /RAM \d+%/ ints in [0,100]; launcher
+                                   + GitHub/LinkedIn links; pill-3 click ->
+                                   expect.poll async getAttribute data-active=true;
+                                   power menu -> Reboot replays boot-screen.
+                                   mobile describe (viewport forced): waybar hidden.
+- .omo/evidence/task-8-zaidos-portfolio.txt  this file
+
+Files modified
+--------------
+- src/store/boot.ts                ONE additive action: resetBoot: () => set({ booted: false })
+                                  (+ interface field). completeBoot + persist
+                                  config untouched — boot.test.tsx persists green.
+- src/app/page.tsx                 <Waybar /> mounted after <Wallpaper />; only the
+                                  TODO(todo 8) mount comment removed — TODO(9)/TODO(10)
+                                  comments and the header comment structure intact.
+
+Verification (node /tmp/node-v22.17.1-linux-arm64/bin)
+------------------------------------------------------
+1) npx tsc --noEmit
+   RESULT: exit 0 (TSC_OK)
+
+2) npm run lint (eslint .)
+   RESULT: exit 0, 0 problems (react-hooks/purity caught eager Date.now()
+   in useRef — fixed by tick-counting uptime instead)
+
+3) npm run test:unit (vitest run)
+   RESULT: 9 files, 113 tests, 113 passed (104 existing + 9 new
+   Waybar tests; boot/smoke/wallpaper/workspaces/wm suites untouched)
+
+4) npm run build (next build, Turbopack, Next 16.3.0)
+   RESULT: exit 0 — "Compiled successfully", 6 static pages generated
+   (desktop shell still renders null pre-hydration, so the client-only
+   Waybar never SSRs)
+
+5) npx playwright test (full e2e, desktop + mobile projects)
+   Env: export LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l;
+        export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1;
+        export FONTCONFIG_FILE=/tmp/opencode/fonts.conf
+   RESULT: 22/22 passed (3 smoke + 4 wallpaper + 4 waybar) x 2 projects,
+   46.1s. Existing smoke + wallpaper specs stay green.
+
+Runtime QA (Playwright probe against live dev server, 1440x900)
+---------------------------------------------------------------
+- waybar boundingBox = {x:0,y:0,width:1440,height:40} — exactly --waybar-h
+- clock "22:17" == system time; date "Aug 10"; uptime ticking "up 0:00:01"
+- tray "CPU 18% RAM 60%" — oscillating demo values (never stuck)
+- pill-2 data-active false -> click -> true; pill-1 flips false
+- power menu opens; Reboot -> boot-screen visible (boot replays)
+- screenshot saved: /tmp/opencode/waybar-desktop.png
+
+Commits
+-------
+(see git log — single commit per this task)

@@ -13,6 +13,11 @@ export interface BootState {
   booted: boolean;
   /** Marks the OS as booted. Persists to localStorage via the middleware. */
   completeBoot: () => void;
+  /**
+   * Flips booted back to false, replaying the boot sequence (waybar
+   * Reboot / Log out). Persists like any other flag change.
+   */
+  resetBoot: () => void;
 }
 
 /**
@@ -31,6 +36,7 @@ export const useBootStore = create<BootState>()(
     (set) => ({
       booted: false,
       completeBoot: () => set({ booted: true }),
+      resetBoot: () => set({ booted: false }),
     }),
     {
       name: BOOT_STORAGE_KEY,

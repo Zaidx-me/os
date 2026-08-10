@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import BootScreen from "@/components/wm/BootScreen";
 import Wallpaper from "@/components/wm/Wallpaper";
+import Waybar from "@/components/wm/Waybar";
 import { useIsHydrated } from "@/hooks/useIsHydrated";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useBootStore } from "@/store/boot";
@@ -69,14 +70,12 @@ export default function Home() {
             {/*
               ---------------------------------------------------------------
               ZaidOS desktop mount points — later wave-2 todos mount here:
-                TODO(todo 7)  Wallpaper     -> absolute inset-0 z-0 (behind all)
-                TODO(todo 8)  Waybar        -> fixed top-0 inset-x-0 z-40,
-                                               height var(--waybar-h)
                 TODO(todo 9)  WorkspaceView -> absolute inset-0 z-10 (window layer)
                 TODO(todo 10) DesktopIcons  -> absolute inset-0 z-20 (icon grid)
               ---------------------------------------------------------------
             */}
             <Wallpaper />
+            <Waybar />
           </motion.div>
         )}
       </AnimatePresence>
