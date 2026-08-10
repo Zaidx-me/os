@@ -160,7 +160,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: 5 pills render, click switches workspace. failure: tray CPU always parsed as integer 0-100 (asserts no real metric leak). Evidence .omo/evidence/task-8-zaidos-portfolio.txt
   Commit: Y | feat(desktop): add waybar with workspaces, clock, and demo system tray
 
-- [ ] 9. Workspace system (5 workspaces)
+- [x] 9. Workspace system (5 workspaces)
   What to do / Must NOT do: src/store/workspaces.ts (zustand): 5 workspaces ids 1-5 labels term/proj/web/soc/game; each = ordered window-id list + focused id. Actions: openInWorkspace(appId, ws?), closeWindow(id), moveWindow(id, ws), focusNextInWs(ws), setActive(ws). src/components/wm/WorkspaceView.tsx renders active workspace windows. Super+1..5 switch (hotkeys todo 12). Empty workspace shows hint "Nothing here yet. Press Super+Space". MUST NOT allow window in 2 workspaces; close removes only from owning ws. **workspaces.ts is the ONLY source of truth for workspace membership** — `wm.ts` window objects have NO `workspace` field (todo 12). All membership mutation goes through the orchestrators in `lib/wm/actions.ts` (`openApp`, `moveWindowToWorkspace`) so both stores update in one synchronous handler. **Never persist workspaces.ts** (session-only; a persisted desktop session would restore windows off-screen on smaller viewports).
   Parallelization: Wave 2 | Blocked by: 2,6 | Blocks: 13,16,44-48
   References (executor has NO interview context - be exhaustive): zustand; interacts with wm.ts (todo 12); Hyprland-like workspace semantics
