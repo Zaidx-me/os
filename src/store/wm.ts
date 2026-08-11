@@ -43,6 +43,23 @@ export const MAXIMIZE_GAP = 8;
  */
 export type ResizeDir = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
+/**
+ * Edge-snap zones (todo 14): a pointer within this many px of a viewport edge
+ * (while dragging a titlebar) shows the snap preview and snaps on drop.
+ */
+export const SNAP_EDGE_ZONE = 40;
+
+/** Snap targets for edge-snap tiling + keyboard tiling (todo 14). */
+export type SnapDir = "left" | "right" | "full";
+
+/** Floating geometry remembered when a window snaps, so Mod+F can restore it. */
+export interface FloatBounds {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 /** Default open size until the app registry (todo 15) supplies defaultSize. */
 export const DEFAULT_WINDOW_SIZE = { w: 640, h: 480 } as const;
 
@@ -63,6 +80,7 @@ export interface WindowState {
   minimized: boolean;
   maximized: boolean;
   mode: WindowMode;
+  floatBounds: FloatBounds | null;
 }
 
 /** Partial bounds update accepted by setBounds (undefined fields are kept). */
@@ -126,6 +144,39 @@ export function maximizeBounds(vp: Viewport): {
     w: vp.vw - MAXIMIZE_GAP * 2,
     h: vp.vh - WAYBAR_H - MAXIMIZE_GAP * 2,
   };
+}
+
+/**
+ * Exact bounds a snapped window takes for `dir` (todo 14):
+ *   left : x=8, y=48, w=50%-12px (8px gutter + 8px gap to the right pane)
+ *   right: x=vw/2+4, y=48, w=50%-12px (sits beside a left-snapped window)
+ *   full : the maximize rect (workspace minus waybar + gutter)
+ */
+export function snapBounds(dir: SnapDir, vp: Viewport): {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+} {
+  if (dir === "full") return maximizeBounds(vp);
+  const halfW = vp.vw / 2 - 12;
+  return {
+    x: dir === "left" ? MAXIMIZE_GAP : vp.vw / 2 + 4,
+    y: WAYBAR_H + MAXIMIZE_GAP,
+    w: halfW,
+    h: vp.vh - WAYBAR_H - MAXIMIZE_GAP * 2,
+  };
+}
+
+/** Snap zone under a pointer: within SNAP_EDGE_ZONE of an edge, else null. */
+export function snapZoneAt(
+  point: { x: number; y: number },
+  vp: Viewport,
+): SnapDir | null {
+  if (point.x < SNAP_EDGE_ZONE) return "left";
+  if (point.x > vp.vw - SNAP_EDGE_ZONE) return "right";
+  if (point.y < SNAP_EDGE_ZONE) return "full";
+  return null;
 }
 
 /** Drag position: clamped to the viewport, never above the waybar (todo 13). */
@@ -193,6 +244,10 @@ export interface WmStore {
   toggleMaximize(id: string): void;
   setBounds(id: string, bounds: WindowBounds): void;
   setMode(id: string, mode: WindowMode): void;
+  /** Tiles a window to a snap region; the pre-snap float bounds are remembered. */
+  snap(id: string, dir: SnapDir): void;
+  /** Restores a tiled window to its remembered float bounds (Mod+F). */
+  toggleFloat(id: string): void;
   /** Re-clamps every window to the current viewport (ResizeObserver wiring, later todo). */
   reclampToViewport(): void;
 }
@@ -249,6 +304,7 @@ export const useWmStore = create<WmStore>((set) => ({
           minimized: false,
           maximized: false,
           mode: input.mode ?? "float",
+          floatBounds: null,
         },
       },
       nextZ: s.nextZ + 1,
@@ -352,6 +408,34 @@ export const useWmStore = create<WmStore>((set) => ({
       const win = s.windows[id];
       if (win === undefined) return s;
       return { windows: { ...s.windows, [id]: { ...win, mode } } };
+    });
+  },
+
+  snap: (id, dir) => {
+    set((s) => {
+      const win = s.windows[id];
+      if (win === undefined) return s;
+      const floatBounds =
+        win.mode === "float"
+          ? (win.floatBounds ?? { x: win.x, y: win.y, w: win.w, h: win.h })
+          : win.floatBounds;
+      return {
+        windows: { ...s.windows, [id]: { ...win, mode: "tile", floatBounds, ...snapBounds(dir, getViewport()) } },
+      };
+    });
+  },
+
+  toggleFloat: (id) => {
+    set((s) => {
+      const win = s.windows[id];
+      if (win === undefined || win.mode !== "tile") return s;
+      if (win.floatBounds === null) {
+        return { windows: { ...s.windows, [id]: { ...win, mode: "float" } } };
+      }
+      const { x, y, w, h } = win.floatBounds;
+      return {
+        windows: { ...s.windows, [id]: { ...win, mode: "float", floatBounds: null, x, y, w, h } },
+      };
     });
   },
 

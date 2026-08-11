@@ -12,7 +12,7 @@ import { WorkspaceView } from "@/components/wm/WorkspaceView";
 import { useIsHydrated } from "@/hooks/useIsHydrated";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { initHotkeys } from "@/lib/hotkeys";
-import { closeWindow, moveWindowToWorkspace, openApp } from "@/lib/wm/actions";
+import { closeWindow, moveWindowToWorkspace, openApp, snapWindow } from "@/lib/wm/actions";
 import { useBootStore } from "@/store/boot";
 import { clamp, useWmStore } from "@/store/wm";
 import {
@@ -87,15 +87,17 @@ export default function Home() {
         ) as WorkspaceId;
         moveWindowToWorkspace(id, target);
       },
+      tile: (dir) => {
+        const workspaces = useWorkspacesStore.getState();
+        const id = workspaces.workspaces[workspaces.activeWs].focused;
+        if (id === null) return;
+        snapWindow(id, dir);
+      },
       toggleFloat: () => {
         const workspaces = useWorkspacesStore.getState();
         const id = workspaces.workspaces[workspaces.activeWs].focused;
         if (id === null) return;
-        const win = useWmStore.getState().windows[id];
-        if (win === undefined) return;
-        useWmStore
-          .getState()
-          .setMode(id, win.mode === "float" ? "tile" : "float");
+        useWmStore.getState().toggleFloat(id);
       },
       cycleWindows: () => {
         const workspaces = useWorkspacesStore.getState();

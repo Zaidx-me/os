@@ -56,7 +56,7 @@ test.describe("window chrome (drag/resize/min/max/close)", () => {
     expect(after.y).toBeCloseTo(before.y + 80, 0);
   });
 
-  test("dragging beyond the top clamps at the waybar height", async ({
+  test("dragging up clamps at the waybar height (outside the 40px snap band)", async ({
     page,
   }) => {
     await bootToDesktop(page);
@@ -66,10 +66,12 @@ test.describe("window chrome (drag/resize/min/max/close)", () => {
     const origin = { x: tb.x + tb.width / 2, y: tb.y + tb.height / 2 };
     await page.mouse.move(origin.x, origin.y);
     await page.mouse.down();
-    await page.mouse.move(origin.x, 0, { steps: 4 }); // way above the top
+    // drop at exactly the waybar bottom (y=40) — NOT inside the y<40 snap band
+    await page.mouse.move(origin.x, 40, { steps: 4 });
     await page.mouse.up();
     const after = (await win.boundingBox())!;
-    expect(after.y).toBeCloseTo(40, 0); // WAYBAR_H
+    expect(after.y).toBeCloseTo(40, 0); // WAYBAR_H — clamped, NOT snapped
+    await expect(win).toHaveAttribute("data-mode", "float");
   });
 
   test("maximize fills the workspace minus the waybar and gutter", async ({

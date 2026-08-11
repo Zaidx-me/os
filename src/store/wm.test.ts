@@ -7,9 +7,13 @@ import {
 import {
   clampWindowBounds,
   dragBounds,
+  getViewport,
   maximizeBounds,
   MAXIMIZE_GAP,
   resizeBounds,
+  SNAP_EDGE_ZONE,
+  snapBounds,
+  snapZoneAt,
   useWmStore,
   VIEWPORT_MARGIN,
   WAYBAR_H,
@@ -101,6 +105,7 @@ describe("wm store — open", () => {
       minimized: false,
       maximized: false,
       mode: "float",
+      floatBounds: null,
     });
     expect(wm().nextZ).toBe(1);
   });
@@ -296,6 +301,42 @@ describe("wm geometry helpers — maximize/drag/resize (todo 13)", () => {
   });
 });
 
+describe("wm geometry helpers — snapBounds/snapZoneAt (todo 14)", () => {
+  const VP = { vw: 1440, vh: 900 };
+
+  it("left snap: x=8, y=48, w=50%-12px, h=workspace-2*gutter", () => {
+    expect(snapBounds("left", VP)).toEqual({
+      x: 8,
+      y: WAYBAR_H + MAXIMIZE_GAP,
+      w: VP.vw / 2 - 12,
+      h: VP.vh - WAYBAR_H - MAXIMIZE_GAP * 2,
+    });
+  });
+
+  it("right snap sits beside a left-snapped window (x=vw/2+4)", () => {
+    const left = snapBounds("left", VP);
+    const right = snapBounds("right", VP);
+    expect(right.x).toBe(VP.vw / 2 + 4);
+    expect(right.w).toBe(left.w);
+    // no overlap and an 8px gap between the two panes
+    expect(right.x - (left.x + left.w)).toBe(MAXIMIZE_GAP);
+    expect(right.x + right.w).toBe(VP.vw - MAXIMIZE_GAP);
+  });
+
+  it("full snap equals the maximize rect", () => {
+    expect(snapBounds("full", VP)).toEqual(maximizeBounds(VP));
+  });
+
+  it("snapZoneAt returns left/right/full only inside the 40px band", () => {
+    expect(snapZoneAt({ x: SNAP_EDGE_ZONE - 1, y: 200 }, VP)).toBe("left");
+    expect(snapZoneAt({ x: VP.vw - SNAP_EDGE_ZONE + 1, y: 200 }, VP)).toBe("right");
+    expect(snapZoneAt({ x: 200, y: SNAP_EDGE_ZONE - 1 }, VP)).toBe("full");
+    expect(snapZoneAt({ x: SNAP_EDGE_ZONE, y: 200 }, VP)).toBeNull();
+    expect(snapZoneAt({ x: 200, y: SNAP_EDGE_ZONE }, VP)).toBeNull();
+    expect(snapZoneAt({ x: 200, y: 200 }, VP)).toBeNull();
+  });
+});
+
 describe("wm store — setMode", () => {
   it("switches tile <-> float", () => {
     const id = openApp("terminal");
@@ -304,6 +345,49 @@ describe("wm store — setMode", () => {
     expect(wm().windows[id].mode).toBe("tile");
     wm().setMode(id, "float");
     expect(wm().windows[id].mode).toBe("float");
+  });
+});
+
+describe("wm store — snap/toggleFloat (todo 14)", () => {
+  it("snap tiles to exact bounds and remembers the pre-snap float bounds", () => {
+    const id = openApp("terminal");
+    const before = { x: wm().windows[id].x, y: wm().windows[id].y, w: 640, h: 480 };
+    wm().snap(id, "left");
+    const win = wm().windows[id];
+    expect(win.mode).toBe("tile");
+    expect(win.floatBounds).toEqual(before);
+    expect(win).toMatchObject(snapBounds("left", getViewport()));
+  });
+
+  it("re-snapping a tiled window does NOT overwrite the remembered bounds", () => {
+    const id = openApp("terminal");
+    const before = { x: wm().windows[id].x, y: wm().windows[id].y, w: 640, h: 480 };
+    wm().snap(id, "left");
+    wm().snap(id, "right");
+    expect(wm().windows[id].floatBounds).toEqual(before);
+  });
+
+  it("toggleFloat restores the remembered float bounds and clears them", () => {
+    const id = openApp("terminal");
+    const before = { x: wm().windows[id].x, y: wm().windows[id].y, w: 640, h: 480 };
+    wm().snap(id, "right");
+    wm().toggleFloat(id);
+    const win = wm().windows[id];
+    expect(win.mode).toBe("float");
+    expect(win.floatBounds).toBeNull();
+    expect(win).toMatchObject(before);
+  });
+
+  it("toggleFloat on a never-snapped window is a safe no-op", () => {
+    const id = openApp("terminal");
+    const before = { ...wm().windows[id] };
+    wm().toggleFloat(id);
+    expect(wm().windows[id]).toEqual(before);
+  });
+
+  it("unknown ids are a safe no-op for snap", () => {
+    wm().snap("win-999", "full");
+    expect(wm().windows).toEqual({});
   });
 });
 

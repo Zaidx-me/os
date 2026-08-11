@@ -1,4 +1,5 @@
 import type { WorkspaceId } from "@/store/workspaces";
+import type { SnapDir } from "@/store/wm";
 
 /**
  * Global hotkey service.
@@ -8,15 +9,18 @@ import type { WorkspaceId } from "@/store/workspaces";
  * via `detectPlatform()` (overridable for tests).
  *
  * Keymap:
- *   Mod+Enter        open terminal
- *   Mod+Space        toggle launcher
- *   Mod+1..5         switch to workspace 1..5
- *   Mod+Q            close focused window
- *   Mod+M            minimize focused window
- *   Mod+ArrowLeft    move window to previous workspace
- *   Mod+ArrowRight   move window to next workspace
- *   Mod+F            toggle float mode
- *   Mod+Tab          cycle windows (active workspace only)
+ *   Mod+Enter             open terminal
+ *   Mod+Space             toggle launcher
+ *   Mod+1..5              switch to workspace 1..5
+ *   Mod+Q                 close focused window
+ *   Mod+M                 minimize focused window
+ *   Mod+ArrowLeft         snap focused window to the left half
+ *   Mod+ArrowRight        snap focused window to the right half
+ *   Mod+ArrowUp           snap focused window full size
+ *   Mod+Shift+ArrowLeft   move window to previous workspace
+ *   Mod+Shift+ArrowRight  move window to next workspace
+ *   Mod+F                 toggle float mode (restores the pre-snap bounds)
+ *   Mod+Tab               cycle windows (active workspace only)
  *
  * The listener is IGNORED when the event target is an input/textarea/
  * contentEditable element OR while a modal overlay (launcher, context dialogs)
@@ -38,6 +42,7 @@ export type HotkeyAction =
   | { type: "selectWorkspace"; ws: WorkspaceId }
   | { type: "closeFocused" }
   | { type: "minimizeFocused" }
+  | { type: "tile"; dir: SnapDir }
   | { type: "moveToWorkspace"; dir: -1 | 1 }
   | { type: "toggleFloat" }
   | { type: "cycleWindows" };
@@ -49,6 +54,7 @@ export interface HotkeyHandlers {
   selectWorkspace(ws: WorkspaceId): void;
   closeFocused(): void;
   minimizeFocused(): void;
+  tile(dir: SnapDir): void;
   moveToWorkspace(dir: -1 | 1): void;
   toggleFloat(): void;
   cycleWindows(): void;
@@ -112,11 +118,28 @@ const KEY_TO_ACTION: Record<string, HotkeyAction> = {
   "5": { type: "selectWorkspace", ws: 5 },
   q: { type: "closeFocused" },
   m: { type: "minimizeFocused" },
-  ArrowLeft: { type: "moveToWorkspace", dir: -1 },
-  ArrowRight: { type: "moveToWorkspace", dir: 1 },
   f: { type: "toggleFloat" },
   Tab: { type: "cycleWindows" },
 };
+
+/**
+ * Arrow keys split on Shift: plain tiles the focused window, Shift moves it to
+ * the neighboring workspace (both are Mod+chords, checked by resolveHotkey).
+ */
+function arrowAction(event: HotkeyEvent): HotkeyAction | null {
+  if (event.key === "ArrowLeft") {
+    return event.shiftKey
+      ? { type: "moveToWorkspace", dir: -1 }
+      : { type: "tile", dir: "left" };
+  }
+  if (event.key === "ArrowRight") {
+    return event.shiftKey
+      ? { type: "moveToWorkspace", dir: 1 }
+      : { type: "tile", dir: "right" };
+  }
+  if (event.key === "ArrowUp") return { type: "tile", dir: "full" };
+  return null;
+}
 
 /**
  * Pure resolver: maps a keyboard event (plus optional platform override) to a
@@ -130,6 +153,9 @@ export function resolveHotkey(
   if (modalOpen) return null;
   if (isEditableTarget(event.target)) return null;
   if (!modActive(event, platform)) return null;
+  if (event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "ArrowUp") {
+    return arrowAction(event);
+  }
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
   return KEY_TO_ACTION[key] ?? null;
 }
@@ -150,6 +176,9 @@ function dispatch(action: HotkeyAction, handlers: HotkeyHandlers): void {
       break;
     case "minimizeFocused":
       handlers.minimizeFocused();
+      break;
+    case "tile":
+      handlers.tile(action.dir);
       break;
     case "moveToWorkspace":
       handlers.moveToWorkspace(action.dir);

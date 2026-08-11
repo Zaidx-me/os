@@ -1,4 +1,4 @@
-import { useWmStore, clampWindowBounds } from "@/store/wm";
+import { useWmStore, clampWindowBounds, type SnapDir } from "@/store/wm";
 import {
   useWorkspacesStore,
   type WorkspaceId,
@@ -77,4 +77,14 @@ export function moveWindowToWorkspace(id: string, ws: WorkspaceId): void {
   if (workspaces.getWindowWs(id) === workspaces.activeWs) {
     wm.focus(id);
   }
+}
+
+/**
+ * Snaps a window to a tile region (todo 14) and raises it. The pre-snap float
+ * bounds are remembered by wm.snap, so Mod+F can restore the prior position.
+ * Used by both the drag-to-edge drop and the Mod+Arrow tile hotkeys.
+ */
+export function snapWindow(id: string, dir: SnapDir): void {
+  useWmStore.getState().snap(id, dir);
+  focusWindow(id);
 }

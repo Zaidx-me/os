@@ -200,7 +200,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: drag beyond top clamps at waybar height. failure: maximize then drag -> no position change. Evidence .omo/evidence/task-13-zaidos-portfolio.txt
   Commit: Y | feat(wm): window chrome with drag, resize, and window controls
 
-- [ ] 14. Edge-snap tiling + keyboard tiling
+- [x] 14. Edge-snap tiling + keyboard tiling
   What to do / Must NOT do: Snap preview overlay (left half / right half / full, glass panel); drop -> mode=tile with exact bounds (gutter 8px; x=gap, y=waybar+gap, w=50%-gap/2). Keyboard: Mod+Left/Right/Up tile half/quarter, Mod+F float toggle (restores prior bounds), Mod+Shift+Left/Right move workspace — the move calls the `moveWindowToWorkspace` orchestrator (lib/wm/actions.ts), never a raw store action. Tile math uses the viewport-capped clamps from todo 12. No cascade/auto-tiling of new windows (windows open floating; user snaps) - scope boundary. Animate tile transitions. MUST NOT auto-tile on open, MUST NOT implement full Hyprland layouts.
   Parallelization: Wave 3 | Blocked by: 12 | Blocks: 17-48
   References (executor has NO interview context - be exhaustive): tokens gap; wm.ts setBounds/setMode; snap math exact: x=8, y=40+8, w=calc(50% - 12px)

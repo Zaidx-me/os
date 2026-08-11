@@ -4,7 +4,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import Window from "@/components/wm/Window";
 import { openApp } from "@/lib/wm/actions";
-import { MAXIMIZE_GAP, useWmStore, WAYBAR_H } from "@/store/wm";
+import {
+  getViewport,
+  MAXIMIZE_GAP,
+  snapBounds,
+  SNAP_EDGE_ZONE,
+  useWmStore,
+  WAYBAR_H,
+} from "@/store/wm";
 import {
   createInitialWorkspaces,
   useWorkspacesStore,
@@ -122,7 +129,29 @@ describe("Window (window chrome)", () => {
     });
   });
 
-  it("dragging beyond the top edge clamps at the waybar height", () => {
+  it("dragging up clamps at the waybar (no snap inside the 40px band)", () => {
+    const id = setup();
+    const before = wm().windows[id];
+    const titlebar = screen.getByTestId("window-titlebar");
+    fireEvent.pointerDown(titlebar, {
+      clientX: before.x + 10,
+      clientY: before.y + 10,
+      pointerId: 1,
+      buttons: 1,
+    });
+    // drop at exactly the waybar bottom — NOT inside the top snap band (y<40)
+    fireEvent.pointerMove(window, {
+      clientX: before.x + 10,
+      clientY: WAYBAR_H,
+      pointerId: 1,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(window, { pointerId: 1 });
+    expect(wm().windows[id].y).toBe(WAYBAR_H);
+    expect(wm().windows[id].mode).toBe("float");
+  });
+
+  it("dragging to the very top edge snaps full (top 40px band)", () => {
     const id = setup();
     const before = wm().windows[id];
     const titlebar = screen.getByTestId("window-titlebar");
@@ -139,7 +168,61 @@ describe("Window (window chrome)", () => {
       buttons: 1,
     });
     fireEvent.pointerUp(window, { pointerId: 1 });
-    expect(wm().windows[id].y).toBe(WAYBAR_H);
+    expect(wm().windows[id].mode).toBe("tile");
+    expect(wm().windows[id]).toMatchObject(snapBounds("full", getViewport()));
+  });
+
+  it("dragging into the left edge shows the preview and snaps on drop", () => {
+    const id = setup();
+    const before = wm().windows[id];
+    const titlebar = screen.getByTestId("window-titlebar");
+    fireEvent.pointerDown(titlebar, {
+      clientX: before.x + 10,
+      clientY: before.y + 10,
+      pointerId: 1,
+      buttons: 1,
+    });
+    fireEvent.pointerMove(window, {
+      clientX: SNAP_EDGE_ZONE - 1,
+      clientY: 300,
+      pointerId: 1,
+      buttons: 1,
+    });
+    const preview = screen.getByTestId("snap-preview");
+    expect(preview).toBeInTheDocument();
+    expect(preview).toHaveStyle({
+      left: `${snapBounds("left", getViewport()).x}px`,
+      width: `${snapBounds("left", getViewport()).w}px`,
+    });
+    fireEvent.pointerUp(window, { pointerId: 1 });
+    expect(screen.queryByTestId("snap-preview")).not.toBeInTheDocument();
+    expect(wm().windows[id].mode).toBe("tile");
+    expect(wm().windows[id]).toMatchObject(snapBounds("left", getViewport()));
+  });
+
+  it("dropping away from an edge keeps the drag position (no snap)", () => {
+    const id = setup();
+    const before = wm().windows[id];
+    const titlebar = screen.getByTestId("window-titlebar");
+    fireEvent.pointerDown(titlebar, {
+      clientX: before.x + 10,
+      clientY: before.y + 10,
+      pointerId: 1,
+      buttons: 1,
+    });
+    fireEvent.pointerMove(window, {
+      clientX: before.x + 110,
+      clientY: before.y + 70,
+      pointerId: 1,
+      buttons: 1,
+    });
+    expect(screen.queryByTestId("snap-preview")).not.toBeInTheDocument();
+    fireEvent.pointerUp(window, { pointerId: 1 });
+    expect(wm().windows[id]).toMatchObject({
+      x: before.x + 100,
+      y: before.y + 60,
+      mode: "float",
+    });
   });
 
   it("dragging while maximized does NOT move the window (restore first)", () => {

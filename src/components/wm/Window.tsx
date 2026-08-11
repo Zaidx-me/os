@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
+import { createPortal } from "react-dom";
 import { Copy, Minus, Square, X } from "lucide-react";
 import { motion } from "motion/react";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import { closeWindow, focusWindow } from "@/lib/wm/actions";
+import { closeWindow, focusWindow, snapWindow } from "@/lib/wm/actions";
 import {
   dragBounds,
   getViewport,
   maximizeBounds,
   resizeBounds,
+  snapBounds,
+  snapZoneAt,
   useWmStore,
   type ResizeDir,
+  type SnapDir,
   type WindowState,
 } from "@/store/wm";
 import {
@@ -34,6 +38,9 @@ import {
  *     never above the waybar). Dragging is DISABLED while maximized — you
  *     must restore the window first (restore via Maximize button or
  *     double-clicking the titlebar).
+ *   - drag into an edge zone  -> glass snap preview (left half / right half /
+ *     full, via snapZoneAt + snapBounds); releasing inside the zone snaps the
+ *     window (wm.snap remembers the pre-snap float bounds for Mod+F restore).
  *   - double-click titlebar  -> toggle maximize.
  *   - 8 invisible resize handles (cursor styles) -> wm.setBounds via
  *     resizeBounds (360x240 minimum, anchored edges). Also disabled while
@@ -99,6 +106,8 @@ export default function Window({ windowId }: WindowProps) {
   const { focused } = useWorkspacesStore(selectWorkspace(activeWs));
   const reducedMotion = usePrefersReducedMotion();
   const [gesture, setGesture] = useState<Gesture | null>(null);
+  const [snapZone, setSnapZone] = useState<SnapDir | null>(null);
+  const snapZoneRef = useRef<SnapDir | null>(null);
 
   // Last known state while closing: the stores drop the window synchronously,
   // but AnimatePresence keeps this child mounted to play the exit animation.
@@ -117,13 +126,25 @@ export default function Window({ windowId }: WindowProps) {
       const dx = e.clientX - gesture.origin.x;
       const dy = e.clientY - gesture.origin.y;
       const vp = getViewport();
-      const next =
-        gesture.kind === "drag"
-          ? dragBounds(gesture.start, dx, dy, vp)
-          : resizeBounds(gesture.start, gesture.dir, dx, dy, vp);
-      useWmStore.getState().setBounds(windowId, next);
+      if (gesture.kind === "drag") {
+        const zone = snapZoneAt({ x: e.clientX, y: e.clientY }, vp);
+        if (snapZoneRef.current !== zone) {
+          snapZoneRef.current = zone;
+          setSnapZone(zone);
+        }
+        useWmStore.getState().setBounds(windowId, dragBounds(gesture.start, dx, dy, vp));
+      } else {
+        useWmStore.getState().setBounds(windowId, resizeBounds(gesture.start, gesture.dir, dx, dy, vp));
+      }
     };
-    const handleUp = () => setGesture(null);
+    const handleUp = () => {
+      if (gesture.kind === "drag" && snapZoneRef.current !== null) {
+        snapWindow(windowId, snapZoneRef.current);
+      }
+      snapZoneRef.current = null;
+      setSnapZone(null);
+      setGesture(null);
+    };
     window.addEventListener("pointermove", handleMove);
     window.addEventListener("pointerup", handleUp);
     window.addEventListener("pointercancel", handleUp);
@@ -168,6 +189,8 @@ export default function Window({ windowId }: WindowProps) {
     useWmStore.getState().toggleMaximize(windowId);
   };
 
+  const previewBounds = snapZone !== null ? snapBounds(snapZone, getViewport()) : null;
+
   return (
     <motion.div
       data-testid={`window-${current.appId}`}
@@ -176,6 +199,7 @@ export default function Window({ windowId }: WindowProps) {
       data-focused={isFocused ? "true" : "false"}
       data-minimized={current.minimized ? "true" : "false"}
       data-maximized={current.maximized ? "true" : "false"}
+      data-mode={current.mode}
       role="dialog"
       aria-label={`${current.title} window`}
       aria-hidden={current.minimized}
@@ -278,6 +302,22 @@ export default function Window({ windowId }: WindowProps) {
           ))}
         </div>
       )}
+
+      {previewBounds !== null &&
+        createPortal(
+          <div
+            data-testid="snap-preview"
+            aria-hidden="true"
+            className="window-glass hairline pointer-events-none fixed z-30 rounded-[var(--radius-window)] border-2 border-zaid-accent/60"
+            style={{
+              left: previewBounds.x,
+              top: previewBounds.y,
+              width: previewBounds.w,
+              height: previewBounds.h,
+            }}
+          />,
+          document.body,
+        )}
     </motion.div>
   );
 }

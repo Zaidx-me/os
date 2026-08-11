@@ -1,0 +1,132 @@
+Task 14 — Edge-snap tiling + keyboard tiling
+============================================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- e2e/tiling.spec.ts              — 6 Playwright tests x2 projects (edge-snap:
+                                   left-edge drag snap, two windows side-by-
+                                   side, very-top drag snaps full, drop <40px
+                                   from edge keeps drag position; keyboard:
+                                   Mod+ArrowLeft tiles the focused window,
+                                   Mod+F restores the pre-snap float bounds).
+
+Files modified
+--------------
+- src/store/wm.ts           — new types SnapDir ("left"|"right"|"full") and
+                              FloatBounds {x,y,w,h}; SNAP_EDGE_ZONE = 40; pure
+                              snapBounds(vp, dir) (left {x:8, y:48,
+                              w:vw/2-12, h:vh-56}, right {x:vw/2+4, w:vw/2-12},
+                              full = maximizeBounds) and snapZoneAt(vp, point)
+                              (left/right x<40 / x>vw-40, full y<40);
+                              WindowState.floatBounds (null on open);
+                              WmStore.snap(id, dir) — sets mode=tile + bounds,
+                              records floatBounds ONLY while floating (re-snap
+                              never overwrites prior bounds) — and
+                              WmStore.toggleFloat(id) — restores floatBounds
+                              (falls back to dragBounds-center) else maximizes.
+- src/store/wm.test.ts      — open() toEqual now includes floatBounds:null;
+                              new "wm geometry helpers — snapBounds/snapZoneAt
+                              (todo 14)" and "wm store — snap/toggleFloat
+                              (todo 14)" describe blocks.
+- src/lib/hotkeys.ts        — arrow remap: Mod+Left/Right tile halves,
+                              Mod+Up tile full, Mod+Shift+Left/Right
+                              moveToWorkspace (orchestrator, never a raw store
+                              action), Mod+F toggleFloat; HotkeyAction gains
+                              {type:"tile"; dir:SnapDir}; new arrowAction()
+                              resolves Shift-vs-plain arrows BEFORE the
+                              KEY_TO_ACTION lookup; arrows removed from
+                              KEY_TO_ACTION; "tile" dispatch case; header
+                              keymap comment updated.
+- src/lib/hotkeys.test.ts   — handlers() gains tile: vi.fn(); keymap cases
+                              updated (ArrowLeft/Right/Up now tile, ArrowUp is
+                              full); new "Shift turns the arrow keys back into
+                              moveToWorkspace (both platforms)" test;
+                              initHotkeys dispatch test now also dispatches
+                              ArrowLeft and asserts h.tile called with "left".
+- src/lib/wm/actions.ts     — new snapWindow(id, dir) orchestrator = wm.snap
+                              + focusWindow (raises the snapped window).
+- src/app/page.tsx          — imports snapWindow; new tile(dir) handler;
+                              toggleFloat now calls
+                              useWmStore.getState().toggleFloat(id) instead
+                              of a setMode flip.
+- src/components/wm/Window.tsx — drag-snap: pointer y<40 or x<40/x>vw-40 sets
+                              snapZone state during drag, snap-on-drop via
+                              snapWindow; glass snap-preview portal
+                              (data-testid="snap-preview", fixed z-30, explicit
+                              left/top/width/height CSS, border-2
+                              border-zaid-accent/60 + backdrop blur);
+                              data-mode={current.mode} attr on the window.
+- src/components/wm/Window.test.tsx — top-clamp test reworked to drop at
+                              y=WAYBAR_H=40 (outside the snap band); new tests:
+                              very-top drag snaps full, left-edge shows preview
+                              + snaps on drop, drop away from edge keeps the
+                              drag position (no preview).
+- e2e/window.spec.ts        — clamp test renamed "dragging up clamps at the
+                              waybar height (outside the 40px snap band)",
+                              drops at y=40 and asserts data-mode stays float.
+
+Acceptance mapping (plan line 204)
+----------------------------------
+- Snap preview overlay: left half / right half / full glass panel, rendered
+  through a portal (z-30) above the window; follows the pointer's zone.
+- Drop -> mode=tile with exact bounds (gutter 8px; x=gap, y=waybar+gap,
+  w=50%-gap/2 = vw/2-12); full = maximizeBounds (waybar + 8px gutter).
+- Keyboard: Mod+Left/Right tile halves, Mod+Up tile full, Mod+F float toggle
+  restores prior bounds, Mod+Shift+Left/Right move workspace via the
+  moveWindowToWorkspace orchestrator (never a raw store action).
+- Tile math uses the viewport-capped clamps from todo 12 (setBounds).
+- Scope boundary respected: no auto-tiling on open, windows open floating and
+  the user snaps; no Hyprland-style layouts implemented.
+
+QA scenarios (named as required by plan line 208)
+-------------------------------------------------
+- happy: "snap bounds within ±2px of math" -> e2e tiling.spec.ts:47, drags
+  the chess window to the left edge at 1440x900, asserts box.x === 8 and
+  box.width === 708 (vw/2-12 = 708) with a 2px tolerance.
+- failure: "drop NOT near edge (<40px) keeps drag position (no accidental
+  snap)" -> e2e tiling.spec.ts:98, drops at mid-viewport, asserts x/y
+  unchanged and the snap-preview absent.
+
+Design decisions / fixes found during verification
+--------------------------------------------------
+1. Top-edge drag now SNAPS FULL (y<40), changing task 13's "clamp at the
+   waybar" behavior. The old clamp tests were reworked to drop at exactly
+   y=WAYBAR_H=40 (outside the 40px band) so clamping is still covered in
+   both unit and e2e.
+2. Preview style MUST use explicit CSS prop names (left/top/width/height) —
+   a style object with {x,y,w,h} keys is ignored by React (caught by a
+   failing toHaveStyle unit test and fixed).
+3. snap() records floatBounds only when currently floating, so re-snapping a
+   tiled window preserves the original float position for Mod+F restore.
+4. Desktop icons occupy the top-left (flex-col flex-wrap), so a left-snapped
+   window covers the next app's icon — the side-by-side e2e snaps chess RIGHT
+   first, opens terminal, then snaps terminal left.
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/deps/
+usr/lib/aarch64-linux-gnu:/tmp/opencode/pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server already running on
+:3000 and reused by Playwright)
+
+1. npm run test:unit
+   Test Files  15 passed (15)
+   Tests       188 passed (188)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully; TypeScript clean; 6/6 static pages generated
+   exit 0
+
+5. npx playwright test e2e
+   80 passed (3.3m) — 40 per project x2 (desktop 1440x900, mobile 390x844);
+   includes 12 new tiling.spec.ts tests (6 per project) + the reworked
+   window.spec.ts clamp test.

@@ -47,6 +47,7 @@ function handlers(): HotkeyHandlers {
     selectWorkspace: vi.fn(),
     closeFocused: vi.fn(),
     minimizeFocused: vi.fn(),
+    tile: vi.fn(),
     moveToWorkspace: vi.fn(),
     toggleFloat: vi.fn(),
     cycleWindows: vi.fn(),
@@ -75,8 +76,9 @@ describe("resolveHotkey — keymap", () => {
       ["q", { type: "closeFocused" }],
       ["Q", { type: "closeFocused" }], // shift held — still matches
       ["m", { type: "minimizeFocused" }],
-      ["ArrowLeft", { type: "moveToWorkspace", dir: -1 }],
-      ["ArrowRight", { type: "moveToWorkspace", dir: 1 }],
+      ["ArrowLeft", { type: "tile", dir: "left" }],
+      ["ArrowRight", { type: "tile", dir: "right" }],
+      ["ArrowUp", { type: "tile", dir: "full" }],
       ["f", { type: "toggleFloat" }],
       ["Tab", { type: "cycleWindows" }],
     ];
@@ -92,14 +94,33 @@ describe("resolveHotkey — keymap", () => {
       ["3", { type: "selectWorkspace", ws: 3 }],
       ["q", { type: "closeFocused" }],
       ["m", { type: "minimizeFocused" }],
-      ["ArrowLeft", { type: "moveToWorkspace", dir: -1 }],
-      ["ArrowRight", { type: "moveToWorkspace", dir: 1 }],
+      ["ArrowLeft", { type: "tile", dir: "left" }],
+      ["ArrowRight", { type: "tile", dir: "right" }],
       ["f", { type: "toggleFloat" }],
       ["Tab", { type: "cycleWindows" }],
     ];
     for (const [key, action] of cases) {
       expect(resolveHotkey(linux({ key }), "other")).toEqual(action);
     }
+  });
+
+  it("Shift turns the arrow keys back into moveToWorkspace (both platforms)", () => {
+    expect(resolveHotkey(mac({ key: "ArrowLeft", shiftKey: true }), "mac")).toEqual({
+      type: "moveToWorkspace",
+      dir: -1,
+    });
+    expect(resolveHotkey(mac({ key: "ArrowRight", shiftKey: true }), "mac")).toEqual({
+      type: "moveToWorkspace",
+      dir: 1,
+    });
+    expect(resolveHotkey(linux({ key: "ArrowLeft", shiftKey: true }), "other")).toEqual({
+      type: "moveToWorkspace",
+      dir: -1,
+    });
+    expect(resolveHotkey(linux({ key: "ArrowRight", shiftKey: true }), "other")).toEqual({
+      type: "moveToWorkspace",
+      dir: 1,
+    });
   });
 
   it("resolves nothing for plain keys or wrong modifiers", () => {
@@ -154,10 +175,12 @@ describe("initHotkeys — guarded listener", () => {
 
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true, cancelable: true }));
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "3", metaKey: true, cancelable: true }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", metaKey: true, cancelable: true }));
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", metaKey: true, cancelable: true }));
 
     expect(h.openTerminal).toHaveBeenCalledTimes(1);
     expect(h.selectWorkspace).toHaveBeenCalledWith(3);
+    expect(h.tile).toHaveBeenCalledWith("left");
     expect(h.cycleWindows).toHaveBeenCalledTimes(1);
     expect(h.closeFocused).not.toHaveBeenCalled();
 
