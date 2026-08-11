@@ -1,0 +1,79 @@
+Task 20 — Experience & Education app
+====================================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- src/components/apps/ExperienceApp.tsx — timeline grouped by type (Education,
+  Work, Freelance) from content/experience.ts. Each entry = role + org
+  (when present) + period (or "Current" badge for ongoing entries) + 2-3
+  factual bullets. Unknown dates render "—", never "undefined". Icons per
+  group (graduation-cap / briefcase / globe) via the Icon map.
+- src/components/apps/ExperienceApp.test.tsx — Vitest: >=3 entries incl.
+  BSIT + Tech Bridge; education labeled with org; QA happy: factual org
+  names (Tech Bridge Consultancy) and no invented employer for the
+  org-less freelance entry; QA failure: "undefined" never in DOM, tech-bridge
+  period renders "—".
+- e2e/experience.spec.ts — Playwright x2 (desktop+mobile): acceptance test
+  (>=3 entries incl. BSIT + Tech Bridge, education group labeled with org) +
+  QA happy/failure test (org names factual; "—" for unknown date; no
+  "undefined" text).
+
+Source of truth (no invented copy)
+----------------------------------
+- All roles, orgs, current flags, and bullets: src/content/experience.ts
+  (todo 3, sourced from the zaidx.me home bio + GitHub README). No invented
+  employers, dates, or achievements. Periods were never published, so the
+  UI renders "—" for unknown dates.
+- The "Side projects (whatbot, applicator highlights)" category from the plan
+  has no entry in experience.ts — NOT added (would invent data). The 3 data
+  types (education/work/freelance) are rendered as-is.
+
+Acceptance mapping (plan line 255)
+----------------------------------
+- open Experience -> timeline shows >=3 entries incl. BSIT + Tech Bridge:
+  e2e/experience.spec.ts:43 (count >= 3) + unit test.
+- education labeled: e2e asserts experience-group-education contains
+  "Education" + the Punjab org; unit test asserts the same.
+
+QA scenarios (named as required by plan line 256)
+-------------------------------------------------
+- happy: "all entries render factual org names" -> e2e/experience.spec.ts:61
+  (tech-bridge org = "Tech Bridge Consultancy") + unit test (same, plus the
+  freelance entry renders NO org line because it has none — no invented org).
+- failure: "unknown date renders as '—' not 'undefined'" -> e2e asserts
+  experience-period-tech-bridge-intern is exactly "—" and the app body
+  contains no "undefined"; unit test asserts both.
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/
+pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server reused on :3000)
+
+1. npm run test:unit
+   Test Files  22 passed (22)   (was 21)
+   Tests       223 passed (223) (was 219, +4 ExperienceApp)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint (eslint ExperienceApp.tsx, ExperienceApp.test.tsx,
+   experience.spec.ts)
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully; 6/6 static pages; exit 0
+
+5. npx playwright test e2e
+   136 passed (6.0m) — 68 per project x2 (desktop 1440x900, mobile 390x844);
+   132 baseline + 4 new experience tests.
+
+Implementation notes
+--------------------
+- Period contract: `period` is undefined for ALL entries; `current` flags
+  ongoing work. Period line renders `entry.period ?? (entry.current ?
+  "Current" : "—")` — so ongoing entries say "Current" and unknown-date
+  non-current entries say "—".

@@ -1,3 +1,9 @@
+## Task 20 (Experience & Education app) — 2026-08-11
+- NO-DATA CATEGORY RULE: plan mentioned a "Side projects (whatbot, applicator)" timeline category, but experience.ts has no such entry. Do NOT synthesize it — render exactly the data-layer groups (education/work/freelance). Acceptance only required >=3 entries incl. BSIT + Tech Bridge + education labeled; the data satisfies it.
+- PERIOD CONTRACT: `period` is undefined for every entry; `current` is the flag. Render `entry.period ?? (entry.current ? "Current" : "—")`. The QA failure scenario ("unknown date renders '—' not 'undefined'") is locked by a DOM-wide `not.toContain("undefined")` assert + an exact-text assert on tech-bridge's period.
+- GROUPED TIMELINE SHAPE: group by `type` in a fixed order (education/work/freelance), section header = icon + label (graduation-cap/briefcase/globe); entries are hairline cards with role, org (only when present — the freelance entry has NO org and asserting that absence is the "no invented org" QA), period, bullets.
+- Suite now: unit 223 (22 files), e2e 136, tsc/lint/build clean.
+
 ## Task 19 (Skills app) — 2026-08-11
 - C++ IS A RESERVED-PARSE KEY: object keys like `C++:` in a Record<...> literal are a HARD parse error under vite:oxc ("Expected `,` or `}` but found `++`"). MUST be quoted: `"C++": "code"`. Same gotcha applies to any key containing `+`, `.` is fine unquoted but quote it too for consistency. Verify by running the targeted vitest spec (transform fails before any test runs, so a clean targeted run is the check).
 - ICON GLYPH ADDITIONS (Icon.tsx): adding a glyph = lucide import + ICONS map entry; the IconName union auto-derives, so no type edits elsewhere. Verified all names against the INSTALLED lucide-react 1.31.0 via `require('lucide-react')` before importing (brand icons are removed in 1.x, but utility icons like Server/Smartphone/Container/Palette/Zap/Atom/Workflow/Layers/LayoutDashboard/Puzzle/Package all exist).

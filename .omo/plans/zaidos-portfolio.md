@@ -248,7 +248,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: React Native + Hyprland present. failure: no empty groups (each group has chips). Evidence .omo/evidence/task-19-zaidos-portfolio.txt
   Commit: Y | feat(apps): Skills window grouped by domain with disclaimer
 
-- [ ] 20. Experience & Education app
+- [x] 20. Experience & Education app
   What to do / Must NOT do: src/components/apps/ExperienceApp.tsx: timeline entries from content/experience.ts: Education (BSIT, 4th semester, University of the Punjab - Gujranwala, current), Work (Graphic Design Intern, Tech Bridge Consultancy; Freelance Mobile (React Native) + Shopify developer, current), Side projects (whatbot, applicator highlights). Each: role, org, period, 2-3 factual bullets. MUST NOT invent employers, dates, or achievements beyond Findings.
   Parallelization: Wave 4 | Blocked by: 3,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): zaidx.me home bio ("currently working as a mobile and Shopify developer", "Graphic Design Intern at Tech Bridge Consultancy", "Information Technology student at the University of the Punjab")
