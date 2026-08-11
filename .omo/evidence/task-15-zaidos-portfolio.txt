@@ -1,0 +1,136 @@
+Task 15 — App registry + window content provider
+=================================================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- src/lib/apps.tsx             — registry AppMeta { id, title, icon (ReactNode),
+                                 keywords, component (React.lazy), defaultSize,
+                                 defaultWorkspace? } for 11 apps (terminal,
+                                 about, projects, skills, experience, resume,
+                                 contact, articles, settings, chat, chess).
+                                 Each component is a lazy dynamic import
+                                 `React.lazy(() => import("@/components/apps/
+                                 <App>App"))` — NO static imports of app
+                                 components (code-splitting per plan MUST NOT).
+                                 Also: WindowAppProps { windowId, close,
+                                 minimize, maximize, setTitle },
+                                 WindowAppComponent type, getAppMeta(appId),
+                                 appTitle(appId) fallback.
+- src/components/apps/         — 12 files: AppPlaceholder.tsx (renders
+                                 data-testid="app-content-<appId>" frame) + one
+                                 default-export module per app (TerminalApp,
+                                 AboutApp, ProjectsApp, SkillsApp,
+                                 ExperienceApp, ResumeApp, ContactApp,
+                                 ArticlesApp, SettingsApp, ChatApp, ChessApp).
+- src/components/wm/WindowHost.tsx — Suspense-wraps the lazy component from
+                                 the registry; resolves the app from
+                                 getAppMeta(current.appId); throws a clear
+                                 error for unknown appIds; renders the app with
+                                 { windowId, close, minimize, maximize,
+                                 setTitle }; loading fallback
+                                 data-testid="window-app-loading".
+- src/components/wm/WindowHost.test.tsx — Vitest: mounts WindowHost under a
+                                 test harness with a real wm store; asserts
+                                 app-content-<id> renders for every registry
+                                 app (verifying each lazy import RESOLVES);
+                                 unknown appId ("not-an-app") throws /Unknown
+                                 app id/.
+- e2e/apps.spec.ts             — Playwright x2 projects (desktop+mobile): opens
+                                 all 11 apps from the launcher, asserts
+                                 window-<appId> AND app-content-<appId> visible
+                                 (lazy content really mounted); plus "all 11
+                                 apps open with no console errors".
+
+Files modified
+--------------
+- src/store/wm.ts              — WmStore.setTitle(id, title); implementation
+                                 guards `if (win === undefined) return s;`.
+- src/components/wm/Window.tsx — content area now renders
+                                 <WindowHost windowId={current.id}
+                                 appId={current.appId} /> inside
+                                 data-testid="window-content"; imported.
+- src/lib/wm/actions.ts        — openApp is registry-driven: resolves
+                                 defaultSize + defaultWorkspace (explicit ws
+                                 param still wins) + defaultTitle from
+                                 getAppMeta; falls back to defaultTitle +
+                                 DEFAULT_WINDOW_SIZE for unknown ids (kept
+                                 permissive — wm.test.ts opens "files").
+- src/lib/apps.test.ts         — "lazy component + sane defaultSize" test:
+                                 every entry has a lazy component (asserted via
+                                 `component.$$typeof === Symbol.for("react.lazy")
+                                 — React 19 returns an OBJECT, not a function)
+                                 and defaultSize w/h >= 360x240.
+
+Acceptance mapping (plan line 211)
+----------------------------------
+- src/lib/apps.tsx registry: appId -> { title, icon, keywords, component:
+  React.lazy(() => import('@/components/apps/<App>')), defaultSize,
+  defaultWorkspace? } for all 11 apps.
+- src/components/wm/WindowHost.tsx: Suspense-wraps the lazy app, passes
+  { windowId, close, minimize, maximize, setTitle }.
+- MUST NOT statically import app components in the host — WindowHost imports
+  only getAppMeta and the WindowAppComponent type; the lazy() calls live in
+  apps.tsx.
+- Acceptance: registry has exactly 11 appIds; each lazy import resolves —
+  proven by WindowHost.test.tsx rendering app-content-<id> for every app and
+  by e2e opening each app.
+
+QA scenarios (named as required by plan line 216)
+-------------------------------------------------
+- happy: "all 11 apps open with no console errors" -> e2e apps.spec.ts:72,
+  opens every app through the launcher and asserts the console error log is
+  empty (lazy chunk fetch + Suspense + window mount produce no errors).
+- failure: "unknown appId throws clear error; test asserts throw" ->
+  WindowHost.test.tsx, mounts WindowHost with appId "not-an-app" and asserts
+  the thrown Error matches /Unknown app id/ (window frame still renders the
+  throw state, no silent blank window).
+
+Design decisions / fixes found during verification
+--------------------------------------------------
+1. React 19 (19.2.8) `lazy()` returns an OBJECT tagged
+   `$$typeof: Symbol.for("react.lazy")` — NOT a function. The registry test
+   asserts the symbol, not `typeof === "function"` (which was the initial
+   failing assertion: 1 failed -> fixed -> 191 passed).
+2. The old placeholder content (`<div data-testid="ws-window">` + "No window
+   content yet") is replaced by WindowHost. e2e for EVERY app asserts both
+   window-<appId> (frame) and app-content-<appId> (lazy body) so the content
+   provider is exercised, not just the frame.
+3. openApp stays permissive for unknown ids (humanized title + default
+   size) so wm.test.ts's "files" window and any launcher command still work —
+   strictness lives in WindowHost (throws), not the store.
+4. e2e uses the deterministic result row: fill launcher-input then click
+   data-testid="launcher-result-<appId>" (Launcher.tsx:282) — NOT a
+   non-existent "launcher-results" testid (initial apps.spec asserted it and
+   all 24 e2e tests failed with locator not-found; fixed by using the real
+   launcher-list/launcher-result testids proven in launcher.spec.ts).
+5. Terminal keeps defaultSize {w:640, h:480} (wm.test.ts pins openApp("terminal")
+   geometry); defaults preserved exactly.
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/deps/
+usr/lib/aarch64-linux-gnu:/tmp/opencode/pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server already running on
+:3000 and reused by Playwright)
+
+1. npm run test:unit
+   Test Files  16 passed (16)
+   Tests       191 passed (191)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully; TypeScript clean; 6/6 static pages generated
+   exit 0
+
+5. npx playwright test e2e
+   104 passed (3.3m) — 52 per project x2 (desktop 1440x900, mobile 390x844);
+   includes 12 new apps.spec.ts tests (6 per project) on top of the 80-test
+   baseline.

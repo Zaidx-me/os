@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { Copy, Minus, Square, X } from "lucide-react";
 import { motion } from "motion/react";
 import { AppIcon } from "@/components/ui/AppIcon";
+import WindowHost from "@/components/wm/WindowHost";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { closeWindow, focusWindow, snapWindow } from "@/lib/wm/actions";
 import {
@@ -278,12 +279,9 @@ export default function Window({ windowId }: WindowProps) {
 
         <div
           data-testid="window-content"
-          className="flex flex-1 flex-col items-center justify-center gap-3 p-6"
+          className="relative flex-1 overflow-hidden"
         >
-          <AppIcon appId={current.appId} size={32} className="text-zaid-muted" />
-          <p className="font-mono text-xs text-zaid-muted">
-            {current.title} — app content lands in todo 15
-          </p>
+          <WindowHost windowId={windowId} appId={current.appId} />
         </div>
       </div>
 

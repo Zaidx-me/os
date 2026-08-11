@@ -242,6 +242,8 @@ export interface WmStore {
   /** Minimizes a window (state preserved; restore happens via focus()). */
   minimize(id: string): void;
   toggleMaximize(id: string): void;
+  /** Live window title, updated by the window's app content (WindowHost). */
+  setTitle(id: string, title: string): void;
   setBounds(id: string, bounds: WindowBounds): void;
   setMode(id: string, mode: WindowMode): void;
   /** Tiles a window to a snap region; the pre-snap float bounds are remembered. */
@@ -381,6 +383,14 @@ export const useWmStore = create<WmStore>((set) => ({
           [id]: { ...win, maximized: !win.maximized },
         },
       };
+    });
+  },
+
+  setTitle: (id, title) => {
+    set((s) => {
+      const win = s.windows[id];
+      if (win === undefined) return s;
+      return { windows: { ...s.windows, [id]: { ...win, title } } };
     });
   },
 

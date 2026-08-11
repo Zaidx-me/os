@@ -208,7 +208,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: snap bounds within ±2px of math. failure: drop NOT near edge (<40px) keeps drag position (no accidental snap). Evidence .omo/evidence/task-14-zaidos-portfolio.txt
   Commit: Y | feat(wm): edge-snap and keyboard tiling with float toggle
 
-- [ ] 15. App registry + window content provider
+- [x] 15. App registry + window content provider
   What to do / Must NOT do: src/lib/apps.tsx: registry appId -> { title, icon, keywords, component: React.lazy(() => import('@/components/apps/<App>')), defaultSize, defaultWorkspace? } for 11 apps. src/components/wm/WindowHost.tsx: Suspense-wraps lazy app, passes { windowId, close, minimize, maximize, setTitle }. MUST NOT statically import app components in host; dynamic import required for code-splitting.
   Parallelization: Wave 3 | Blocked by: 4,12,13 | Blocks: 17-48
   References (executor has NO interview context - be exhaustive): React.lazy https://react.dev/reference/react/lazy ; AppIcon (todo 4)

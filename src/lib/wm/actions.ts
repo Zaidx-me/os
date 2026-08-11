@@ -3,6 +3,7 @@ import {
   useWorkspacesStore,
   type WorkspaceId,
 } from "@/store/workspaces";
+import { getAppMeta } from "@/lib/apps";
 
 /**
  * WM orchestrators — the ONLY entry points that mutate BOTH stores.
@@ -27,17 +28,31 @@ import {
 export { clampWindowBounds };
 
 /**
- * Human-readable default title ("file-manager" -> "File Manager"). The app
- * registry (todo 15) supplies real titles once it lands.
+ * Human-readable default title for unknown app ids ("file-manager" -> "File
+ * Manager"). The registry (todo 15) supplies titles for the 11 known apps;
+ * this is the fallback so openApp stays permissive for ad-hoc ids.
  */
 function defaultTitle(appId: string): string {
   return appId.replace(/[-_]+/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
 }
 
-/** Opens an app: registers membership, then creates the window. Returns the win-<n> id. */
+/**
+ * Opens an app: registers membership, then creates the window. Returns the
+ * win-<n> id. Title, initial size, and default workspace come from the app
+ * registry; unknown ids fall back to a humanized title + DEFAULT_WINDOW_SIZE.
+ */
 export function openApp(appId: string, ws?: WorkspaceId): string {
-  const id = useWorkspacesStore.getState().openInWorkspace(appId, ws);
-  useWmStore.getState().open({ id, appId, title: defaultTitle(appId) });
+  const meta = getAppMeta(appId);
+  const id = useWorkspacesStore
+    .getState()
+    .openInWorkspace(appId, ws ?? meta?.defaultWorkspace);
+  useWmStore.getState().open({
+    id,
+    appId,
+    title: meta?.title ?? defaultTitle(appId),
+    w: meta?.defaultSize.w,
+    h: meta?.defaultSize.h,
+  });
   return id;
 }
 
