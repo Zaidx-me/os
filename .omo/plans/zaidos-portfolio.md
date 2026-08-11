@@ -272,7 +272,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: valid submit shows success. failure: route 501 -> mailto: link constructed with subject/body (assert href contains mailto:). Evidence .omo/evidence/task-22-zaidos-portfolio.txt
   Commit: Y | feat(apps): Contact window with form, socials, and mailto fallback
 
-- [ ] 23. Articles app + inline reader
+- [x] 23. Articles app + inline reader
   What to do / Must NOT do: src/components/apps/ArticlesApp.tsx: list from content/articles.ts (title, description, reading time, date) -> inline reader window rendering markdown from content/articles/*.md via react-markdown + remark-gfm (install; MIT), code blocks styled simply (no heavy syntax highlighter). "Read full article" link -> /articles/[slug] SSR route (todo 34). Single content module shared with routes (MUST NOT duplicate state/content). 4 articles exactly.
   Parallelization: Wave 4 | Blocked by: 3,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): article slugs/titles https://zaidx.me/articles ; react-markdown https://github.com/remarkjs/react-markdown

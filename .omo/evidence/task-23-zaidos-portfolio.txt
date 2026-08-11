@@ -1,0 +1,133 @@
+Task 23 — Articles app + inline reader
+======================================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- src/content/articles/building-whatsapp-gateway.md — verbatim markdown body
+  fetched from https://zaidx.me/articles/building-whatsapp-gateway (reading
+  time 00:01:49:86, 2 sections). Site chrome stripped (skip-link, nav/social
+  anchors, "## [](/articles/<slug>#sec)Heading" rewritten to "## Heading",
+  reading-time line, footer, stray `typescript` label lines); prose kept
+  VERBATIM — no silent fixes (per task-20 evidence rule). No frontmatter
+  yet (todo 34 adds frontmatter + SSR routes).
+- src/content/articles/building-offline-urdu-reader.md — verbatim body
+  (00:02:08:00, 3 sections).
+- src/content/articles/designing-university-courseware-platform.md —
+  verbatim body (00:03:01:86, 4 sections).
+- src/content/articles/ai-job-application-assistant.md — verbatim body
+  (00:01:33:59, 3 sections).
+- src/content/article-bodies.ts — SINGLE shared content module for all
+  article bodies: `import.meta.glob("./articles/*.md", { query: "?raw",
+  eager: true, import: "default" }) as Record<string, string>`; slug derived
+  via regex `articles\/(.+)\.md$`; exports `articleBodies: Record<string,
+  string>` + `getArticleBody(slug): string` ("" fallback). Comment declares
+  it the single module shared with todo-34 SSR routes (plan: MUST NOT
+  duplicate content).
+- src/components/apps/ArticlesApp.tsx — rewrite of the placeholder into the
+  list -> inline reader window. List: 4 items from content/articles.ts
+  (title, description, reading time, date) with `article-item-<slug>`,
+  `article-open-<slug>` (button), `article-meta-<slug>` = `{readingTime ??
+  "—"} · {date ?? "—"}` (never renders "undefined"). Inline reader
+  (`article-reader-<slug>`): back button (`article-back`, chevron-left),
+  truncated title span, "Read full article" link (`article-read-full-<slug>`
+  -> /articles/<slug>, the SSR route built in todo 34), body rendered via
+  ReactMarkdown + remarkGfm (`article-body-<slug>`, class .article-body),
+  fallback `article-coming-soon-<slug>` = "Article body coming soon" when
+  the body is empty/missing. Outer testid `app-content-articles` preserved
+  (WindowHost.test.tsx / apps.spec.ts contract). Component is prop-less
+  (same pattern as AboutApp/ResumeApp — registry weak-type guard).
+- src/components/ui/Icon.tsx — added `chevron-left` glyph (lucide import +
+  ICONS map entry; IconName union auto-derives).
+- src/styles/globals.css — appended `.article-body` markdown styles
+  (h1-h3, p, ul/ol, strong, a, code, pre) after the resume `@media print`
+  block (file was 138 lines); section-label comment matches file convention.
+- src/components/apps/ArticlesApp.test.tsx — Vitest (7): renders 4 items
+  with title/description/meta; meta shows "—" not "undefined"; clicking
+  opens the reader with heading + paragraphs; headings h2 present in the
+  whatsapp article; read-full link has href /articles/<slug>; back returns
+  to the list; QA failure: mocked empty body -> "Article body coming soon"
+  visible + no article-body element (vi.resetModules + vi.doMock +
+  dynamic import — MUST be the last test: vi.doMock leaks into later tests).
+- e2e/articles.spec.ts — Playwright x2 projects: acceptance (open Articles
+  -> 4 article-item-* entries; open first -> h1 exact text + p count > 0)
+  + QA happy (headings render, back returns to list, read-full href points
+  at /articles/<slug>). Uses test.use({ viewport: 1440x900 }) like
+  experience.spec.ts. Never clicks /articles/<slug> (route = todo 34).
+
+Design decisions / plan conformance
+-----------------------------------
+- The plan's QA list for task 23 (plan lines 275-281) requires: (a) list of
+  4 articles, (b) inline markdown reader (h1 + paragraphs), (c) "Read full
+  article" -> SSR route (todo 34), (d) QA happy: headings, (e) QA failure:
+  empty/missing body shows friendly fallback instead of crash. All covered.
+- react-markdown ^10.1.0 + remark-gfm ^4.0.1 installed (MIT) — no syntax
+  highlighter (plan: code blocks styled simply, no heavy highlighter).
+  .article-body code/pre styled with monospace + subtle background.
+- TURBOPACK LOADER GOTCHA (the build blocker): `import.meta.glob` with
+  `query: "?raw"` works natively in Vite (vitest) but Turbopack rejects
+  `.md` with "Unknown module type ... Use a known file extension, or
+  register a loader for it" — EVEN with `turbopack: { rules: { "*.md":
+  ["raw-loader"] } }` (bare-array form). The documented form is the OBJECT
+  form: `turbopack: { rules: { "*.md": { loaders: ["raw-loader"],
+  as: "*.js" } } }` (next-config-js/turbopack.md "Configuring webpack
+  loaders": rules map extensions to { loaders, as }; `as` declares the
+  output module type). With the object form the build compiles. raw-loader
+  installed as devDependency. The `?raw` query stays in the glob for Vite;
+  the loader rule satisfies Turbopack.
+- Articles body re-fetched from zaidx.me (DNS still up) — de-risks the
+  todo-45 cutover (owner's domain / content source). Bodies are the source
+  of truth; the .md files are cleaned verbatim copies.
+- Suite numbers updated: unit 250 (26 files), e2e 154 (77/project x2).
+
+Acceptance mapping (plan line 278)
+----------------------------------
+- Playwright acceptance: open Articles -> 4 items; open first -> markdown
+  body renders (h1 + paragraphs). e2e/articles.spec.ts acceptance test on
+  both desktop + mobile. Unit mirrors it.
+- QA happy: article renders headings (h2 count > 0 in unit + e2e).
+- QA failure: empty/missing md file shows "Article body coming soon"
+  (unit via doMock of article-bodies; e2e does not click /articles/<slug>
+  since the SSR route is todo 34 — asserting the fallback at the window
+  level is a unit concern; the list still renders 4 items).
+- ReactMarkdown renders h1 from the first `# ` line of each body; gfm
+  tables/lists work (whatsapp article has a table — verified h2 count).
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/
+pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server reused on :3000)
+
+1. npm run test:unit
+   Test Files  26 passed (26)
+   Tests       250 passed (250)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint (eslint on changed src files: ArticlesApp, test,
+   article-bodies, Icon)
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully in 22.1s; TypeScript pass; 6/6 static pages +
+   /api/contact dynamic; exit 0
+   (Fix history: bare-array rule failed -> object {loaders, as} form passes)
+
+5. npx playwright test e2e
+   154 passed (7.6m) — 77 per project x2 (desktop 1440x900, mobile 390x844).
+
+Implementation notes
+--------------------
+- Unit test assertion pitfall: articles.ts descriptions contain intentional
+  double spaces ("Maktaba  a React Native app", "PU Stacks  a platform");
+  jest-dom toHaveTextContent collapses element whitespace but not the
+  expected string -> assertions normalize both sides with
+  `const norm = (s) => s.replace(/\s+/g, " ").trim()`.
+- vi.doMock leaks: the QA-failure test (resetModules + doMock
+  @/content/article-bodies + dynamic import) is the LAST test in the file.
+- The 4 article bodies are the exact bytes of zaidx.me's markdown content
+  minus site chrome; no invented content (task-20 rule: data layer wins).
