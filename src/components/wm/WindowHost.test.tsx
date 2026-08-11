@@ -11,21 +11,27 @@ import { APPS } from "@/lib/apps";
  * Error (the QA failure scenario).
  */
 describe("WindowHost", () => {
-  it("resolves the lazy component and renders content for every app", async () => {
-    for (const app of APPS) {
-      const { unmount } = render(
-        <Suspense fallback={null}>
-          <WindowHost windowId="w-test" appId={app.id} />
-        </Suspense>,
-      );
-      expect(
-        await screen.findByTestId(`app-content-${app.id}`, undefined, {
-          timeout: 3000,
-        }),
-      ).toBeInTheDocument();
-      unmount();
-    }
-  });
+  it(
+    "resolves the lazy component and renders content for every app",
+    async () => {
+      for (const app of APPS) {
+        const { unmount } = render(
+          <Suspense fallback={null}>
+            <WindowHost windowId="w-test" appId={app.id} />
+          </Suspense>,
+        );
+        expect(
+          await screen.findByTestId(`app-content-${app.id}`, undefined, {
+            timeout: 3000,
+          }),
+        ).toBeInTheDocument();
+        unmount();
+      }
+    },
+    // 11 lazy chunks import + render sequentially; the terminal pulls the
+    // whole content barrel + WM stores, so the loop outgrew the 5s default.
+    15000,
+  );
 
   it("throws a clear error for an unknown app id", () => {
     expect(() =>

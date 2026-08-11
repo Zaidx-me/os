@@ -228,3 +228,35 @@
 .article-body pre code {
   color: var(--color-zaid-text);
 }
+
+/* Terminal app (todo 24): the simulated shell. A hidden input captures
+ * keystrokes while the prompt line renders from state, so the blinking block
+ * cursor is a styled span, not the browser caret. */
+.terminal-hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background-color: var(--color-zaid-accent);
+  animation: terminal-blink 1s steps(2, start) infinite;
+}
+
+@keyframes terminal-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal-cursor {
+    animation: none;
+  }
+}
