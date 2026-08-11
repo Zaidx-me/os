@@ -1,0 +1,96 @@
+Task 21 — Resume app
+====================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- src/components/apps/ResumeApp.tsx — data-layer one-page resume: name +
+  title (site.owner/roleLine), contact row (GitHub/LinkedIn/Linktree),
+  summary (site.bio), skills (skillGroups), experience + education
+  (experience.ts), featured project (projects). A single "Download PDF"
+  control: a print button when no PDF is shipped, an <a download> anchor
+  when one is. Print stylesheet prints the window (all chrome hidden).
+- src/components/apps/ResumeApp.test.tsx — Vitest: renders name, role,
+  contact row, summary, skills, experience; QA happy: "Download PDF" button
+  calls window.print (printFn injected as the window.print mock);
+  QA failure: resumePdfUrl set -> the control becomes an <a download
+  href="..."> anchor with no print call.
+- e2e/resume.spec.ts — Playwright x2 (desktop+mobile): acceptance test
+  (name, role, contact row, summary, skills, experience render) + QA
+  tests: happy (click Download PDF -> window.print called, stubbed via
+  addInitScript), failure (@media print emulation: resume sheet visible,
+  waybar/taskbar/desktop display:none).
+- src/content/site.ts — added `export const resumePdfUrl: string | null =
+  null` (standalone const, OUTSIDE the `as const` site object — keeps the
+  widest type `string | null` and lets a future real PDF flip it).
+- src/styles/globals.css — @media print: hides waybar, windows, and desktop;
+  prints only the resume sheet (full width, no margins).
+
+Design decisions / plan conformance
+-----------------------------------
+- The plan requires a "Download PDF" control whose behavior switches on
+  whether a real PDF exists. That truth lives in the data layer
+  (resumePdfUrl), NEVER in a runtime probe: HEAD/fetching a missing
+  public/ asset would log a 404 console error and fail the
+  no-console-errors e2e gate, and a fake PDF must never be shipped. With
+  resumePdfUrl null the control is a button that calls window.print();
+  the stylesheet makes print output the polished PDF.
+- Prop-less component: the first implementation passed props (title, icon)
+  into ResumeApp and hit the WindowAppComponent registry type error (the
+  registry types all windows as { title: string; icon: IconName }, so any
+  window component must accept EXACTLY those props). ResumeApp takes no
+  props and reads everything from the content layer. This fixed the
+  component-registry weak type.
+- Naming/labels use the owner's data only; no invented copy. Period
+  contract (— / Current) reused from ExperienceApp conventions.
+
+Acceptance mapping (plan line 263)
+----------------------------------
+- open Resume -> name + sections render: e2e acceptance (resume-name,
+  resume-role, resume-contact, resume-summary, resume-skills,
+  resume-experience); unit test asserts each section's text from data.
+- click Download PDF -> window.print called: unit test (print spy) + e2e
+  (addInitScript window.print stub; asserted it fired).
+
+QA scenarios (named as required by plan line 264)
+-------------------------------------------------
+- happy: print control works (unit: window.print called once; e2e:
+  stub fired).
+- failure: shipped PDF changes control to download anchor (unit: <a
+  download href="/resume/zaid-resume.pdf">, print NOT called) AND print
+  media emulation shows resume sheet with chrome hidden (e2e:
+  waybar/taskbar/desktop display none, resume sheet visible).
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/
+pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server reused on :3000)
+
+1. npm run test:unit
+   Test Files  25 passed (25)
+   Tests       243 passed (243)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint (eslint on all changed/new app + content + e2e files)
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully; 6/6 static pages + /api/contact dynamic; exit 0
+
+5. npx playwright test e2e
+   150 passed (7.0m) — 75 per project x2 (desktop 1440x900, mobile 390x844).
+
+Implementation notes
+--------------------
+- The resume is assembled at runtime from the content layer (single source
+  of truth) — it is not a static document, so it can never drift from the
+  About/Experience data. Print is the delivery mechanism; a future real
+  PDF (owner-supplied) flips resumePdfUrl and the control becomes a
+  download link.
+- jsdom has no window.print; tests stub it explicitly (vi.spyOn +
+  mockImplementation, restored in afterEach).

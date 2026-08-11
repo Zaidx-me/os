@@ -73,3 +73,66 @@
 @utility hairline {
   border: 1px solid var(--color-zaid-border);
 }
+
+/* Print (todo 21): window.print() prints ONLY the resume window's sheet.
+ * Every desktop-chrome layer and every other window becomes display:none, and
+ * the resume window is pulled out of the absolute window layer into normal
+ * flow so multi-page output flows naturally. */
+@media print {
+  body {
+    background: #fff;
+  }
+
+  [data-testid="wallpaper"],
+  [data-testid="desktop-icons-layer"],
+  [data-testid="waybar"],
+  [data-testid="context-menu"],
+  [data-testid="launcher"],
+  [data-testid="switcher"],
+  [data-testid="snap-preview"],
+  [data-testid="boot-flash"] {
+    display: none !important;
+  }
+
+  [data-testid="desktop"],
+  [data-testid="workspace-view"] {
+    position: static !important;
+    inset: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  [data-window][data-app]:not([data-app="resume"]) {
+    display: none !important;
+  }
+
+  [data-window][data-app="resume"] {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+  }
+
+  [data-window][data-app="resume"] [data-testid="window-titlebar"],
+  [data-window][data-app="resume"] [data-testid^="window-resize-"] {
+    display: none !important;
+  }
+
+  [data-window][data-app="resume"] .window-glass,
+  [data-window][data-app="resume"] [data-testid="window-content"],
+  [data-window][data-app="resume"] [data-testid="app-content-resume"] {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #fff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+}
