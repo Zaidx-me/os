@@ -216,7 +216,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: all 11 apps open with no console errors. failure: unknown appId throws clear error; test asserts throw. Evidence .omo/evidence/task-15-zaidos-portfolio.txt
   Commit: Y | feat(wm): lazy app registry and window host
 
-- [ ] 16. Waybar taskbar + window switcher overlay
+- [x] 16. Waybar taskbar + window switcher overlay
   What to do / Must NOT do: Waybar task section: open windows per current workspace (icon + truncated title); click focuses/restores, click focused -> minimize (toggle); minimized dimmed. src/components/wm/Switcher.tsx: Mod+Tab overlay listing ONLY active-workspace windows (excludes minimized), sorted by z desc, with icon+title; Arrows+Enter select, ESC dismiss; respects modal focus. MUST NOT use native Alt+Tab; Mod+Tab only. WorkspaceView, waybar taskbar, switcher, and close-focus-fallback all import ONE selector from `lib/wm/selectors.ts`: `isVisible(winId) = workspaces.activeWs.list.includes(winId) && !wm.windows[winId]?.minimized` — no component computes visibility itself.
   Parallelization: Wave 3 | Blocked by: 8,12 | Blocks: 17-48
   References (executor has NO interview context - be exhaustive): workspaces (9), wm (12), Waybar (8)
@@ -224,7 +224,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: minimized window restores via task click. failure: click focused task minimizes (toggle) - assert hidden. Evidence .omo/evidence/task-16-zaidos-portfolio.txt
   Commit: Y | feat(wm): waybar taskbar toggle and window switcher overlay
 
-- [ ] 17. About app
+- [x] 17. About app
   What to do / Must NOT do: src/components/apps/AboutApp.tsx: header (photo via next/image from public/images/profile.jpg - download from https://zaidx.me/assets/Profile-YD56AsA9.jpg at implementation - MUST use a browser-like User-Agent (hotlink protection possible) and verify the download is a real image (file signature + dimensions, not an HTML/403 page); download MUST happen BEFORE the DNS cutover in todo 45 because the old Cloudflare site may be unreachable afterward; name "Muhammad Zaid Yaseen"; role line "Developer · Programmer · Engineer · Designer · Modder"), bio from content/site.ts (reuse his personal zaidx.me home bio "I'm Zaid, an IT student..." + GitHub README personality lines - sanity-check the homepage bio is genuinely his own writing and NOT template boilerplate before reuse; MUST NOT reuse the /uses template text or generic template meta description), personality chips (Chess - London System, MMA, Urdu poetry, CachyOS + Hyprland ricing, C++/SFML games), quick stats (projects count from data, 29 repos, 4 articles). Scrollable content area. MUST NOT include the old template's /uses content.
   Parallelization: Wave 4 | Blocked by: 3,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): bio+photo https://zaidx.me ; personality https://github.com/Zaidx-me README ; content/site.ts (todo 3)

@@ -1,0 +1,87 @@
+Task 17 — About app
+===================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- public/images/profile.jpg   — profile photo downloaded from
+                                https://zaidx.me/assets/Profile-YD56AsA9.jpg at
+                                implementation time using a browser-like
+                                User-Agent (Mozilla/5.0 … Chrome/126) against
+                                the Cloudflare edge. HTTP 200, content-type
+                                image/jpeg, 77,507 bytes, file signature
+                                FF D8 FF, real JPEG with dims 914x1145 (parsed
+                                from the SOF marker). Not an HTML/403 page.
+- src/components/apps/AboutApp.tsx — real content replaces the todo-15
+                                placeholder: profile header (photo via
+                                next/image from public/images/profile.jpg,
+                                unoptimized so the DOM src is exactly
+                                /images/profile.jpg per acceptance), name,
+                                role line, handle, bio paragraphs, personality
+                                chips, quick stats. Scrollable content area
+                                (overflow-y-auto, h-full w-full inside the
+                                window body).
+- src/components/apps/AboutApp.test.tsx — Vitest: name+role line; photo src;
+                                >=3 chips matching site.personalityChips; no
+                                old-template meta-description copy; quick stats
+                                from data layer (projects.length, articles.length,
+                                repo count 29).
+- e2e/about.spec.ts            — Playwright x2 (desktop+mobile): acceptance
+                                test (name, role line, >=3 chips, photo src
+                                regex /\/images\/profile\.jpg/, all sections
+                                visible) + QA failure test (old template meta
+                                description string absent, "uses" absent).
+
+Source of truth (no invented copy)
+----------------------------------
+- name / roleLine / bio / personalityChips: src/content/site.ts (todo 3,
+  written in Zaid's own voice from the zaidx.me home bio + GitHub README;
+  explicitly NOT the /uses template text — verified during todo 3).
+- quick stats: projects.length (12) + articles.length (4) derived from the
+  shipped data layer; repo count 29 is the published GitHub fact from the
+  task-3 evidence (29 public repos).
+- Old template meta description to keep OUT: "product designer working on
+  web & mobile apps" (from the original zaidx.me raw HTML, .omo/drafts line
+  41). Asserted absent in both unit and e2e tests.
+
+Acceptance mapping (plan line 231)
+----------------------------------
+- open About -> name, role line, >=3 chips render: e2e/about.spec.ts:48.
+- image has src=/images/profile.jpg: e2e/about.spec.ts:48 (toHaveAttribute
+  src matching /\/images\/profile\.jpg/) + unit AboutApp.test.tsx photo test
+  (exact src "/images/profile.jpg").
+- Registry: "about" already registered (todo 15); window title "About" from
+  apps.tsx; registry count test unchanged (still 11 apps mirroring APP_IDS).
+
+QA scenarios (named as required by plan line 232)
+-------------------------------------------------
+- happy: "all sections visible" -> e2e/about.spec.ts:48 asserts Bio, Beyond
+  the code, and Quick stats headings all visible.
+- failure: "assert no string from the old template meta description appears
+  in About DOM" -> e2e/about.spec.ts:77 + unit test assert
+  "product designer working on web & mobile apps" is absent (also "uses").
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/
+pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server reused on :3000)
+
+1. npm run test:unit
+   Test Files  19 passed (19)   (was 18)
+   Tests       209 passed (209) (was 205, +4 AboutApp)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint (eslint AboutApp.tsx, AboutApp.test.tsx, about.spec.ts)
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully; 6/6 static pages; exit 0
+
+5. npx playwright test e2e
+   122 passed (5.7m) — 61 per project x2 (desktop 1440x900, mobile 390x844);
+   118 baseline + 4 new about tests.

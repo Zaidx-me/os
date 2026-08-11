@@ -1,0 +1,151 @@
+Task 16 — Waybar taskbar + window switcher overlay
+===================================================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- src/lib/wm/selectors.ts      — single shared visibility rule for the taskbar,
+                                 switcher, and close-focus-fallback:
+                                 `isVisible(winId) = activeWs.list.includes(id)
+                                 && !wm.windows[id]?.minimized`. No component
+                                 computes visibility itself (plan MUST).
+- src/lib/wm/selectors.test.ts — Vitest: isVisible true for an open window,
+                                 false when minimized, false when the window is
+                                 on a non-active workspace.
+- src/components/wm/Switcher.tsx — Mod+Tab overlay (z-70, glass): lists ONLY
+                                 the active workspace's VISIBLE windows (minimized
+                                 excluded) sorted by z desc, each icon + title.
+                                 Opens via `zaidos:toggle-switcher` (dispatched by
+                                 the Mod+Tab hotkey). Arrows move the active row
+                                 (wrap), Enter focuses the selected window, Escape
+                                 dismisses, click-away backdrop closes. Calls
+                                 setModalOpen(true) while open (blocks hotkeys,
+                                 same contract as the Launcher). Auto-dismisses
+                                 (render-time setOpen) when there are zero visible
+                                 windows so Mod+Tab on an empty workspace is a
+                                 silent no-op. Keyboard handled via an Effect
+                                 Event (useEffectEvent) read by ONE capture-phase
+                                 window keydown listener.
+- src/components/wm/Switcher.test.tsx — Vitest: opens on event; lists visible
+                                 windows topmost-first (icon+title); minimizes
+                                 excluded; arrows+Enter focus; Escape closes;
+                                 zero-window auto-dismiss. 6 tests.
+- e2e/taskbar.spec.ts            — Playwright x2 (desktop+mobile): two windows
+                                 -> both tasks visible; clicking background task
+                                 focuses; clicking focused task minimizes (toggle,
+                                 task dimmed) then click restores; minimized task
+                                 restores on click; Mod+Tab lists topmost-first +
+                                 arrows + Enter selects; minimized windows excluded
+                                 from switcher; Mod+Tab with no windows shows no
+                                 switcher. openSwitcher helper polls Control+Alt+Tab
+                                 (the hotkey listener attaches in an effect AFTER
+                                 the desktop paints, so a one-shot keypress can
+                                 land before it is wired).
+
+Files modified
+--------------
+- src/lib/wm/actions.ts         — closeWindow: after wm.close + workspaces.close,
+                                 if the fallback focus landed on a MINIMIZED
+                                 (invisible) window, correct focus to the next
+                                 visible one in the owning workspace (focus never
+                                 rests on a hidden window). Only corrected for the
+                                 ACTIVE workspace (isVisible is active-relative).
+- src/components/wm/Waybar.tsx  — task section between pills and right cluster:
+                                 one button per open window on the active
+                                 workspace (AppIcon + truncated title, max-w-36);
+                                 click focused task -> minimize (toggle), click
+                                 background/restore task -> focusWindow (also
+                                 restores minimized). data-window/data-app/
+                                 data-active/data-minimized attrs + waybar-task-
+                                 <appId> testid. Dimmed (opacity-50) when minimized.
+- src/components/wm/Waybar.test.ts — +3 tests: task per open window on active ws;
+                                 click focused task minimizes + dims; click
+                                 background task focuses. wm store reset added to
+                                 beforeEach (createInitialWmState).
+- src/components/wm/WorkspaceView.tsx — renders only VISIBLE windows (isVisible
+                                 + reactive minimized flags via useShallow over
+                                 wm store — geometry changes don't re-render the
+                                 list). Minimized windows leave the DOM entirely;
+                                 the waybar task is their only representation.
+- src/app/page.tsx              — Mod+Tab (cycleWindows) now dispatches
+                                 `zaidos:toggle-switcher` instead of calling
+                                 focusNextInWs directly; <Switcher/> mounted.
+- e2e/window.spec.ts            — minimize test updated: asserts the window is
+                                 hidden then REMOVED from the DOM (toHaveCount 0),
+                                 and the waybar task stays with data-minimized=true.
+
+Acceptance mapping (plan line 223)
+----------------------------------
+- 2 windows -> both tasks visible: e2e taskbar.spec.ts:45.
+- click background task focuses: e2e taskbar.spec.ts:54.
+- Mod+Tab opens switcher; Enter selects: e2e taskbar.spec.ts:107.
+- minimized window restores via task click: e2e taskbar.spec.ts:92.
+- click focused task minimizes (toggle) - assert hidden: e2e taskbar.spec.ts:68.
+- isVisible single-selector rule: all three consumers import
+  src/lib/wm/selectors.ts (Waybar.tsx, WorkspaceView.tsx, actions.ts,
+  Switcher.tsx).
+
+QA scenarios (named as required by plan line 224)
+-------------------------------------------------
+- happy: "minimized window restores via task click" -> e2e taskbar.spec.ts:92,
+  minimize via titlebar button, assert window leaves the DOM + task
+  data-minimized=true, then click the task and assert window is visible again
+  and data-minimized=false.
+- failure: "click focused task minimizes (toggle) - assert hidden" ->
+  e2e taskbar.spec.ts:68, click the focused window's task and assert the window
+  is hidden + removed from DOM + task dimmed.
+
+Design decisions / fixes found during verification
+---------------------------------------------------
+1. The killer e2e bug: "Mod+Tab lists windows topmost-first; arrows + Enter
+   select" failed intermittently — Enter closed the switcher but the terminal
+   never became focused. Root cause (proven by a throwaway e2e/_diag.spec.ts):
+   after dblclick-opening a desktop icon, the ICON BUTTON retains DOM focus;
+   pressing Enter keydowns that button FIRST, whose own onKeyDown handler calls
+   open(app.id) — spawning a SECOND chess window on top — and only then bubbles
+   to the window listener. Fix: the switcher's keydown listener runs in the
+   CAPTURE phase (addEventListener "keydown", handler, true) and calls
+   preventDefault + stopPropagation while open, so no keystroke can leak to a
+   focused element underneath the overlay.
+2. useEffectEvent (React 19.2, stable) replaces the previous
+   `onKeyDownRef.current = ...` "latest handler ref" pattern. The old pattern
+   hit the new react-hooks v6 rule `react-hooks/refs` ("Cannot update ref
+   during render" — a lint error). Effect Event + capture-phase listener reads
+   freshest open/entries/safeActive without a ref written during render; lint
+   and e2e both pass.
+3. WorkspaceView subscribes to ONLY minimized flags (useShallow over wm store),
+   not the whole wm store, so dragging/resizing a window (geometry churn) does
+   not re-render the window list on every frame.
+4. Minimize now UNMOUNTS the window (it left the workspace layer entirely) —
+   previously it stayed mounted with aria-hidden. The AnimatePresence exit
+   animation still plays; the waybar task is the window's only representation
+   while minimized (toHaveCount(0) in both window.spec.ts and taskbar.spec.ts).
+5. Switcher auto-dismiss adjusts state during render (`if (open && entries.length
+   === 0) setOpen(false)`) rather than in an effect — avoids a cascading
+   setState-in-effect (react-hooks v6 rule `react-hooks/set-state-in-effect`).
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/
+pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server reused on :3000)
+
+1. npm run test:unit
+   Test Files  18 passed (18)
+   Tests       205 passed (205)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully; 6/6 static pages generated; exit 0
+
+5. npx playwright test e2e
+   118 passed (3.9m) — 59 per project x2 (desktop 1440x900, mobile 390x844);
+   includes 14 new taskbar.spec.ts tests (7 per project) on top of the 104-test
+   baseline.
