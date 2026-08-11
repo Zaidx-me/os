@@ -240,7 +240,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: link hrefs match data (repo->https://github.com/Zaidx-me/<repo>). failure: filter Live -> archived card absent. Evidence .omo/evidence/task-18-zaidos-portfolio.txt
   Commit: Y | feat(apps): Projects window with cards, filters, and detail pane
 
-- [ ] 19. Skills app
+- [x] 19. Skills app
   What to do / Must NOT do: src/components/apps/SkillsApp.tsx: grouped skill chips (Mobile, Frontend, Backend, AI & DevTools, Design, Systems) from content/skills.ts; each chip = lucide icon + name + one-line note. Section "the stack I actually use (not the LinkedIn cosplay version)" with his README list: React Native, TypeScript, Node.js, Python, C++, FastAPI, Docker, Arch, Hyprland. Optional animated level bars MUST be labeled "vibes, not metrics". MUST NOT show fake percentages without that disclaimer.
   Parallelization: Wave 4 | Blocked by: 3,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): skills facts https://github.com/Zaidx-me + zaidx.me home tags; content/skills.ts

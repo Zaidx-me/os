@@ -1,0 +1,88 @@
+Task 19 — Skills app
+====================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- src/components/apps/SkillsApp.tsx — 6 grouped skill sections (Mobile,
+  Frontend, Backend, AI & DevTools, Design, Systems) rendered from
+  content/skills.ts. Each chip = lucide icon + name + one-line note
+  (icon picked per-skill from a typed map, generic `code` fallback). A
+  "The stack I actually use (not the LinkedIn cosplay version)" section lists
+  the README stack (React Native, TypeScript, Node.js, Python, C++, FastAPI,
+  Docker, Arch, Hyprland) with decorative animated level bars explicitly
+  labeled "vibes, not metrics" — never real percentages, so no fake metrics
+  are implied.
+- src/components/apps/SkillsApp.test.tsx — Vitest: all 6 groups render with
+  >=1 chip each (no empty groups); QA happy: React Native + Hyprland present;
+  disclaimer present because bars are used; full README stack section present.
+- e2e/skills.spec.ts — Playwright x2 (desktop+mobile): acceptance test
+  (all 6 groups visible, each with >=1 chip, disclaimer "vibes, not metrics")
+  + QA happy test (React Native + Hyprland chips visible).
+
+Files modified
+--------------
+- src/components/ui/Icon.tsx — added glyphs for skill chips + the stack
+  section: archive (prev task), atom, container, layers, layout-dashboard,
+  package, palette, puzzle, server, smartphone, workflow, zap. All verified
+  present in lucide-react 1.31.0 (checked via require() at implementation
+  time). IconName union auto-derives from the ICONS map.
+
+Source of truth (no invented copy)
+----------------------------------
+- skillGroups + per-skill notes: src/content/skills.ts (todo 3, sourced from
+  the GitHub README + zaidx.me tags; "not the LinkedIn cosplay version" is the
+  file's own framing).
+- CORE_STACK list verbatim from plan line 243 (React Native, TypeScript,
+  Node.js, Python, C++, FastAPI, Docker, Arch, Hyprland).
+- CORE_STACK_VIBES widths are DECORATIVE ("vibes, not metrics") — never
+  sourced from data or presented as real percentages; the disclaimer sentence
+  is always rendered next to the bars.
+
+Acceptance mapping (plan line 247)
+----------------------------------
+- open Skills -> all 6 groups render: e2e/skills.spec.ts:49 loops all 6 group
+  ids and asserts visible.
+- each group has >=1 chip: e2e/skills.spec.ts:52-54 (count >= 1 per group) +
+  unit test (group.skills.length >= 1).
+- disclaimer present if bars used: bars ARE used -> disclaimer always rendered;
+  e2e/skills.spec.ts:57 + unit test assert "vibes, not metrics".
+
+QA scenarios (named as required by plan line 248)
+-------------------------------------------------
+- happy: "React Native + Hyprland present" -> e2e/skills.spec.ts:74 +
+  unit test (skills-chip-react-native + skills-chip-hyprland).
+- failure: "no empty groups (each group has chips)" -> unit test + e2e count
+  assertions per group.
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/
+pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server reused on :3000)
+
+1. npm run test:unit
+   Test Files  21 passed (21)   (was 20)
+   Tests       219 passed (219) (was 215, +4 SkillsApp)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint (eslint SkillsApp.tsx, SkillsApp.test.tsx, Icon.tsx,
+   skills.spec.ts)
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully; 6/6 static pages; exit 0
+
+5. npx playwright test e2e
+   132 passed (6.2m) — 66 per project x2 (desktop 1440x900, mobile 390x844);
+   128 baseline + 4 new skills tests.
+
+Implementation notes
+--------------------
+- JS gotchas hit: object keys `C++` MUST be quoted ("C++") in both the icon map
+  and the vibes map (vite:oxc parse error otherwise); a test typo referenced
+  `skill.skills` instead of `group.skills` (fixed).
