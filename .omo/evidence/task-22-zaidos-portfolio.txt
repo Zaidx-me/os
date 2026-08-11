@@ -1,0 +1,108 @@
+Task 22 — Contact app + /api/contact
+====================================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- src/app/api/contact/route.ts — POST /api/contact: lightweight validation
+  (no zod — name/email/subject/message required, email regex), honeypot
+  field (filled `website` short-circuits to a silent 200 {ok:true} without
+  sending), in-memory rate limit (5 POSTs/min per IP via cf-connecting-ip,
+  then 429 { error: "Too many messages" }), and an env-gated Resend relay:
+  RESEND_API_KEY + CONTACT_TO_EMAIL (+ optional RESEND_FROM override)
+  present -> Resend send with from/to/subject/replyTo/text; absent ->
+  501 { message: "mailto" } telling the client to fall back to mailto.
+  Resend SDK v6 non-throwing { data, error } contract; error -> 500.
+  Logging (console.debug) never includes email addresses (PII-free).
+- src/app/api/contact/route.test.ts — Vitest API tests (6): 501 when env
+  keys missing; 400 for invalid payloads (empty fields, bad email); 200
+  with Resend called when keys are set (stub env via vi.stubEnv + mock
+  module); honeypot short-circuit (no send); 429 after 5/min per-IP
+  (different IPs isolated); 500 on Resend error. vi.resetModules() per
+  test isolates the module-scoped rate-limit Map.
+- src/components/apps/ContactApp.tsx — form (name/email/subject/message)
+  with client-side validation mirroring the API, honeypot `website` field
+  (hidden via absolutely-positioned off-screen styling), on submit -> POST
+  /api/contact; 200 -> success state; 501 or network abort -> mailto:
+  fallback link with subject/body filled from the typed values; 429 ->
+  rate-limit message with NO mailto. Beside the form: socials row
+  (GitHub/LinkedIn/Linktree from socials.ts) and a "copy email" button
+  (navigator.clipboard.writeText(site.contactEmail), "Copied" feedback).
+- src/components/apps/ContactApp.test.tsx — Vitest (10): renders form
+  fields + honeypot + socials + copy button; input typing updates state;
+  invalid/empty submit shows field errors without fetch; success path
+  (POST 200 -> success text; body contains website:""); mailto fallback on
+  501 (link href starts mailto: + subject/body filled); mailto fallback on
+  network abort; 429 -> rate-limit message and NO mailto; copy email
+  writes site.contactEmail and shows "Copied".
+- e2e/contact.spec.ts — Playwright x2 (desktop+mobile): acceptance test
+  (form renders, submit valid -> success via intercepted route 200) + QA
+  tests: happy (success message, email body includes website:""), failure
+  501 (intercepted 501 -> mailto link present with subject/body),
+  failure network abort (route abort -> mailto fallback), failure 429
+  (intercepted 429 -> rate-limit message, no mailto). All /api/contact
+  requests intercepted — never touches the real (env-gated) Resend path.
+- .env.example — RESEND_API_KEY, CONTACT_TO_EMAIL, RESEND_FROM placeholders.
+- .gitignore — added `!.env.example` exception (placeholder file tracked,
+  `.env*` still ignored).
+
+Design decisions / plan conformance
+-----------------------------------
+- The plan's QA list for task 22 (plan line 270-272) requires: (a) form
+  renders and typed input reaches state, (b) success path, (c) failure
+  scenarios incl. the mailto fallback and rate limiting. This
+  implementation covers all of them; the contact route answers 501 when
+  email is not configured and the client turns that into a mailto link.
+- The ORIGINAL working-tree implementation (written earlier in the
+  session) only showed red error hints on submit with NO mailto fallback,
+  NO honeypot, NO rate limit, and NO socials row — it did not meet the
+  plan's task-22 spec. This commit brings the contact app + route fully
+  into plan conformance and re-verifies the whole suite.
+- Resend SDK v6 (installed) vs v4 (plan text): same non-throwing
+  { data, error } contract; implementation uses v6 as installed.
+- PII gate: the real recipient email lives ONLY in .env (never committed);
+  .env.example ships placeholders; logs omit addresses.
+
+Acceptance mapping (plan line 272)
+----------------------------------
+- API unit tests: route.test.ts covers 501/400/honeypot/429/Resend-called/
+  500 (6 tests, all pass).
+- Form renders + typed input reaches state: ContactApp.test.tsx + e2e
+  acceptance.
+- QA happy: valid submit -> success (unit + e2e intercepted 200).
+- QA failure: 501 -> mailto link with subject/body (unit + e2e asserted);
+  network abort -> mailto fallback (unit + e2e); 429 -> rate-limit message,
+  no mailto (unit + e2e).
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/
+pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server reused on :3000)
+
+1. npm run test:unit
+   Test Files  25 passed (25)
+   Tests       243 passed (243)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint (eslint on all changed/new app + content + e2e files)
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully; 6/6 static pages + /api/contact dynamic; exit 0
+
+5. npx playwright test e2e
+   150 passed (7.0m) — 75 per project x2 (desktop 1440x900, mobile 390x844).
+
+Implementation notes
+--------------------
+- fetch errors: `catch` on fetch itself (network abort) also maps to the
+  mailto fallback — matches the plan's "network error" failure case.
+- Rate limit state is module-scoped (works across requests in dev/prod);
+  unit tests use vi.resetModules() + vi.stubEnv for isolation.
+- mailto link subject/body are encodeURIComponent'd; e2e asserts the href
+  prefix (mailto:...) and that encoded subject/body are present.
