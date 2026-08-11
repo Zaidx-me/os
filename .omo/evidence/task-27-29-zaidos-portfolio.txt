@@ -1,0 +1,10 @@
+Task 27-29 — Easter eggs, chess, terminal e2e
+=============================================
+Date: 2026-08-12
+Status: PASS
+
+Task 27: fortune.ts, cowsay.ts, matrix/cmatrix commands, MatrixOverlay.tsx
+Task 28: ChessApp.tsx, src/lib/chess/engine.ts, chess.js
+Task 29: e2e/terminal.spec.ts (full walkthrough), e2e/chess.spec.ts
+
+Verification: npm run test:unit 381 pass; npx playwright test e2e/terminal.spec.ts e2e/chess.spec.ts --project=desktop --workers=1 — 17 passed

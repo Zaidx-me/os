@@ -1,3 +1,14 @@
+---
+title: "Designing a University Courseware Platform"
+description: "How I built PU Stacks — a platform for educators to share and remix course materials. System design decisions, versioning challenges, and why collaboration features matter more than you think."
+date: "2025-07-25"
+readingTime: "3 min read"
+tags:
+  - education
+  - remix
+  - postgresql
+  - pu-stacks
+---
 # Designing a University Courseware Platform
 
 ## The problem

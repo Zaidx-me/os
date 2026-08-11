@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 /**
  * Reusable Canvas-2D matrix rain wallpaper (ORIGINAL implementation — no
@@ -93,7 +93,7 @@ function readTokens(): Tokens {
 
 export default function MatrixRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const reducedMotion = usePrefersReducedMotion();
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     const canvas = canvasRef.current;

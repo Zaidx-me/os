@@ -61,7 +61,7 @@ export function WorkspaceView() {
       {windows.length === 0 ? (
         <div className="flex h-full w-full items-center justify-center p-4">
           <p data-testid="ws-empty-hint" className="font-mono text-sm text-zaid-muted">
-            Nothing here yet. Press Super+Space
+            Nothing here yet. Press ⌘Space
           </p>
         </div>
       ) : null}

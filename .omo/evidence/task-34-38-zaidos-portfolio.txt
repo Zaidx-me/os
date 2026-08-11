@@ -1,0 +1,49 @@
+Tasks 34-38 — Articles SSR + SEO wave
+======================================
+Date: 2026-08-12
+Status: PASS
+
+Task 34 — Articles port + SSR routes
+------------------------------------
+- Added YAML frontmatter (title, description, date, readingTime, tags) to all 4
+  src/content/articles/*.md files; slugs unchanged.
+- Extended src/content/article-bodies.ts: parseFrontmatter(), getArticleFrontmatter(),
+  articleBodies now strips frontmatter from getArticleBody() output.
+- Updated src/content/articles.ts with date + readingTime metadata.
+- Created src/app/articles/page.tsx (SSR list + metadata).
+- Created src/app/articles/[slug]/page.tsx (generateStaticParams,
+  generateMetadata, dynamicParams=false, notFound for unknown slugs).
+- Shared src/components/content/ArticleMarkdown.tsx used by SSR routes + ArticlesApp.
+
+Task 35 — Metadata + OG image
+-----------------------------
+- Updated src/app/layout.tsx: metadataBase https://zaidx.me, title
+  "ZaidOS - Muhammad Zaid", voice description, openGraph + twitter + canonical.
+- Created src/app/opengraph-image.tsx (next/og rice terminal card).
+
+Task 36 — sitemap, robots, JSON-LD, humans.txt
+------------------------------------------------
+- src/app/sitemap.ts: /, /articles, 4 article slugs.
+- src/app/robots.ts: allow all + sitemap URL.
+- JSON-LD Person schema in root layout (7 sameAs, knowsAbout from skills).
+- public/humans.txt
+
+Task 37 — Redirects + ?app= deep-links
+--------------------------------------
+- next.config.ts redirects (permanent): /projects/:slug -> /?app=projects,
+  /contact -> /?app=contact, /uses -> /?app=about.
+- src/app/page.tsx: reads ?app= after boot, opens matching window, cleans URL.
+
+Task 38 — SEO e2e + Lighthouse baseline
+---------------------------------------
+- e2e/seo.spec.ts: metadata, article SSR/404, redirects (301/308), sitemap,
+  robots, humans.txt, JSON-LD, ?app= deep-link — 11/11 PASS (desktop).
+- Lighthouse (.omo/evidence/lh-baseline.json, production build on :3001):
+  perf 74, a11y 100, seo 100 (perf gate >=90 is task 42 scope).
+
+Verification
+------------
+- npm run typecheck: PASS
+- npm run build: PASS (SSG /articles + 4 slugs)
+- npx playwright test e2e/seo.spec.ts --project=desktop: 11 passed
+- ArticlesApp.test.tsx: 7 passed (meta test updated for published dates)

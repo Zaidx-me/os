@@ -102,7 +102,7 @@ describe("BootScreen", () => {
     ).toBeInTheDocument();
   });
 
-  it("auto-advances (completeBoot) after ~4s without interaction", async () => {
+  it("auto-advances (completeBoot) after ~5.5s without interaction", async () => {
     const { useBootStore } = await import("@/store/boot");
     const { default: BootScreen } = await import(
       "@/components/wm/BootScreen"
@@ -111,7 +111,7 @@ describe("BootScreen", () => {
     expect(useBootStore.getState().booted).toBe(false);
 
     act(() => {
-      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(6000);
     });
     expect(useBootStore.getState().booted).toBe(true);
   });

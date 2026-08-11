@@ -28,7 +28,7 @@ describe("ContextMenu", () => {
       workspaces: createInitialWorkspaces(),
       activeWs: 1,
     });
-    useWallpaperStore.setState({ type: "matrix" });
+    useWallpaperStore.setState({ type: "teal" });
     useBootStore.setState({ booted: true });
   });
 
@@ -64,9 +64,9 @@ describe("ContextMenu", () => {
     const submenu = screen.getByTestId("context-menu-wallpaper-submenu");
     expect(submenu).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("context-menu-wallpaper-dark"));
+    fireEvent.click(screen.getByTestId("context-menu-wallpaper-slate"));
 
-    expect(useWallpaperStore.getState().type).toBe("dark");
+    expect(useWallpaperStore.getState().type).toBe("slate");
     expect(screen.queryByTestId("context-menu")).not.toBeInTheDocument();
   });
 

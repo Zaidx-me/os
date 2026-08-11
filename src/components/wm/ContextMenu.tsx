@@ -1,18 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import {
   Image as ImageIcon,
+  LayoutGrid,
   MonitorCog,
   Power,
   RefreshCw,
   RotateCcw,
   Terminal,
 } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { openApp } from "@/lib/wm/actions";
 import { setModalOpen } from "@/lib/hotkeys";
 import { useBootStore } from "@/store/boot";
+import { useDesktopLayoutStore } from "@/store/desktop-layout";
 import {
   WALLPAPER_TYPES,
   selectWallpaperType,
@@ -26,7 +29,7 @@ import {
  * Opens in response to `zaidos:desktop-context` (dispatched by the desktop
  * icon layer's context handler — never from inside a window). Items:
  *   Open Terminal          — opens the terminal app
- *   Change Wallpaper ▸     — 4-variant submenu (matrix/gradient/dark/light)
+ *   Change Wallpaper ▸     — 4 static variants (slate/teal/sky/sand)
  *   Refresh                — spins the desktop icons
  *   About ZaidOS           — opens the Settings app
  *   Reboot                 — replays the boot sequence
@@ -37,12 +40,11 @@ import {
  * backdrop intercepts right-clicks so they can never re-open the menu.
  */
 
-/** "Matrix Rain" — human labels for the wallpaper submenu. */
 const WALLPAPER_LABELS: Record<WallpaperType, string> = {
-  matrix: "Matrix Rain",
-  gradient: "Animated Gradient",
-  dark: "Dark Abstract",
-  light: "Light",
+  slate: "Midnight",
+  teal: "Ocean",
+  sky: "Sonoma",
+  sand: "Linen",
 };
 
 const MENU_W = 200;
@@ -68,7 +70,10 @@ export default function ContextMenu() {
   const [menu, setMenu] = useState<MenuPos | null>(null);
   const [submenu, setSubmenu] = useState<"wallpaper" | null>(null);
   const [shutdown, setShutdown] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const wallpaper = useWallpaperStore(selectWallpaperType);
+
+  useFocusTrap(menuRef, menu !== null);
 
   // Block hotkeys while any modal is up.
   useEffect(() => {
@@ -131,10 +136,11 @@ export default function ContextMenu() {
             }}
           />
           <motion.div
+            ref={menuRef}
             data-testid="context-menu"
             role="menu"
             aria-label="Desktop menu"
-            className="window-glass hairline fixed z-50 w-[200px] rounded-lg p-1 font-mono text-xs text-zaid-text"
+            className="window-glass hairline fixed z-50 w-[200px] p-1 font-mono text-xs text-zaid-text"
             style={{ left: menu.x, top: menu.y }}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -164,7 +170,7 @@ export default function ContextMenu() {
                   data-testid="context-menu-wallpaper-submenu"
                   role="menu"
                   aria-label="Change Wallpaper"
-                  className="window-glass hairline absolute left-full top-0 z-50 w-40 -ml-1 rounded-lg p-1"
+                  className="window-glass hairline absolute left-full top-0 z-50 w-40 -ml-1 p-1"
                 >
                   {WALLPAPER_TYPES.map((type) => (
                     <MenuItem
@@ -190,6 +196,16 @@ export default function ContextMenu() {
                 }}
               >
                 Refresh
+              </MenuItem>
+              <MenuItem
+                testId="context-menu-reset-layout"
+                icon={<LayoutGrid size={13} aria-hidden="true" />}
+                onClick={() => {
+                  useDesktopLayoutStore.getState().resetLayout();
+                  close();
+                }}
+              >
+                Reset icon layout
               </MenuItem>
               <MenuItem
                 testId="context-menu-about"
@@ -289,7 +305,7 @@ function ShutdownDialog({ open, onDismiss }: { open: boolean; onDismiss: () => v
         transition={{ duration: 0.5, ease: "easeIn" }}
       />
       <motion.div
-        className="window-glass hairline relative z-10 w-80 rounded-xl p-5 font-mono text-xs text-zaid-text"
+        className="window-glass hairline relative z-10 w-80 p-5 font-mono text-xs text-zaid-text"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.2 }}

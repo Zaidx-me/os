@@ -1,8 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import ProjectsApp from "@/components/apps/ProjectsApp";
 import { projects } from "@/content";
+
+vi.mock("@/lib/wm/openBrowser", () => ({
+  openBrowser: vi.fn(),
+}));
 
 /**
  * Projects (projects) content tests (todo 18 acceptance): >=12 cards, featured
@@ -15,7 +19,10 @@ describe("ProjectsApp", () => {
     render(<ProjectsApp />);
     const cards = screen
       .getAllByTestId(/^projects-card-[a-z0-9]+(?:-[a-z0-9]+)*$/)
-      .filter((el) => !(el.getAttribute("data-testid") ?? "").endsWith("-status"));
+      .filter((el) => {
+        const id = el.getAttribute("data-testid") ?? "";
+        return !id.endsWith("-status") && !id.endsWith("-live");
+      });
     expect(cards.length).toBe(projects.length);
     expect(cards.length).toBeGreaterThanOrEqual(12);
 
@@ -57,9 +64,8 @@ describe("ProjectsApp", () => {
     }
 
     const repo = screen.getByTestId("projects-link-repo");
-    expect(repo).toHaveAttribute("href", `https://github.com/Zaidx-me/${whatbot!.links.repo!.split("/").pop()}`);
-    expect(repo).toHaveAttribute("target", "_blank");
-    expect(repo).toHaveAttribute("rel", "noopener noreferrer");
+    expect(repo.tagName).toBe("BUTTON");
+    expect(repo).toHaveTextContent("Repo");
   });
 
   it("shows the archived note for zenith-build and no dead live link", () => {
@@ -71,11 +77,10 @@ describe("ProjectsApp", () => {
     expect(screen.queryByTestId("projects-link-live")).not.toBeInTheDocument();
   });
 
-  it("renders the footer More-on-GitHub link", () => {
+  it("renders the footer More-on-GitHub control", () => {
     render(<ProjectsApp />);
-    expect(screen.getByTestId("projects-more-github")).toHaveAttribute(
-      "href",
-      "https://github.com/Zaidx-me?tab=repositories",
-    );
+    const link = screen.getByTestId("projects-more-github");
+    expect(link.tagName).toBe("BUTTON");
+    expect(link).toHaveTextContent("github.com/Zaidx-me");
   });
 });

@@ -5,6 +5,8 @@ import {
 } from "@/store/workspaces";
 import { getAppMeta } from "@/lib/apps";
 import { isVisible } from "@/lib/wm/selectors";
+import { recordAppLaunch } from "@/store/launcher-prefs";
+import type { AppId } from "@/components/ui/AppIcon";
 
 /**
  * WM orchestrators — the ONLY entry points that mutate BOTH stores.
@@ -54,6 +56,9 @@ export function openApp(appId: string, ws?: WorkspaceId): string {
     w: meta?.defaultSize.w,
     h: meta?.defaultSize.h,
   });
+  if (getAppMeta(appId)) {
+    recordAppLaunch(appId as AppId);
+  }
   return id;
 }
 

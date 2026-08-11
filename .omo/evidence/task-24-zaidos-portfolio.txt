@@ -1,0 +1,57 @@
+Task 24 — Terminal shell core (parser, registry, fake fs)
+============================================================
+Date: 2026-08-12
+Status: PASS
+
+Files (verified / present)
+--------------------------
+- src/lib/shell/parser.ts — zsh-flavored tokenizer (quotes, escapes, adjacent
+  quote concat, lenient unterminated quotes).
+- src/lib/shell/parser.test.ts — Vitest quote/escape edge cases.
+- src/lib/shell/registry.ts — register/find/list/clear; ShellContext with
+  openApp, data, wallpaper, launcher, close (close wired in todo 25).
+- src/lib/shell/registry.test.ts — register, alias, replace, list.
+- src/lib/shell/fakefs.ts — ~ tree (projects/, dotfiles/, games/, README.md);
+  ls/cd/pwd/cat/resolve/promptPath semantics.
+- src/lib/shell/fakefs.test.ts — navigation, errors, README content.
+- src/lib/shell/shell.ts — createShell(), run(), complete(), core commands
+  (help, history, clear, ls, cd, pwd, cat, sudo), history array.
+- src/lib/shell/shell.test.ts — QA happy ls, sudo joke, not-found, cd state,
+  cat, clear ANSI, help, history order, tab completion.
+- src/components/apps/TerminalApp.tsx — hidden input capture, typewriter output,
+  ANSI green [ OK ] boot banner, blinking cursor, ArrowUp/Down history, Tab
+  complete, click-to-focus, clear wipes screen, reduced-motion instant drain.
+- src/components/apps/TerminalApp.test.tsx — boot banner, ls, sudo, not-found,
+  history, clear, Tab, click focus, reduced motion.
+- src/styles/globals.css — .terminal-hidden-input, .terminal-cursor styles.
+- e2e/terminal.spec.ts — acceptance + QA (ls lists ~, sudo joke, not-found).
+- src/test/setup.ts — localStorage polyfill for jsdom (Node 22+ gate fix).
+
+Acceptance mapping (plan line 287)
+----------------------------------
+- Vitest parser quotes/escapes: parser.test.ts PASS.
+- Unknown command not-found line: shell.test.ts + TerminalApp.test.tsx PASS.
+- ls/cd/pwd/cat on fake fs: fakefs.test.ts + shell.test.ts PASS.
+- History order correct: shell.test.ts PASS.
+
+QA scenarios (plan line 288)
+----------------------------
+- happy run('ls') lists ~ entries: shell.test.ts + TerminalApp.test.tsx +
+  e2e/terminal.spec.ts (desktop + mobile) PASS.
+- failure run('sudo nope') sudoers joke: shell.test.ts + TerminalApp.test.tsx +
+  e2e/terminal.spec.ts PASS.
+
+Verification gates (ALL PASS)
+-----------------------------
+1. npm run test:unit — 32 files, 321 tests PASS
+2. npm run typecheck — PASS (after npm run build generates LayoutProps)
+3. npm run lint — PASS
+4. npm run build — PASS
+5. npx playwright test e2e/terminal.spec.ts — 6 passed (desktop + mobile)
+
+Fix applied this session
+------------------------
+- e2e runCommand: use getByTestId('terminal-input').fill() + press('Enter')
+  instead of page.keyboard.type (keystrokes were not reaching the hidden input).
+
+Commit: pending user request

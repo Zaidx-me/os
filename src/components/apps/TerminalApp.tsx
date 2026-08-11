@@ -10,11 +10,14 @@ import {
   skillGroups,
   socials,
 } from "@/content";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { createShell } from "@/lib/shell/shell";
 import type { ShellContext } from "@/lib/shell/registry";
+import type { WindowAppProps } from "@/lib/apps";
 import { openApp as openAppAction } from "@/lib/wm/actions";
+import { bumpFilesystem, getSharedFs } from "@/store/filesystem";
 import { useWallpaperStore } from "@/store/wallpaper";
+import { MatrixOverlay } from "@/components/wm/MatrixOverlay";
 
 /**
  * Terminal (terminal) — the simulated shell (todo 24).
@@ -61,12 +64,13 @@ function renderAnsi(text: string) {
   );
 }
 
-export function TerminalApp() {
-  const shell = useMemo(() => createShell(), []);
-  const reduced = usePrefersReducedMotion();
+export function TerminalApp({ close }: Partial<Pick<WindowAppProps, "close">> = {}) {
+  const shell = useMemo(() => createShell(getSharedFs()), []);
+  const reduced = useReducedMotion();
 
   const [lines, setLines] = useState<TermLine[]>([]);
   const [input, setInput] = useState("");
+  const [matrixOpen, setMatrixOpen] = useState(false);
   const idRef = useRef(0);
   const pendingRef = useRef<string[]>([]);
   const drainingRef = useRef(false);
@@ -82,8 +86,10 @@ export function TerminalApp() {
       wallpaper: (type) => useWallpaperStore.getState().setWallpaper(type),
       launcher: () =>
         window.dispatchEvent(new CustomEvent("zaidos:toggle-launcher")),
+      close,
+      showMatrix: () => setMatrixOpen(true),
     }),
-    [],
+    [close],
   );
 
   /**
@@ -134,6 +140,10 @@ export function TerminalApp() {
         return;
       }
       const output = shell.run(raw, ctx);
+      const trimmed = raw.trim();
+      if (/^(cd|mkdir|touch|rm)\b/.test(trimmed)) {
+        bumpFilesystem();
+      }
       if (output.includes(ANSI_CLEAR)) {
         // `clear`: wipe every line (including this command), fresh prompt.
         pendingRef.current = [];
@@ -258,6 +268,7 @@ export function TerminalApp() {
         spellCheck={false}
         aria-label="Terminal input"
       />
+      {matrixOpen ? <MatrixOverlay onClose={() => setMatrixOpen(false)} /> : null}
     </div>
   );
 }

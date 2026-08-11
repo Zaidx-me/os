@@ -1,0 +1,43 @@
+Task 25 — Terminal command content
+====================================
+Date: 2026-08-12
+Status: PASS
+
+Files created / updated
+-----------------------
+- src/lib/shell/commands.ts — content commands: about, projects, skills,
+  experience, contact, socials, whoami, date, echo, exit, open; formatHelpGrid
+  (two-column help); sudoHandler (rm -rf / refusal joke vs sudoers joke);
+  SUDOERS_JOKE + SUDO_RM_JOKE constants.
+- src/lib/shell/commands.test.ts — Vitest (15): help lists all commands;
+  projects contains applicator/whatbot/maktaba + all 12 ids; open chess calls
+  openApp; open nosuch error; about/whoami/echo/socials/contact/history/exit;
+  sudo rm -rf / vs sudo nope; open tab completion.
+- src/lib/shell/shell.ts — registerContentCommands() on createShell; history
+  command; help uses formatHelpGrid; sudo delegates to sudoHandler.
+- src/lib/shell/registry.ts — ShellContext.close optional for exit command.
+- src/components/apps/TerminalApp.tsx — passes close from WindowAppProps into
+  ShellContext for `exit`.
+- src/lib/shell/shell.test.ts — updated help + tab-complete assertions for new
+  commands (contact on 'c' prefix).
+
+Acceptance mapping (plan line 295)
+----------------------------------
+- help lists all commands: commands.test.ts PASS.
+- projects output contains applicator/whatbot/maktaba: commands.test.ts PASS.
+- open('chess') calls ctx.openApp('chess'): commands.test.ts PASS.
+
+QA scenarios (plan line 296)
+----------------------------
+- happy `projects` prints all 12 ids: commands.test.ts PASS.
+- failure `open nosuch` error line, no crash: commands.test.ts PASS.
+
+Verification gates (ALL PASS)
+-----------------------------
+1. npm run test:unit — 32 files, 321 tests PASS
+2. npm run typecheck — PASS (via build)
+3. npm run lint — PASS
+4. npm run build — PASS
+5. npx playwright test e2e/terminal.spec.ts — 6 passed
+
+Commit: pending user request

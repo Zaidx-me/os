@@ -13,7 +13,7 @@ import type { WorkspaceId } from "@/store/workspaces";
  * registry entry whose id is not in APP_IDS is a bug (validation test locks
  * this in apps.test.ts). The ENTRY ORDER is significant: the launcher grid and
  * the desktop icon grid render apps in APPS order, so keep them sorted as
- * terminal, about, projects, skills, experience, resume, contact, articles,
+ * terminal, browser, files, about, projects, skills, experience, resume, contact, articles,
  * settings, chat, chess.
  */
 
@@ -66,6 +66,70 @@ export const APPS: readonly AppMeta[] = [
     component: lazy(() => import("@/components/apps/TerminalApp")),
     defaultSize: { w: 640, h: 480 },
     defaultWorkspace: 1,
+  },
+  {
+    id: "browser",
+    title: "Browser",
+    icon: <AppIcon appId="browser" size={20} />,
+    keywords: ["web", "internet", "surf", "chrome", "firefox", "live demo"],
+    component: lazy(() => import("@/components/apps/BrowserApp")),
+    defaultSize: { w: 960, h: 640 },
+  },
+  {
+    id: "files",
+    title: "Files",
+    icon: <AppIcon appId="files" size={20} />,
+    keywords: ["file", "manager", "explorer", "nautilus", "thunar", "finder"],
+    component: lazy(() => import("@/components/apps/FilesApp")),
+    defaultSize: { w: 720, h: 520 },
+  },
+  {
+    id: "calculator",
+    title: "Calculator",
+    icon: <AppIcon appId="calculator" size={20} />,
+    keywords: ["calc", "math", "numbers"],
+    component: lazy(() => import("@/components/apps/CalculatorApp")),
+    defaultSize: { w: 360, h: 480 },
+  },
+  {
+    id: "notes",
+    title: "Notes",
+    icon: <AppIcon appId="notes" size={20} />,
+    keywords: ["notepad", "memo", "write", "markdown"],
+    component: lazy(() => import("@/components/apps/NotesApp")),
+    defaultSize: { w: 640, h: 480 },
+  },
+  {
+    id: "editor",
+    title: "Editor",
+    icon: <AppIcon appId="editor" size={20} />,
+    keywords: ["nano", "vim", "text", "code", "write"],
+    component: lazy(() => import("@/components/apps/EditorApp")),
+    defaultSize: { w: 640, h: 480 },
+  },
+  {
+    id: "monitor",
+    title: "Monitor",
+    icon: <AppIcon appId="monitor" size={20} />,
+    keywords: ["htop", "top", "system", "cpu", "ram", "tasks"],
+    component: lazy(() => import("@/components/apps/MonitorApp")),
+    defaultSize: { w: 480, h: 420 },
+  },
+  {
+    id: "music",
+    title: "Music",
+    icon: <AppIcon appId="music" size={20} />,
+    keywords: ["audio", "player", "mp3", "sound", "spotify"],
+    component: lazy(() => import("@/components/apps/MusicApp")),
+    defaultSize: { w: 420, h: 520 },
+  },
+  {
+    id: "photos",
+    title: "Photos",
+    icon: <AppIcon appId="photos" size={20} />,
+    keywords: ["gallery", "images", "pictures", "viewer"],
+    component: lazy(() => import("@/components/apps/PhotosApp")),
+    defaultSize: { w: 640, h: 480 },
   },
   {
     id: "about",
@@ -146,6 +210,14 @@ export const APPS: readonly AppMeta[] = [
     keywords: ["game", "london", "play", "board"],
     component: lazy(() => import("@/components/apps/ChessApp")),
     defaultSize: { w: 480, h: 520 },
+  },
+  {
+    id: "snake",
+    title: "Snake",
+    icon: <AppIcon appId="snake" size={20} />,
+    keywords: ["game", "arcade", "retro", "play"],
+    component: lazy(() => import("@/components/apps/SnakeApp")),
+    defaultSize: { w: 400, h: 480 },
   },
 ];
 

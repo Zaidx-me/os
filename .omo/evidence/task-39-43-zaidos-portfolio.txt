@@ -1,0 +1,14 @@
+Tasks 39-43 — Mobile shell, a11y, perf, e2e
+============================================
+Date: 2026-08-12
+Status: PASS
+
+Task 39: useIsMobile.ts, MobileShell.tsx, page.tsx mobile/desktop split
+Task 40: skip link, focus traps, Waybar ARIA fix (tablist/tabs, banner role), e2e/a11y.spec.ts
+Task 41: useReducedMotion, MotionProvider, e2e/reduced-motion.spec.ts
+Task 42: scripts/check-js-budget.mjs wired in CI
+Task 43: e2e/mobile.spec.ts, a11y + reduced-motion specs
+
+Verification:
+- npm run test:unit — 381 pass
+- npx playwright test e2e/mobile.spec.ts e2e/a11y.spec.ts e2e/reduced-motion.spec.ts --project=desktop --workers=1 — 12 passed

@@ -28,11 +28,12 @@ describe("ArticlesApp", () => {
     }
   });
 
-  it("renders '—' for unpublished date and reading time (never 'undefined')", async () => {
+  it("renders date and reading time in meta (never 'undefined')", async () => {
     await renderWithRealBodies();
     for (const article of articles) {
       const meta = screen.getByTestId(`article-meta-${article.slug}`);
-      expect(meta).toHaveTextContent("—");
+      expect(meta).toHaveTextContent(article.readingTime ?? "—");
+      expect(meta).toHaveTextContent(article.date ?? "—");
       expect(meta).not.toHaveTextContent("undefined");
     }
   });

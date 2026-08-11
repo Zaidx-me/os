@@ -8,7 +8,14 @@
  * they close over THIS shell's filesystem; content commands (todo 25)
  * register globally through the same registry.
  */
+import {
+  formatHelpGrid,
+  registerContentCommands,
+  sudoHandler,
+  SUDOERS_JOKE,
+} from "./commands";
 import { FakeFs } from "./fakefs";
+import { getSharedFs } from "@/store/filesystem";
 import { parse } from "./parser";
 import {
   findCommand,
@@ -17,9 +24,7 @@ import {
   type ShellContext,
 } from "./registry";
 
-/** The sudoers joke — task 24 QA failure path. Task 25 refines sudo further. */
-export const SUDOERS_JOKE =
-  "zaid is not in the sudoers file. This incident will be reported. (to the chess board)";
+export { SUDOERS_JOKE };
 
 export interface ShellInstance {
   /** Run one input line, returning the output lines to render. */
@@ -46,18 +51,21 @@ function completePath(fs: FakeFs, args: readonly string[]): string[] {
     .map((entry) => dirPart + entry.name + (entry.type === "dir" ? "/" : ""));
 }
 
-function registerCoreCommands(fs: FakeFs): void {
+function registerCoreCommands(fs: FakeFs, history: string[]): void {
   const core = [
     {
       name: "help",
       help: "list available commands",
-      handler: () => {
-        const sorted = [...listCommands()].sort((a, b) =>
-          a.name.localeCompare(b.name),
-        );
-        const width = Math.max(...sorted.map((c) => c.name.length), 1);
-        return sorted.map((c) => `${c.name.padEnd(width + 2)}${c.help}`);
-      },
+      handler: () =>
+        formatHelpGrid(
+          listCommands().map((c) => ({ name: c.name, help: c.help })),
+        ),
+    },
+    {
+      name: "history",
+      help: "print command history",
+      handler: () =>
+        history.map((line, i) => `${String(i + 1).padStart(5)}  ${line}`),
     },
     {
       name: "clear",
@@ -76,6 +84,15 @@ function registerCoreCommands(fs: FakeFs): void {
         return entries.map((e) => (e.type === "dir" ? `${e.name}/` : e.name));
       },
       complete: (args: readonly string[]) => completePath(fs, args),
+    },
+    {
+      name: "tree",
+      help: "list directories as a tree",
+      handler: (args: readonly string[]) => {
+        const out = fs.tree(args[0] ?? "", 3);
+        if (out === null) return [`tree: ${args[0] ?? fs.promptPath()}: No such file or directory`];
+        return out;
+      },
     },
     {
       name: "cd",
@@ -108,9 +125,42 @@ function registerCoreCommands(fs: FakeFs): void {
       complete: (args: readonly string[]) => completePath(fs, args),
     },
     {
+      name: "mkdir",
+      help: "create a directory",
+      handler: (args: readonly string[]) => {
+        const name = args[0];
+        if (name === undefined) return ["mkdir: missing operand"];
+        const err = fs.mkdir(name);
+        return err === null ? [] : [err];
+      },
+      complete: (args: readonly string[]) => completePath(fs, args),
+    },
+    {
+      name: "touch",
+      help: "create an empty file or update timestamp",
+      handler: (args: readonly string[]) => {
+        const name = args[0];
+        if (name === undefined) return ["touch: missing file operand"];
+        const err = fs.touch(name);
+        return err === null ? [] : [err];
+      },
+      complete: (args: readonly string[]) => completePath(fs, args),
+    },
+    {
+      name: "rm",
+      help: "remove a file or empty directory",
+      handler: (args: readonly string[]) => {
+        const name = args[0];
+        if (name === undefined) return ["rm: missing operand"];
+        const err = fs.rm(name);
+        return err === null ? [] : [err];
+      },
+      complete: (args: readonly string[]) => completePath(fs, args),
+    },
+    {
       name: "sudo",
       help: "run with elevated privileges (not really)",
-      handler: () => [SUDOERS_JOKE],
+      handler: (args: readonly string[]) => sudoHandler(args),
     },
   ] as const;
 
@@ -124,26 +174,36 @@ function registerCoreCommands(fs: FakeFs): void {
   }
 }
 
-export function createShell(): ShellInstance {
-  const fs = new FakeFs();
-  registerCoreCommands(fs);
+export function createShell(fs: FakeFs = getSharedFs()): ShellInstance {
+  registerContentCommands();
   const history: string[] = [];
+  registerCoreCommands(fs, history);
+
+  function runLine(line: string, ctx: ShellContext): readonly string[] {
+    const parsed = parse(line);
+    if (parsed.command === null) return [];
+    history.push(line);
+    const cmd = findCommand(parsed.command);
+    if (!cmd) {
+      return [
+        `zsh: command not found: ${parsed.command}`,
+        "Type 'help' to see what I can do",
+      ];
+    }
+    return cmd.handler(parsed.args, ctx) ?? [];
+  }
 
   return {
     fs,
     history,
     run(input, ctx) {
-      const parsed = parse(input);
-      if (parsed.command === null) return [];
-      history.push(input);
-      const cmd = findCommand(parsed.command);
-      if (!cmd) {
-        return [
-          `zsh: command not found: ${parsed.command}`,
-          "Type 'help' to see what I can do",
-        ];
+      const segments = input.split("&&").map((s) => s.trim()).filter(Boolean);
+      if (segments.length === 0) return [];
+      const outputs: string[] = [];
+      for (const segment of segments) {
+        outputs.push(...runLine(segment, ctx));
       }
-      return cmd.handler(parsed.args, ctx) ?? [];
+      return outputs;
     },
     complete(input) {
       const trimmed = input.trim();

@@ -315,7 +315,7 @@ describe("WorkspaceView (window chrome)", () => {
   it("renders the launcher hint on an empty active workspace", () => {
     render(createElement(WorkspaceView));
     expect(screen.getByTestId("ws-empty-hint")).toHaveTextContent(
-      "Nothing here yet. Press Super+Space",
+      "Nothing here yet. Press ⌘Space",
     );
   });
 

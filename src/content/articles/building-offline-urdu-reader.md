@@ -1,3 +1,14 @@
+---
+title: "Building an Offline-First Urdu Book Reader"
+description: "How I built Maktaba — a React Native app that serves 3,000+ Urdu books and PDFs without internet. Firebase sync, local storage, and why offline-first matters for accessibility."
+date: "2025-07-18"
+readingTime: "2 min read"
+tags:
+  - react-native
+  - urdu
+  - offline-first
+  - maktaba
+---
 # Building an Offline-First Urdu Book Reader
 
 ## Why offline-first?

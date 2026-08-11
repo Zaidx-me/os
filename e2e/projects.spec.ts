@@ -65,7 +65,7 @@ test.describe("projects window (todo 18)", () => {
     await expect(page.getByTestId("projects-card-applicator")).toBeVisible();
   });
 
-  test("clicking a card opens the detail pane with stack and correct link hrefs", async ({
+  test("clicking a card opens the detail pane with stack and in-OS link controls", async ({
     page,
   }) => {
     await openProjects(page);
@@ -78,12 +78,12 @@ test.describe("projects window (todo 18)", () => {
     );
 
     const repo = page.getByTestId("projects-link-repo");
-    await expect(repo).toHaveAttribute(
-      "href",
-      "https://github.com/Zaidx-me/whatbot",
-    );
-    await expect(repo).toHaveAttribute("target", "_blank");
-    await expect(repo).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(repo).toHaveText("Repo");
+    await repo.click();
+    await expect(page.getByTestId("app-content-browser")).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.getByTestId("browser-toolbar")).toBeVisible();
   });
 
   test("zenith-build detail shows the archived note and no live link", async ({

@@ -1,42 +1,46 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { AppIcon } from "@/components/ui/AppIcon";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppIcon, iconShapeForApp } from "@/components/ui/AppIcon";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { APPS } from "@/lib/apps";
+import { projects } from "@/content";
 import { openApp } from "@/lib/wm/actions";
-
-/**
- * Desktop icon grid — the ZaidOS analog of the Arch/Hyprland desktop.
- *
- * Renders one selectable icon per app. Single-click selects (accent ring),
- * double-click opens the app window, Enter opens the selected icon. The grid
- * layer also owns the DESKTOP right-click surface: right-clicking the empty
- * desktop dispatches `zaidos:desktop-context` (the ContextMenu component
- * listens) and suppresses the native menu. Right-clicks that happen on the
- * window layer above are stopped by the window tiles/chrome, so they never
- * reach this handler.
- *
- * The layer spans the area below the waybar at z-10 — the window layer
- * (WorkspaceView, z-20) floats above it, so open windows cover the icons just
- * like a real desktop.
- *
- * "Refresh" (context menu) dispatches `zaidos:refresh-icons`; this component
- * plays a brief spin. Under reduced motion the spin is skipped entirely.
- */
+import { openBrowser } from "@/lib/wm/openBrowser";
+import {
+  getIconPosition,
+  useDesktopLayoutStore,
+} from "@/store/desktop-layout";
 
 const SPIN_MS = 600;
 const SPIN_CLASS = "animate-spin";
+const DRAG_THRESHOLD = 4;
 
+const LIVE_SHORTCUTS = projects.filter((p) => p.links.live).slice(0, 4);
+
+/**
+ * macOS desktop — draggable app icons over the wallpaper.
+ * Drag to rearrange; positions persist in localStorage.
+ */
 export default function DesktopIcons() {
+  const positions = useDesktopLayoutStore((s) => s.positions);
+  const setPosition = useDesktopLayoutStore((s) => s.setPosition);
   const [selected, setSelected] = useState<string | null>(null);
   const [spinning, setSpinning] = useState(false);
-  const reducedMotion = usePrefersReducedMotion();
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const dragRef = useRef<{
+    id: string;
+    startX: number;
+    startY: number;
+    origX: number;
+    origY: number;
+    moved: boolean;
+  } | null>(null);
+  const reducedMotion = useReducedMotion();
 
-  // "Refresh" from the context menu: play a short spin on the icons.
   useEffect(() => {
     const onRefresh = () => {
-      if (reducedMotion) return; // no spin under reduced motion
+      if (reducedMotion) return;
       setSpinning(true);
       window.setTimeout(() => setSpinning(false), SPIN_MS);
     };
@@ -44,13 +48,53 @@ export default function DesktopIcons() {
     return () => window.removeEventListener("zaidos:refresh-icons", onRefresh);
   }, [reducedMotion]);
 
-  /** Opens an app via the WM orchestrator and clears the selection. */
   const open = useCallback((appId: string) => {
     setSelected(null);
     openApp(appId);
   }, []);
 
-  /** Desktop right-click surface — never shows the native menu. */
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
+      if (!drag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      drag.moved = true;
+      setDraggingId(drag.id);
+      setPosition(drag.id, {
+        x: Math.max(8, drag.origX + dx),
+        y: Math.max(8, drag.origY + dy),
+      });
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      setDraggingId(null);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [setPosition]);
+
+  const startDrag = (
+    e: React.PointerEvent,
+    id: string,
+    pos: { x: number; y: number },
+  ) => {
+    if (e.button !== 0) return;
+    dragRef.current = {
+      id,
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: pos.x,
+      origY: pos.y,
+      moved: false,
+    };
+  };
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     window.dispatchEvent(
@@ -63,51 +107,82 @@ export default function DesktopIcons() {
   return (
     <div
       data-testid="desktop-icons-layer"
-      aria-label="Desktop"
+      role="application"
+      aria-label="Desktop applications"
       onContextMenu={handleContextMenu}
       onClick={() => setSelected(null)}
-      className="absolute inset-x-0 bottom-0 top-[var(--waybar-h)] z-10"
+      className="absolute inset-x-0 bottom-20 top-waybar z-10"
     >
-      <div
-        aria-label="Applications"
-        className="flex h-full flex-col flex-wrap content-start items-start gap-1 p-2"
-      >
-        {APPS.map((app) => {
-          const isSelected = selected === app.id;
-          return (
-            <button
-              key={app.id}
-              type="button"
-              data-testid={`desktop-icon-${app.id}`}
-              data-selected={isSelected ? "true" : "false"}
-              aria-label={app.title}
-              aria-pressed={isSelected}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelected(app.id);
-              }}
-              onDoubleClick={(e) => {
-                e.stopPropagation();
+      {APPS.map((app) => {
+        const pos = getIconPosition(positions, app.id);
+        const isSelected = selected === app.id;
+        const isDragging = draggingId === app.id;
+        return (
+          <button
+            key={app.id}
+            type="button"
+            data-testid={`desktop-icon-${app.id}`}
+            data-selected={isSelected ? "true" : "false"}
+            aria-label={app.title}
+            aria-pressed={isSelected}
+            style={{ left: pos.x, top: pos.y }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              startDrag(e, app.id, pos);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (dragRef.current?.moved) return;
+              setSelected(app.id);
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              if (dragRef.current?.moved) return;
+              open(app.id);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
                 open(app.id);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  open(app.id);
-                }
-              }}
-              className={`flex w-20 select-none flex-col items-center gap-1 rounded-lg border p-2 text-center font-mono text-[11px] leading-tight transition-colors ${
-                isSelected
-                  ? "border-zaid-accent bg-zaid-accent/10 text-zaid-text"
-                  : "border-transparent text-zaid-muted hover:text-zaid-text"
-              } ${spinning ? SPIN_CLASS : ""}`}
-            >
-              <AppIcon appId={app.id} size={40} className="drop-shadow" />
-              <span>{app.title}</span>
-            </button>
-          );
-        })}
-      </div>
+              }
+            }}
+            className={`absolute flex w-[4.5rem] touch-none select-none flex-col items-center gap-1.5 rounded-xl p-1.5 text-center text-[11px] leading-tight transition-shadow ${
+              isSelected
+                ? "desktop-icon-selected bg-[rgba(0,122,255,0.22)] shadow-lg ring-2 ring-[rgba(0,122,255,0.45)] backdrop-blur-sm"
+                : "hover:bg-white/25"
+            } ${isDragging ? "z-20 cursor-grabbing opacity-90" : "cursor-grab"} ${spinning ? SPIN_CLASS : ""}`}
+          >
+            <AppIcon appId={app.id} size={52} shape={iconShapeForApp(app.id)} className="drop-shadow-lg" />
+            <span className={`desktop-icon-label font-medium ${isSelected ? "rounded px-1.5 py-0.5 text-zaid-text" : "text-zaid-text"}`}>
+              {app.title}
+            </span>
+          </button>
+        );
+      })}
+      {LIVE_SHORTCUTS.map((project, i) => {
+        const pos = { x: 16 + Math.floor(APPS.length / 8 + 1) * 96, y: 16 + i * 96 };
+        return (
+          <button
+            key={`web-${project.id}`}
+            type="button"
+            data-testid={`desktop-web-${project.id}`}
+            aria-label={`Open ${project.title} live`}
+            style={{ left: pos.x, top: pos.y }}
+            onClick={(e) => {
+              e.stopPropagation();
+              openBrowser(project.links.live!);
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              openBrowser(project.links.live!);
+            }}
+            className="absolute flex w-[4.5rem] select-none flex-col items-center gap-1.5 rounded-xl p-1.5 text-center text-[11px] leading-tight text-zaid-text hover:bg-white/30"
+          >
+            <AppIcon appId="browser" size={52} className="drop-shadow-lg" />
+            <span className="line-clamp-2 font-medium">{project.title}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

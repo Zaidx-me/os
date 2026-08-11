@@ -1,0 +1,10 @@
+/* TEAM */
+Developer: Muhammad Zaid Yaseen
+Site: https://zaidx.me
+Location: Pakistan
+
+/* THANKS */
+Crafted by yours truly.
+
+/* TECH */
+Next.js, React, TypeScript, Tailwind CSS, Zustand, Motion, chess.js

@@ -77,18 +77,18 @@ test.describe("desktop icons + context menu", () => {
     await bootToDesktop(page);
     await expect(page.getByTestId("wallpaper")).toHaveAttribute(
       "data-theme",
-      "matrix",
+      "teal",
     );
 
     await page
       .getByTestId("desktop-icons-layer")
       .click({ button: "right", position: { x: 1100, y: 500 } });
     await page.getByTestId("context-menu-wallpaper").click();
-    await page.getByTestId("context-menu-wallpaper-gradient").click();
+    await page.getByTestId("context-menu-wallpaper-sky").click();
 
     await expect(page.getByTestId("wallpaper")).toHaveAttribute(
       "data-theme",
-      "gradient",
+      "sky",
       { timeout: 2000 },
     );
   });

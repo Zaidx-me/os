@@ -11,23 +11,32 @@ describe("AppIcon", () => {
   it("renders a deterministic fallback for unknown ids without throwing", () => {
     const { container } = render(<AppIcon appId="unknown-id" />);
     expect(screen.getByRole("img", { name: "App" })).toBeInTheDocument();
-    // fallback glyph is a generic app tile: a rect + center dot
-    expect(container.querySelectorAll("rect").length).toBe(1);
-    expect(container.querySelectorAll("circle").length).toBe(1);
+    expect(container.querySelector("path")).not.toBeNull();
   });
 
-  it("renders all 11 appIds without throwing", () => {
+  it("renders all 20 appIds without throwing", () => {
     for (const appId of APP_IDS) {
       const { container } = render(<AppIcon appId={appId} />);
       expect(container.querySelector("svg")).not.toBeNull();
-      expect(container.querySelectorAll("path, circle, rect").length).toBeGreaterThan(0);
+      expect(container.querySelector("path")).not.toBeNull();
     }
   });
 
-  it("uses currentColor theming", () => {
-    const { container } = render(<AppIcon appId="terminal" />);
+  it("glyph variant uses currentColor theming", () => {
+    const { container } = render(<AppIcon appId="terminal" variant="glyph" />);
     const svg = container.querySelector("svg");
     expect(svg?.getAttribute("stroke")).toBe("currentColor");
     expect(svg?.getAttribute("fill")).toBe("none");
+  });
+
+  it("tile variant uses squircle glass path", () => {
+    const { container } = render(<AppIcon appId="browser" size={48} />);
+    expect(container.querySelector("linearGradient")).not.toBeNull();
+    expect(container.querySelectorAll("path").length).toBeGreaterThan(0);
+  });
+
+  it("folder shape renders folder artwork", () => {
+    const { container } = render(<AppIcon appId="files" size={48} shape="folder" />);
+    expect(container.querySelector("path")).not.toBeNull();
   });
 });

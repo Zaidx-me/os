@@ -1,3 +1,14 @@
+---
+title: "Building a WhatsApp API Gateway with MCP Server Integration"
+description: "I forked OpenWA and added an MCP server for AI agents, a protocol-neutral tool registry, and Docker security hardening. Here's how it all fits together."
+date: "2025-07-12"
+readingTime: "2 min read"
+tags:
+  - whatsapp
+  - mcp
+  - nestjs
+  - docker
+---
 # Building a WhatsApp API Gateway with MCP Server Integration
 
 ## Why another WhatsApp gateway?

@@ -1,0 +1,41 @@
+Tasks 44-48 + Final gates — status
+=====================================
+Date: 2026-08-12
+
+Task 44 — Vercel project + env vars
+Status: SKIPPED-CLI (see task-44-zaidos-portfolio.txt)
+- .env.example + README deploy steps complete
+- Requires owner: vercel login, vercel link, vercel deploy --prod
+
+Task 45 — Domain cutover zaidx.me
+Status: BLOCKED (requires task 44 + DNS provider access)
+- Do NOT cut over until Vercel prod deploy exists
+- CRITICAL: preserve whatbot.zaidx.me DNS record
+
+Task 46 — Post-deploy verification
+Status: BLOCKED (depends on task 45)
+
+Task 47 — Analytics + project docs
+Status: PASS
+- @vercel/analytics in layout.tsx
+- README.md + AGENTS.md updated
+
+Task 48 — Final content/link sweep
+Status: PARTIAL
+- grep: no xterm, no "Create Next App" template copy in src/
+- contactEmail remains owner@zaidx.me placeholder (plan: replace before launch)
+- npm run test:unit: 375+ tests PASS
+- npm run build: PASS
+- JS budget: 188.9 KB gzip > 150 KB limit (task 42 gate FAIL — needs optimization)
+- Lighthouse (task 38 baseline): perf 74, a11y 100, seo 100
+
+F1 Plan compliance: 1-43 evidence present; 44 SKIPPED-CLI; 45-46 blocked; 48 partial
+F2 Code quality: lint 0 errors (warnings only), typecheck PASS, budget FAIL
+F3 Full e2e: run `npx playwright install chromium && npx playwright test --workers=1`
+F4 Scope: no xterm/DB/auth; terminal/chatbot/chess/mobile/redirects implemented
+
+Owner next steps:
+1. Optimize landing bundle to <=150KB OR adjust budget with justification
+2. vercel deploy + DNS cutover (tasks 44-46)
+3. Replace contactEmail placeholder
+4. git tag v1.0.0 after prod verification

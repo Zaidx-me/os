@@ -3,8 +3,9 @@
 import { motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useBootStore } from "@/store/boot";
+import { pushNotification } from "@/store/notifications";
 
 /**
  * Full-screen ZaidOS boot sequence, shown on first visit only.
@@ -25,6 +26,11 @@ const BOOT_LINES = [
   "[ OK ] Started ZaidOS - the only OS cooler than your window manager",
   "[ OK ] Mounted /dev/zaid on /home",
   "[ OK ] Started Hyprland.web compositor",
+  "[ OK ] Reached target Graphical Interface",
+  "[ OK ] Started waybar.service",
+  "[ OK ] Started zaidos-wm.service",
+  "[ OK ] Started network-online.target",
+  "[ OK ] Started zaidos-browser-proxy.service",
 ] as const;
 
 /** Typewriter speed: one character per tick. */
@@ -32,7 +38,7 @@ const CHAR_MS = 20;
 /** Pause before each subsequent log line starts typing. */
 const LINE_GAP_MS = 350;
 /** Auto-continue budget: completeBoot fires once elapsed >= this. */
-const AUTO_ADVANCE_MS = 4000;
+const AUTO_ADVANCE_MS = 5500;
 /** Interval tick driving the elapsed clock (fixed step, timer-test friendly). */
 const TICK_MS = 16;
 /** Hold for reduced-motion visitors so the fully-formed screen is visible. */
@@ -59,7 +65,7 @@ function charsTypedAt(elapsedMs: number): number {
 
 export default function BootScreen() {
   const completeBoot = useBootStore((s) => s.completeBoot);
-  const reducedMotion = usePrefersReducedMotion();
+  const reducedMotion = useReducedMotion();
   const [typedCount, setTypedCount] = useState(0);
   const doneRef = useRef(false);
 
@@ -72,6 +78,7 @@ export default function BootScreen() {
   const finish = useCallback(() => {
     if (doneRef.current) return;
     doneRef.current = true;
+    pushNotification("Welcome to ZaidOS", "Press ⌘Space to launch apps");
     completeBoot();
   }, [completeBoot]);
 
@@ -119,7 +126,7 @@ export default function BootScreen() {
   return (
     <motion.div
       data-testid="boot-screen"
-      className="fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center bg-zaid-bg font-mono"
+      className="boot-screen-bg fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center font-sans"
       exit={{
         opacity: 0,
         transition: { duration: reducedMotion ? 0 : EXIT_MS / 1000 },
@@ -131,7 +138,7 @@ export default function BootScreen() {
         <span aria-hidden="true">
           <AppIcon appId="terminal" size={44} className="text-zaid-accent" />
         </span>
-        <span className="text-4xl font-bold tracking-tight text-zaid-text">
+        <span className="font-display text-4xl font-semibold tracking-tight text-zaid-text">
           Zaid<span className="text-zaid-accent">OS</span>
         </span>
       </div>
@@ -159,12 +166,12 @@ export default function BootScreen() {
       </div>
 
       {/* Progress bar */}
-      <div className="mt-10 h-1 w-[min(92vw,560px)] overflow-hidden rounded-full bg-zaid-surface2">
+      <div className="mt-10 h-1 w-[min(92vw,560px)] overflow-hidden rounded-full bg-zaid-border/30">
         {reducedMotion ? (
-          <div className="h-full w-full bg-zaid-accent" />
+          <div className="h-full w-full rounded-full bg-zaid-accent" />
         ) : (
           <motion.div
-            className="h-full bg-zaid-accent"
+            className="h-full rounded-full bg-zaid-accent"
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
             transition={{

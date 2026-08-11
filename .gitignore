@@ -18,6 +18,12 @@
 # next.js
 /.next/
 /out/
+**/.next/
+
+# External dev cache / mirrored paths (NTFS dev quirk — never commit)
+/home/
+/run/
+**/zaidos-next-dev/
 
 # production
 /build
@@ -42,3 +48,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated evidence dumps
+.omo/evidence/lh-baseline.json
+
+# editor / agent
+.cursor/

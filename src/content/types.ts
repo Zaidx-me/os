@@ -84,7 +84,7 @@ export interface Social {
   url: string;
 }
 
-export const WALLPAPER_TYPES = ['matrix', 'gradient', 'dark', 'light'] as const;
+export const WALLPAPER_TYPES = ['slate', 'teal', 'sky', 'sand'] as const;
 
 export type WallpaperType = (typeof WALLPAPER_TYPES)[number];
 

@@ -1,0 +1,37 @@
+Task 26 — neofetch command
+============================
+Date: 2026-08-12
+Status: PASS
+
+Files created
+-------------
+- src/store/session.ts — SESSION_START_MS + getSessionUptimeSec() +
+  formatSessionUptime() for session uptime (client tab lifetime).
+- src/lib/shell/neofetch.ts — original geometric "A" ASCII logo (NOT copied
+  Arch/neofetch art); neofetch(env) merges logo + info card; readNeofetchEnv()
+  reads window.innerWidth/Height, navigator.hardwareConcurrency, fake memory %;
+  ANSI color blocks from design-token palette (green/cyan/blue/magenta/yellow/red).
+- src/lib/shell/neofetch.test.ts — Vitest (6): Hyprland.web + zaid@zaidos;
+  all info lines; logo present; resolution numeric (not NaN); fakeMemoryPct range;
+  readNeofetchEnv overrides.
+- src/lib/shell/commands.ts — register neofetch command.
+- src/lib/shell/commands.test.ts — shell integration test for neofetch.
+- e2e/terminal.spec.ts — Playwright neofetch ASCII card visible (desktop+mobile).
+
+Acceptance mapping (plan line 303)
+----------------------------------
+- Vitest contains Hyprland.web + zaid@zaidos: neofetch.test.ts PASS.
+- Playwright type neofetch -> ASCII block: e2e/terminal.spec.ts PASS.
+
+QA scenarios (plan line 304)
+----------------------------
+- happy all lines present: neofetch.test.ts PASS.
+- failure resolution equals numeric dims: neofetch.test.ts PASS.
+
+Verification gates (ALL PASS)
+-----------------------------
+1. npm run test:unit — 33 files, 328 tests PASS
+2. npm run build — PASS
+3. npx playwright test e2e/terminal.spec.ts — 8 passed
+
+Commit: pending user request

@@ -37,6 +37,10 @@ export interface ShellContext {
   data: ContentData;
   wallpaper: (type: WallpaperType) => void;
   launcher: () => void;
+  /** Wired by TerminalApp so `exit` can close its window. */
+  close?: () => void;
+  /** Wired by TerminalApp — `matrix` / `cmatrix` show the full-screen overlay. */
+  showMatrix?: () => void;
 }
 
 /** A command's rendered output: lines, or nothing. */

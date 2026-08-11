@@ -12,8 +12,8 @@ import { APPS, appTitle, getAppMeta } from "@/lib/apps";
  * defaultSize contract so the window host can mount any app by id.
  */
 describe("app registry", () => {
-  it("registers exactly the 11 apps from APP_IDS, no more, no less", () => {
-    expect(APPS.length).toBe(11);
+  it("registers exactly the 20 apps from APP_IDS, no more, no less", () => {
+    expect(APPS.length).toBe(20);
     const registryIds = APPS.map((app) => app.id).sort();
     const iconIds = [...APP_IDS].sort();
     expect(registryIds).toEqual(iconIds);

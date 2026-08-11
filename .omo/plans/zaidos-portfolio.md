@@ -280,7 +280,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: article renders headings. failure: empty/missing md file shows friendly "Article body coming soon" instead of crash. Evidence .omo/evidence/task-23-zaidos-portfolio.txt
   Commit: Y | feat(apps): Articles window with inline markdown reader
 
-- [ ] 24. Terminal shell core (parser, registry, fake fs)
+- [x] 24. Terminal shell core (parser, registry, fake fs)
   What to do / Must NOT do: src/lib/shell/parser.ts: tokenizer (quotes, escaped chars), command + args, tests. src/lib/shell/registry.ts: register({ name, aliases, help, handler(args, ctx), complete? }). src/lib/shell/shell.ts: run(input, ctx) -> output lines, unknown command -> `zsh: command not found: X` + "Type 'help' to see what I can do"; history array (up/down) in TerminalApp; prompt `zaid@zaidos:~$`; context { openApp, data, wallpaper, launcher }. Fake fs: src/lib/shell/fakefs.ts (~: projects/, dotfiles/, games/, README.md) with ls/cd/pwd/cat semantics. src/components/apps/TerminalApp.tsx: monospace font-mono, auto-scroll, blinking block cursor, typed-line output animation (fast), ANSI-ish escapes (\x1b[32m green for [ OK ]), click-to-focus, paste, selectable text. TDD parser/registry/fakefs/shell; MUST NOT eval/execute real commands; simulated only.
   Parallelization: Wave 5 | Blocked by: 3,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): shell behavior spec in plan Scope; zustand for history? (terminal state local to component)
@@ -288,7 +288,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: run('ls') lists ~ entries. failure: run('sudo nope') returns sudoers joke. Evidence .omo/evidence/task-24-zaidos-portfolio.txt
   Commit: Y | feat(terminal): shell parser, registry, fake filesystem, and terminal UI
 
-- [ ] 25. Terminal command content
+- [x] 25. Terminal command content
   What to do / Must NOT do: Implement commands: help (grid), about, projects (IDs+status from data), skills (groups), experience, contact (email+socials), socials (URLs clickable), whoami ("zaid - developer who rices his desktop"), date, echo, clear, exit (closes window), open <app>, ls, cd, pwd, cat, history, sudo (rm -rf -> refusal joke "nice try. this isn't real, and neither is your productivity."; else "zaid is not in the sudoers file. This incident will be reported. (to the chess board)"). Outputs pull from data layer. TDD: every command handler has a unit test. MUST NOT hardcode project list in command output (read from content/projects.ts).
   Parallelization: Wave 5 | Blocked by: 3,13,15,24 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): data layer (3); joke tone from GitHub README voice
@@ -296,7 +296,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: `projects` prints all 12 ids. failure: `open nosuch` prints error line, no crash. Evidence .omo/evidence/task-25-zaidos-portfolio.txt
   Commit: Y | feat(terminal): command content for about/projects/skills/contact/fs/jokes
 
-- [ ] 26. neofetch command
+- [x] 26. neofetch command
   What to do / Must NOT do: neofetch(): type output: Arch ASCII logo (ORIGINAL text-art, no copied ASCII) + right-aligned lines: zaid@zaidos / OS: ZaidOS x86_64 (browser edition) / Host: your browser (probably) / Kernel: 6.12.1-zen (joke) / Uptime: from session / Shell: zsh 5.9 / WM: Hyprland.web / Terminal: ZaidOS Terminal / CPU: N cores (browser tab) / Memory: fake% / Resolution: window.innerWidth x innerHeight / + accent color blocks using token colors. Rendered as pre-formatted block (special output type). TDD: given session state, output lines match. MUST NOT fabricate a real kernel/host (jokes explicit).
   Parallelization: Wave 5 | Blocked by: 24 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): neofetch style; sessions store for uptime (add uptime.ts store or derive from boot time)
@@ -304,7 +304,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: all lines present. failure: resolution line equals parseFloat window dims (not NaN). Evidence .omo/evidence/task-26-zaidos-portfolio.txt
   Commit: Y | feat(terminal): neofetch with Arch ASCII and system card
 
-- [ ] 27. Easter eggs: matrix rain, cmatrix, fortune, cowsay, power menu
+- [x] 27. Easter eggs: matrix rain, cmatrix, fortune, cowsay, power menu
   What to do / Must NOT do: `matrix`/`cmatrix` -> full-screen canvas rain (reuse MatrixRain todo 7) until key/click/Esc. `fortune` -> 20+ ORIGINAL witty lines in his voice (London System, ricing, sudo survivors, WhatsApp API gateways, Urdu poetry) - no external quotes. `cowsay` -> simple ASCII cow wrapping a fortune line (static template, no dep). Power button dialog (todo 8) implemented here if not already. MUST NOT copy fortune packs; MUST NOT import ASCII art libs.
   Parallelization: Wave 5 | Blocked by: 24 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): MatrixRain (7); voice from GitHub README
@@ -312,7 +312,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: overlay toggles. failure: reduced-motion -> matrix single static frame (no rAF loop). Evidence .omo/evidence/task-27-zaidos-portfolio.txt
   Commit: Y | feat(terminal): matrix rain, fortune, cowsay easter eggs
 
-- [ ] 28. Chess mini-game app
+- [x] 28. Chess mini-game app
   What to do / Must NOT do: npm i chess.js. src/components/apps/ChessApp.tsx: 8x8 CSS-grid board, Unicode piece glyphs, legal-move validation via chess.js, click-move (select piece, show legal target dots), move history (SAN), captured pieces, check/checkmate/stalemate detection + banner, modes Hot-seat + vs Rookie CPU (minimax depth<=2, material eval, ~500ms think delay, random among equal evals), New game + flip board buttons. MUST NOT implement stronger engine (depth<=2 bound); MUST NOT use image assets for pieces.
   Parallelization: Wave 5 | Blocked by: 3,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): chess.js https://github.com/jhlywa/chess.js/blob/master/README.md ; API: moves({verbose:true}), move(), isCheckmate(), isStalemate(), isDraw()
@@ -320,7 +320,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: pawn e2-e4 advances. failure: rook e1-e5 with pieces in between rejected (uci move throws -> state unchanged). Evidence .omo/evidence/task-28-zaidos-portfolio.txt
   Commit: Y | feat(apps): playable chess game with legal moves and Rookie CPU
 
-- [ ] 29. Terminal + easter-egg e2e suite
+- [x] 29. Terminal + easter-egg e2e suite
   What to do / Must NOT do: ONE Playwright spec (terminal.spec.ts): open terminal (Mod+Enter), help lists commands, about prints bio, projects lists ids, matrix shows overlay, neofetch shows ASCII, sudo rm -rf / returns joke, `cd projects && ls` nav fake fs, open chess opens chess window. chess.spec.ts: legal move works, illegal rejected, checkmate banner on Scholar's mate quick setup (FEN). MUST NOT split terminal assertions into separate specs per command (single suite = faster CI).
   Parallelization: Wave 5 | Blocked by: 24-28 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): commands spec (24,25); chess (28)
@@ -328,7 +328,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios: happy: full command walkthrough green. failure: `open nosuch` shows error line and suite still passes that negative assertion. Evidence same file.
   Commit: Y | test(e2e): terminal and chess end-to-end suites
 
-- [ ] 30. Chatbot KB engine (scripted)
+- [x] 30. Chatbot KB engine (scripted)
   What to do / Must NOT do: src/lib/chat/kb.ts: intents >=18 (greeting, who_are_you, what_do_you_do, projects, project_specific x8: applicator/whatbot/maktaba/media-cleaner/pu-stacks/zesho/tower-defense/tank-arena, skills, stack, experience, education, availability/hire, contact, socials, chess, arch/ricing, fun, thanks, bye, help_chat); each { id, patterns[], respond: string | (ctx)=>string, fallback[] }. Matcher: lowercase + regex/word-overlap scoring; below threshold -> random fallback line in his voice. ctx injects content data (projects/skills/socials). TDD: matcher picks correct intent; gibberish -> fallback; case/whitespace insensitivity; every intent has >=1 passing pattern test. MUST NOT call any network; pure function.
   Parallelization: Wave 6 | Blocked by: 3,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): project facts + data layer (3); voice from GitHub README
@@ -336,7 +336,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: 'who are you' -> who_are_you. failure: empty/whitespace input -> help_chat prompt, no crash. Evidence .omo/evidence/task-30-zaidos-portfolio.txt
   Commit: Y | feat(chat): scripted knowledge-base intent engine with fallbacks
 
-- [ ] 31. ZaidGPT chat UI
+- [x] 31. ZaidGPT chat UI
   What to do / Must NOT do: src/components/apps/ChatApp.tsx: message list (user right accent bubble, bot left glass bubble), typing indicator (3-dot + "zaid is thinking..."), quick-reply chips (Who are you? / Show me projects / Skills / Contact), input + Enter send, localStorage history (cap 100 msgs, clear button), header badge "offline KB" vs "AI mode" (todo 32), footer joke "powered by my own API-transformer vibes". Auto-scroll to bottom. MUST NOT auto-scroll if user scrolled up; MUST NOT send empty messages.
   Parallelization: Wave 6 | Blocked by: 15,30 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): KB engine (30); chat UX pattern
@@ -344,7 +344,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: quick-reply works. failure: empty input Enter -> no message, no error. Evidence .omo/evidence/task-31-zaidos-portfolio.txt
   Commit: Y | feat(apps): ZaidGPT chat window with typing indicator and history
 
-- [ ] 32. /api/chat LLM route (env-gated)
+- [x] 32. /api/chat LLM route (env-gated)
   What to do / Must NOT do: src/app/api/chat/route.ts: POST { messages } -> if !process.env.LLM_API_KEY -> 501 {mode:'kb'}; else build system prompt from data layer (bio, projects, skills, socials: "Answer as Zaid - first person, witty but helpful, keep answers short"), POST to `${LLM_BASE_URL||'https://api.openai.com/v1'}/chat/completions` with model LLM_MODEL||'gpt-4o-mini', timeout 15s AbortController, truncate history to last 10, cap each incoming user message at 500 chars, never log keys, never echo the raw system prompt or API keys back to the client, treat LLM output as untrusted (no persistent memory beyond the last 10 messages); on error/timeout -> 502 {mode:'kb'}. Client (ChatApp): if mode kb or fetch fails -> use local KB answer (todo 30). MUST NOT hardcode keys; .env.example only.
   Parallelization: Wave 6 | Blocked by: 30 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): OpenAI-compatible chat completions schema; Vercel route handlers https://nextjs.org/docs/app/building-your-application/routing/route-handlers
@@ -352,7 +352,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: mocked LLM returns content, client renders bubble. failure: 501 -> client falls back to KB answer visibly. Evidence .omo/evidence/task-32-zaidos-portfolio.txt
   Commit: Y | feat(api): env-gated OpenAI-compatible chat route with KB fallback
 
-- [ ] 33. Chatbot e2e + Settings app with AI toggle
+- [x] 33. Chatbot e2e + Settings app with AI toggle
   What to do / Must NOT do: Create src/components/apps/SettingsApp.tsx (wallpaper picker from 7, accent picker, blur toggle, animations toggle, AI-chat toggle, About ZaidOS). Playwright chat.spec.ts: KB answer; route interception of /api/chat -> 501 => KB fallback; -> {mode:'llm', content:'AI says hi'} => AI bubble renders + header shows "AI mode". AI-chat toggle persisted in zustand, rendered in ChatApp header + Settings window. MUST NOT require real keys in CI.
   Parallelization: Wave 6 | Blocked by: 31,32 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): Settings app plan; wallpaper store (7); zustand
@@ -360,7 +360,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: intercepted LLM content renders. failure: intercept 501 -> KB fallback bubble. Evidence .omo/evidence/task-33-zaidos-portfolio.txt
   Commit: Y | feat(apps): Settings app with appearance toggles + chatbot e2e
 
-- [ ] 34. Articles port + SSR routes
+- [x] 34. Articles port + SSR routes
   What to do / Must NOT do: Download the 4 article pages at implementation time (URLs in Findings) -> content/articles/<slug>.md with frontmatter (title, description, date, readingTime, tags) + markdown body (strip old site nav/footer; keep prose). Routes: src/app/articles/page.tsx (SSR list) + src/app/articles/[slug]/page.tsx (SSR reader; generateStaticParams + generateMetadata; revalidate false). Prose styling matching rice theme. MUST keep exact slugs: building-whatsapp-gateway, building-offline-urdu-reader, designing-university-courseware-platform, ai-job-application-assistant. MUST NOT invent content; if a body can't be fetched, keep title+description and mark body "Full article coming soon" (flag in todo 48). Download MUST complete before the DNS cutover in todo 45 (old site may be unreachable after).
   Parallelization: Wave 7 | Blocked by: 3,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): article pages https://zaidx.me/articles/* (4 URLs); markdown linting via remark
@@ -368,7 +368,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: slug page renders prose. failure: unknown slug /articles/nope -> 404 (notFound()). Evidence .omo/evidence/task-34-zaidos-portfolio.txt
   Commit: Y | feat(content): port 4 articles with SSR routes and metadata
 
-- [ ] 35. Metadata + OG image
+- [x] 35. Metadata + OG image
   What to do / Must NOT do: Root layout metadata: title "ZaidOS - Muhammad Zaid", description in his voice (e.g. "The web desktop of Muhammad Zaid - mobile & full-stack developer, AI tinkerer, and Arch Linux ricer. Boot up, poke around, open a terminal."), metadataBase https://zaidx.me, openGraph + twitter. src/app/opengraph-image.tsx via next/og: dark rice card with terminal window (`whoami` -> `zaid`), name, accent green. Per-route metadata for /articles + [slug]. MUST NOT reuse old site's template description/canonical; URL must be https://zaidx.me (not the broken zaidxme).
   Parallelization: Wave 7 | Blocked by: 15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): Next metadata API https://nextjs.org/docs/app/api-reference/functions/generate-metadata ; next/og https://nextjs.org/docs/app/api-reference/file-conventions/metadata-files/opengraph-image
@@ -376,7 +376,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: metadata present. failure: assert old template description string absent from all routes. Evidence .omo/evidence/task-35-zaidos-portfolio.txt
   Commit: Y | feat(seo): metadata and rice-styled OG image via next/og
 
-- [ ] 36. sitemap, robots, JSON-LD, humans.txt
+- [x] 36. sitemap, robots, JSON-LD, humans.txt
   What to do / Must NOT do: src/app/sitemap.ts (/, /articles, 4 slugs); src/app/robots.ts (allow all + sitemap URL); JSON-LD Person in root layout (name, alternateName zaidx, url, sameAs: all 7 socials, jobTitle, alumniOf UoP, knowsAbout: skill list); public/humans.txt (name, site URL, "Crafted by yours truly", tech stack). MUST NOT include /projects or app-query URLs in sitemap (only real routes).
   Parallelization: Wave 7 | Blocked by: 34,35 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): sitemap/robots conventions https://nextjs.org/docs/app/api-reference/file-conventions/metadata-files/sitemap
@@ -384,7 +384,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: sitemap parseable XML. failure: JSON-LD in <head> parses as valid JSON-LD with sameAs length 7. Evidence .omo/evidence/task-36-zaidos-portfolio.txt
   Commit: Y | feat(seo): sitemap, robots, JSON-LD Person, and humans.txt
 
-- [ ] 37. Redirects for old routes
+- [x] 37. Redirects for old routes
   What to do / Must NOT do: next.config.ts redirects (301 permanent): /projects/:slug -> /?app=projects; /contact -> /?app=contact; /uses -> /?app=about. Root client reads ?app= once at mount and opens that app (desktop: window; mobile: full-screen page). /articles/:slug stays same path (new app serves it). www->apex handled at hosting layer (Vercel), not here. MUST NOT redirect /articles/*.
   Parallelization: Wave 7 | Blocked by: 15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): next.config redirects https://nextjs.org/docs/app/api-reference/next-config-js/redirects ; old routes from zaidx.me nav (Projects section is /#project-N anchors, /projects/:slug existed 404 on old site - redirect regardless for link safety)
@@ -392,7 +392,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: redirect chain ends 200 on /. failure: /articles/building-whatsapp-gateway returns 200 (NOT redirected). Evidence .omo/evidence/task-37-zaidos-portfolio.txt
   Commit: Y | feat(routing): 301 redirects for legacy paths and ?app deep-links
 
-- [ ] 38. SEO e2e + Lighthouse baseline
+- [x] 38. SEO e2e + Lighthouse baseline
   What to do / Must NOT do: Playwright seo.spec.ts: / 200 + title + meta; /articles/building-whatsapp-gateway 200 + h1; /articles/nope 404; /projects/applicator 301 Location /?app=projects; /sitemap.xml 200; /robots.txt 200; JSON-LD parse. Lighthouse: `npx lighthouse http://localhost:3000 --only-categories=performance,accessibility,seo --output=json --output-path=.omo/evidence/lh-baseline.json`; record scores; perf + a11y >= 90 required on landing route; else FIX in this todo. MUST NOT skip Lighthouse on CI (add optional job gate).
   Parallelization: Wave 7 | Blocked by: 34-37 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): Lighthouse CLI https://github.com/GoogleChrome/lighthouse
@@ -400,7 +400,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: all assertions green. failure: a redirected path returning 200 fails spec (asserts 301 enforced). Evidence same file.
   Commit: Y | test(seo): SEO e2e suite and Lighthouse baseline gate
 
-- [ ] 39. Mobile shell (touch layout)
+- [x] 39. Mobile shell (touch layout)
   What to do / Must NOT do: useIsMobile hook (matchMedia '(pointer: coarse)' + width <1024). MobileShell: slim top bar (ZaidOS mark, clock, menu button), app-drawer (full-screen icon grid, opens via menu tap), apps open as full-screen stacked pages with back button (no drag/resize/minimize chrome), terminal input fixed at bottom with on-screen hint, chat + chess touch-friendly. Shared content components (same apps, different chrome via props). MUST NOT fork app components; MUST NOT show waybar/windows/desktop on mobile.
   Parallelization: Wave 8 | Blocked by: 2,3,4,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): matchMedia https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia ; reuse all apps from waves 4-6
@@ -408,7 +408,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: drawer -> app -> back round-trip. failure: desktop waybar is display:none on mobile viewport (assert). Evidence .omo/evidence/task-39-zaidos-portfolio.txt
   Commit: Y | feat(mobile): touch shell with app drawer and full-screen apps
 
-- [ ] 40. Keyboard nav + focus + ARIA
+- [x] 40. Keyboard nav + focus + ARIA
   What to do / Must NOT do: Focus management: window open focuses content; Tab cycles within focused window then to waybar + desktop icons; focus trap for launcher/context menu/chat modal + ESC; visible focus-visible ring (2px accent offset). ARIA: waybar role menubar; window role dialog aria-label title; desktop role application; launcher combobox+listbox; chat aria-live polite; aria-labels on all icon buttons; skip link "Skip to desktop" (focuses desktop). axe-core/playwright scans (wcag2a, wcag2aa) on landing, terminal, chat - 0 critical/serious violations. MUST NOT trap keyboard in desktop shell (open system).
   Parallelization: Wave 8 | Blocked by: 13,15,39 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): axe-core/playwright https://github.com/dequelabs/axe-core ; ARIA APG dialog pattern https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/
@@ -416,7 +416,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: full keyboard walkthrough. failure: axe finds violation -> spec fails (gate active). Evidence .omo/evidence/task-40-zaidos-portfolio.txt
   Commit: Y | feat(a11y): keyboard navigation, focus management, and ARIA roles
 
-- [ ] 41. Reduced motion + contrast
+- [x] 41. Reduced motion + contrast
   What to do / Must NOT do: Global reduced-motion: boot animations instant, matrix loop static frame, gradient static, window animations instant, launcher fade only. Motion components use MotionConfig reducedMotion="user". Settings animations toggle overrides (forces on/off). Contrast: tokens designed for WCAG AA (verify text-on-surface >= 4.5:1; muted only for non-essential text); axe color-contrast rule passes on landing. MUST NOT ship elements that auto-animate against reduced-motion preference.
   Parallelization: Wave 8 | Blocked by: 2,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): prefers-reduced-motion https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion ; MotionConfig https://motion.dev/docs/react-reduced-motion
@@ -424,7 +424,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: reduced-motion matrix static. failure: forced-animations toggle re-enables and matrix animates (proves override works). Evidence .omo/evidence/task-41-zaidos-portfolio.txt
   Commit: Y | feat(a11y): reduced-motion support and contrast compliance
 
-- [ ] 42. Performance budget
+- [x] 42. Performance budget
   What to do / Must NOT do: Ensure dynamic imports (todo 15) keep apps out of main bundle; next/image for photo + OG-safe; next/font self-hosted with display swap; preload critical CSS; terminal/matrix/chess/chat code-split. `next build` output must show landing route first-load JS <= 150KB gzipped. Wire a CI-assertable check: a job in .github/workflows/ci.yml parses the build output / route chunk sizes and FAILS the pipeline if initial JS > 150KB gzipped (no eyeball-only check). MUST NOT lazy-load the desktop shell itself (boot+waybar+wm are critical path for landing).
   Parallelization: Wave 8 | Blocked by: 15,39 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): next build output sizes; dynamic import https://nextjs.org/docs/app/building-your-application/optimizing/lazy-loading
@@ -432,7 +432,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: build sizes within budget. failure: adding static import of one app to host makes size exceed - CI budget job fails (proves gate works). Evidence .omo/evidence/task-42-zaidos-portfolio.txt
   Commit: Y | perf: lazy-load apps and meet 150KB initial-JS budget
 
-- [ ] 43. Mobile + a11y e2e suite
+- [x] 43. Mobile + a11y e2e suite
   What to do / Must NOT do: mobile.spec.ts (390x844): boot -> mobile shell; drawer -> Projects -> back; terminal works; chat quick-reply works. a11y.spec.ts (from 40) + reduced-motion.spec.ts (41) consolidated into one e2e suite. Run both Playwright projects in CI. MUST NOT gate on flaky screenshot comparisons (assert DOM state, not pixels).
   Parallelization: Wave 8 | Blocked by: 39-42 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): playwright projects config (5)
@@ -464,7 +464,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: all codes exact. failure: any 5xx or unexpected redirect -> fix and re-verify (do not declare done). Evidence .omo/evidence/task-46-zaidos-portfolio.json
   Commit: Y | chore(infra): post-deploy verification of routes, redirects, and externals
 
-- [ ] 47. Analytics + project docs
+- [x] 47. Analytics + project docs
   What to do / Must NOT do: `npm i @vercel/analytics` + <Analytics /> in root layout (cookieless, no banner needed). README.md: overview, stack, dev commands, env table, content-editing guide (add project/article), deploy notes, rollback notes. AGENTS.md for future agent sessions (repo layout, test commands, conventions). MUST NOT add cookie banners or third-party trackers beyond Vercel Web Analytics.
   Parallelization: Wave 9 | Blocked by: 46 | Blocks: 48
   References (executor has NO interview context - be exhaustive): @vercel/analytics https://vercel.com/docs/analytics

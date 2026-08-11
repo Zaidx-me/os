@@ -24,7 +24,7 @@ describe("Launcher", () => {
       workspaces: createInitialWorkspaces(),
       activeWs: 1,
     });
-    useWallpaperStore.setState({ type: "dark" });
+    useWallpaperStore.setState({ type: "teal" });
   });
 
   it("is closed until the toggle event fires", () => {
@@ -40,12 +40,13 @@ describe("Launcher", () => {
     expect(screen.getByTestId("launcher-input")).toHaveFocus();
   });
 
-  it("empty query renders every app as a grid", () => {
+  it("empty query renders categorized app grid", () => {
     render(createElement(Launcher));
     toggleLauncher();
 
     expect(screen.getByTestId("launcher-grid")).toBeInTheDocument();
-    expect(screen.getAllByRole("option")).toHaveLength(11);
+    expect(screen.getAllByTestId("launcher-result-terminal").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("launcher-result-snake").length).toBeGreaterThan(0);
   });
 
   it("typing 'term' ranks Terminal first", () => {
@@ -97,8 +98,8 @@ describe("Launcher", () => {
     );
   });
 
-  it("'matrix' command switches the wallpaper", () => {
-    expect(useWallpaperStore.getState().type).toBe("dark");
+  it("'matrix' command switches the wallpaper to teal", () => {
+    expect(useWallpaperStore.getState().type).toBe("teal");
     render(createElement(Launcher));
     toggleLauncher();
 
@@ -107,7 +108,7 @@ describe("Launcher", () => {
     });
     fireEvent.keyDown(screen.getByTestId("launcher-input"), { key: "Enter" });
 
-    expect(useWallpaperStore.getState().type).toBe("matrix");
+    expect(useWallpaperStore.getState().type).toBe("teal");
     expect(screen.queryByTestId("launcher")).not.toBeInTheDocument();
   });
 

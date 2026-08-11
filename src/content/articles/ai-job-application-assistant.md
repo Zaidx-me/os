@@ -1,3 +1,14 @@
+---
+title: "How I Built an AI-Powered Job Application Assistant"
+description: "A React Native app that analyzes WhatsApp job messages, extracts opportunities, and generates tailored cover letters — all on-device."
+date: "2025-08-02"
+readingTime: "2 min read"
+tags:
+  - react-native
+  - ai
+  - applicator
+  - privacy
+---
 # How I Built an AI-Powered Job Application Assistant
 
 ## The problem

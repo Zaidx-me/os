@@ -1,8 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-/** The 11 registry apps in APPS order (mirrors src/lib/apps.tsx). */
+/** The 20 registry apps in APPS order (mirrors src/lib/apps.tsx). */
 const APP_IDS = [
   "terminal",
+  "browser",
+  "files",
+  "calculator",
+  "notes",
+  "editor",
+  "monitor",
+  "music",
+  "photos",
   "about",
   "projects",
   "skills",
@@ -13,6 +21,7 @@ const APP_IDS = [
   "settings",
   "chat",
   "chess",
+  "snake",
 ] as const;
 
 /** Skips the boot screen (Enter) and waits for the desktop shell. */
@@ -69,7 +78,7 @@ test.describe("app window content (todo 15)", () => {
     });
   }
 
-  test("all 11 apps open with no console errors", async ({ page }) => {
+  test("all 20 apps open with no console errors", async ({ page }) => {
     const errors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error") errors.push(msg.text());

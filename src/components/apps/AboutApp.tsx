@@ -53,6 +53,22 @@ export function AboutApp() {
 
         <section className="flex flex-col gap-2">
           <h2 className="font-mono text-xs uppercase tracking-wider text-zaid-muted">
+            What is ZaidOS?
+          </h2>
+          <p className="text-sm leading-relaxed text-zaid-text">
+            ZaidOS is an interactive portfolio desktop that runs in your browser. It
+            mimics macOS on desktop and iOS on mobile so you can explore projects, skills,
+            articles, and contact info through familiar apps — Terminal, Safari, Photos,
+            Music, and more — instead of a static résumé page.
+          </p>
+          <p className="text-sm leading-relaxed text-zaid-muted">
+            The old menu-bar labels (Shell, View, Window, Help) were decorative placeholders
+            mimicking macOS menus. They had no function and have been removed.
+          </p>
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h2 className="font-mono text-xs uppercase tracking-wider text-zaid-muted">
             Bio
           </h2>
           <div className="flex flex-col gap-3">

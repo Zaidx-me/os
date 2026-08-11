@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { ArticleMarkdown } from "@/components/content/ArticleMarkdown";
 import { Icon } from "@/components/ui/Icon";
 import { articles } from "@/content";
 import { getArticleBody } from "@/content/article-bodies";
@@ -110,7 +109,7 @@ function ArticleReader({
           data-testid={`article-body-${article.slug}`}
           className="article-body min-h-0 flex-1 overflow-y-auto px-6 py-4"
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
+          <ArticleMarkdown markdown={body} />
         </article>
       ) : (
         <p

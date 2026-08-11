@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-/** Skips the boot screen (Enter) and waits for the desktop shell. */
 async function bootToDesktop(page: import("@playwright/test").Page) {
   await page.goto("/");
   await expect(page.getByTestId("boot-screen")).toBeVisible({ timeout: 2000 });
@@ -9,116 +8,40 @@ async function bootToDesktop(page: import("@playwright/test").Page) {
 }
 
 test.describe("waybar (desktop)", () => {
-  // Force a desktop viewport so these assertions are deterministic in the
-  // desktop project (1440px shows the bar; mobile hides it).
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test("renders after boot with pills, clock, date, and tray", async ({
-    page,
-  }) => {
+  test("renders after boot with Spotlight, clock, and dock", async ({ page }) => {
     await bootToDesktop(page);
 
-    const waybar = page.getByTestId("waybar");
-    await expect(waybar).toBeVisible();
+    await expect(page.getByTestId("waybar")).toBeVisible();
+    await expect(page.getByTestId("waybar-brand")).toBeVisible();
+    await expect(page.getByTestId("waybar-spotlight")).toBeVisible();
+    await expect(page.getByTestId("waybar-clock")).toBeVisible();
+    await expect(page.getByTestId("dock")).toBeVisible();
+  });
 
-    // All 5 workspace pills render with their labels.
-    for (const [ws, label] of [
-      [1, "term"],
-      [2, "proj"],
-      [3, "web"],
-      [4, "soc"],
-      [5, "game"],
-    ] as const) {
-      const pill = page.getByTestId(`waybar-pill-${ws}`);
-      await expect(pill).toBeVisible();
-      await expect(pill).toContainText(label);
-    }
-    // Workspace 1 is active by default.
-    await expect(page.getByTestId("waybar-pill-1")).toHaveAttribute(
-      "data-active",
-      "true",
-    );
+  test("Spotlight opens the launcher", async ({ page }) => {
+    await bootToDesktop(page);
+    await page.getByTestId("waybar-spotlight").click();
+    await expect(page.getByTestId("launcher")).toBeVisible();
+    await expect(page.getByTestId("launcher-input")).toBeFocused();
+  });
 
-    // Clock is HH:MM and matches the system time within a minute (tolerating
-    // the :00 rollover — the clock refreshes every 60s, so it may show the
-    // previous minute right after a boundary).
+  test("clock matches system time within a minute", async ({ page }) => {
+    await bootToDesktop(page);
     const clockText =
       (await page.getByTestId("waybar-clock").textContent()) ?? "";
     const clockMatch = clockText.match(/^(\d{2}):(\d{2})$/);
     expect(clockMatch).not.toBeNull();
     const shownMinutes = Number(clockMatch?.[1]) * 60 + Number(clockMatch?.[2]);
     const now = new Date();
-    const actualMinutes = now.getHours() * 60 + now.getMinutes();
-    const diff = Math.min(
-      Math.abs(shownMinutes - actualMinutes),
-      1440 - Math.abs(shownMinutes - actualMinutes),
-    );
-    expect(diff).toBeLessThanOrEqual(2);
-
-    await expect(page.getByTestId("waybar-date")).toBeVisible();
-    await expect(page.getByTestId("waybar-uptime")).toContainText(/^up \d+:\d{2}:\d{2}$/);
-
-    // Tray shows demo CPU/RAM percentages as integers in [0,100].
-    const trayText = (await page.getByTestId("waybar-tray").textContent()) ?? "";
-    const cpuMatch = trayText.match(/CPU (\d+)%/);
-    const ramMatch = trayText.match(/RAM (\d+)%/);
-    expect(cpuMatch).not.toBeNull();
-    expect(ramMatch).not.toBeNull();
-    const cpu = Number(cpuMatch?.[1]);
-    const ram = Number(ramMatch?.[1]);
-    expect(cpu).toBeGreaterThanOrEqual(0);
-    expect(cpu).toBeLessThanOrEqual(100);
-    expect(ram).toBeGreaterThanOrEqual(0);
-    expect(ram).toBeLessThanOrEqual(100);
-
-    // Social links + launcher present.
-    await expect(page.getByTestId("waybar-launcher")).toBeVisible();
-    await expect(page.getByRole("link", { name: "GitHub" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "LinkedIn" })).toBeVisible();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    expect(Math.abs(shownMinutes - nowMinutes)).toBeLessThanOrEqual(1);
   });
 
-  test("clicking a workspace pill switches the active workspace", async ({
-    page,
-  }) => {
+  test("waybar-launcher button still opens Spotlight", async ({ page }) => {
     await bootToDesktop(page);
-
-    const pill3 = page.getByTestId("waybar-pill-3");
-    await expect(pill3).toHaveAttribute("data-active", "false");
-
-    await pill3.click();
-
-    // getAttribute returns a Promise — the poll predicate must be async.
-    await expect
-      .poll(
-        async () => (await pill3.getAttribute("data-active")) === "true",
-        { timeout: 3000 },
-      )
-      .toBe(true);
-    await expect(page.getByTestId("waybar-pill-1")).toHaveAttribute(
-      "data-active",
-      "false",
-    );
-  });
-
-  test("power button opens the menu; Reboot replays the boot screen", async ({
-    page,
-  }) => {
-    await bootToDesktop(page);
-    await expect(page.getByTestId("power-menu")).not.toBeVisible();
-
-    await page.getByTestId("power-button").click();
-    await expect(page.getByTestId("power-menu")).toBeVisible();
-
-    await page.getByTestId("power-menu-reboot").click();
-    await expect(page.getByTestId("boot-screen")).toBeVisible({ timeout: 3000 });
-  });
-});
-
-test.describe("waybar (mobile)", () => {
-  test.use({ viewport: { width: 390, height: 844 } });
-
-  test("hidden on mobile (CSS-only md breakpoint)", async ({ page }) => {
-    await bootToDesktop(page);
-    await expect(page.getByTestId("waybar")).toBeHidden();
+    await page.getByTestId("waybar-launcher").click();
+    await expect(page.getByTestId("launcher")).toBeVisible();
   });
 });

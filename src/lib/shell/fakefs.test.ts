@@ -11,6 +11,11 @@ describe("FakeFs (todo 24 acceptance: ls/cd/pwd/cat)", () => {
   it("ls lists the home entries in deterministic order", () => {
     const fs = new FakeFs();
     expect(fs.ls()).toEqual([
+      { name: ".config", type: "dir" },
+      { name: "Desktop", type: "dir" },
+      { name: "Documents", type: "dir" },
+      { name: "Downloads", type: "dir" },
+      { name: "Pictures", type: "dir" },
       { name: "README.md", type: "file" },
       { name: "dotfiles", type: "dir" },
       { name: "games", type: "dir" },
@@ -25,6 +30,8 @@ describe("FakeFs (todo 24 acceptance: ls/cd/pwd/cat)", () => {
     expect(fs.promptPath()).toBe("~/projects");
     expect(fs.ls()).toEqual([
       { name: "applicator", type: "dir" },
+      { name: "kens-pk", type: "dir" },
+      { name: "pu-stacks", type: "dir" },
       { name: "whatbot", type: "dir" },
     ]);
   });
@@ -69,7 +76,11 @@ describe("FakeFs (todo 24 acceptance: ls/cd/pwd/cat)", () => {
     expect(fs.pwd()).toBe("/");
     expect(fs.cd("../../..")).toBeNull();
     expect(fs.pwd()).toBe("/");
-    expect(fs.ls("/")).toEqual([{ name: "home", type: "dir" }]);
+    expect(fs.ls("/")).toEqual([
+      { name: "etc", type: "dir" },
+      { name: "home", type: "dir" },
+      { name: "usr", type: "dir" },
+    ]);
   });
 
   it("cat reads the home README", () => {
@@ -84,7 +95,7 @@ describe("FakeFs (todo 24 acceptance: ls/cd/pwd/cat)", () => {
     fs.cd("dotfiles/hypr");
     const res = fs.cat("hyprland.conf");
     expect(res.ok).toBe(true);
-    expect(res.ok && res.lines[0]).toContain("Imaginary config");
+    expect(res.ok && res.lines[0]).toContain("Hyprland rice");
   });
 
   it("cat on a directory reports Is a directory", () => {

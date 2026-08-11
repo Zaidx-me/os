@@ -4,11 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
-import { Copy, Minus, Square, X } from "lucide-react";
 import { motion } from "motion/react";
-import { AppIcon } from "@/components/ui/AppIcon";
 import WindowHost from "@/components/wm/WindowHost";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { closeWindow, focusWindow, snapWindow } from "@/lib/wm/actions";
 import {
   dragBounds,
@@ -59,8 +57,12 @@ import {
  * animation.
  */
 
-const TITLEBAR_H = "h-9"; // 2.25rem — matches the density of the waybar
-const OPEN_MS = 0.2; // open/close scale+fade duration
+import { motionTokens } from "@/lib/motion/spring";
+import { playGenieMinimize } from "@/lib/wm/genie";
+
+const TITLEBAR_H = "h-9";
+const OPEN_MS = motionTokens.duration.hero;
+const CLOSE_MS = motionTokens.duration.close;
 
 type DragGesture = {
   kind: "drag";
@@ -105,7 +107,7 @@ export default function Window({ windowId }: WindowProps) {
   const win = useWmStore((s) => s.windows[windowId]);
   const activeWs = useWorkspacesStore(selectActiveWs);
   const { focused } = useWorkspacesStore(selectWorkspace(activeWs));
-  const reducedMotion = usePrefersReducedMotion();
+  const reducedMotion = useReducedMotion();
   const [gesture, setGesture] = useState<Gesture | null>(null);
   const [snapZone, setSnapZone] = useState<SnapDir | null>(null);
   const snapZoneRef = useRef<SnapDir | null>(null);
@@ -215,66 +217,79 @@ export default function Window({ windowId }: WindowProps) {
         pointerEvents: current.minimized ? "none" : "auto",
       }}
       initial={reducedMotion ? false : { opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
-      transition={{ duration: reducedMotion ? 0 : OPEN_MS, ease: "easeOut" }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+        transition: reducedMotion ? { duration: 0 } : motionTokens.spring.hero,
+      }}
+      exit={{
+        opacity: 0,
+        scale: 0.9,
+        transition: reducedMotion
+          ? { duration: 0 }
+          : { duration: CLOSE_MS, ease: motionTokens.easing.easeOut },
+      }}
       onPointerDown={() => focusWindow(windowId)}
     >
       <div
-        className={`window-glass hairline flex h-full w-full flex-col overflow-hidden rounded-[var(--radius-window)] border ${
-          isFocused ? "border-zaid-accent/50" : ""
+        className={`plasma-window flex h-full w-full flex-col overflow-hidden bg-zaid-surface ${
+          isFocused ? "plasma-window-focused" : ""
         }`}
       >
         <div
           data-testid="window-titlebar"
           onPointerDown={onTitlebarPointerDown}
           onDoubleClick={onTitlebarDoubleClick}
-          className={`flex ${TITLEBAR_H} shrink-0 touch-none cursor-default items-center gap-2 border-b px-2 font-mono text-xs ${
-            isFocused
-              ? "border-zaid-accent/40 bg-zaid-surface2/80 text-zaid-text"
-              : "border-zaid-border bg-zaid-surface2/40 text-zaid-muted"
+          className={`grid ${TITLEBAR_H} shrink-0 touch-none cursor-default grid-cols-[1fr_auto_1fr] items-center px-3 text-xs font-medium ${
+            isFocused ? "plasma-titlebar-active" : "plasma-titlebar"
           }`}
         >
-          <AppIcon appId={current.appId} size={14} className="shrink-0" />
-          <span className="min-w-0 flex-1 truncate" title={current.title}>
-            {current.title}
-          </span>
-          <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              data-testid="window-minimize"
-              aria-label="Minimize window"
-              title="Minimize"
-              onClick={() => useWmStore.getState().minimize(windowId)}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-zaid-muted transition-colors hover:bg-zaid-surface hover:text-zaid-text"
-            >
-              <Minus size={12} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              data-testid="window-maximize"
-              aria-label={current.maximized ? "Restore window" : "Maximize window"}
-              title={current.maximized ? "Restore" : "Maximize"}
-              onClick={() => useWmStore.getState().toggleMaximize(windowId)}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-zaid-muted transition-colors hover:bg-zaid-surface hover:text-zaid-text"
-            >
-              {current.maximized ? (
-                <Copy size={12} aria-hidden="true" />
-              ) : (
-                <Square size={12} aria-hidden="true" />
-              )}
-            </button>
+          <div className="mac-traffic-lights flex items-center pl-0.5">
             <button
               type="button"
               data-testid="window-close"
               aria-label="Close window"
               title="Close"
               onClick={() => closeWindow(windowId)}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-zaid-muted transition-colors hover:bg-zaid-danger hover:text-zaid-bg"
-            >
-              <X size={12} aria-hidden="true" />
-            </button>
+              className="mac-traffic mac-traffic-close hover:brightness-90"
+            />
+            <button
+              type="button"
+              data-testid="window-minimize"
+              aria-label="Minimize window"
+              title="Minimize"
+              onClick={() => {
+                void (async () => {
+                  const dock = document.querySelector(
+                    `[data-dock-app="${current.appId}"]`,
+                  ) as HTMLElement | null;
+                  const winEl = document.querySelector(
+                    `[data-window="${windowId}"]`,
+                  ) as HTMLElement | null;
+                  if (dock && winEl && !reducedMotion) {
+                    await playGenieMinimize(winEl, dock);
+                  }
+                  useWmStore.getState().minimize(windowId);
+                })();
+              }}
+              className="mac-traffic mac-traffic-minimize hover:brightness-90"
+            />
+            <button
+              type="button"
+              data-testid="window-maximize"
+              aria-label={current.maximized ? "Restore window" : "Maximize window"}
+              title={current.maximized ? "Restore" : "Maximize"}
+              onClick={() => useWmStore.getState().toggleMaximize(windowId)}
+              className="mac-traffic mac-traffic-maximize hover:brightness-90"
+            />
           </div>
+          <span
+            className="min-w-0 truncate text-center text-zaid-text/90"
+            title={current.title}
+          >
+            {current.title}
+          </span>
+          <div aria-hidden="true" />
         </div>
 
         <div
@@ -306,7 +321,7 @@ export default function Window({ windowId }: WindowProps) {
           <div
             data-testid="snap-preview"
             aria-hidden="true"
-            className="window-glass hairline pointer-events-none fixed z-30 rounded-[var(--radius-window)] border-2 border-zaid-accent/60"
+            className="pointer-events-none fixed z-30 rounded-xl border-2 border-zaid-accent/40 bg-zaid-accent/10 shadow-lg"
             style={{
               left: previewBounds.x,
               top: previewBounds.y,

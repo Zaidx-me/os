@@ -1,0 +1,16 @@
+Task 44 — Vercel project + env vars
+====================================
+Date: 2026-08-12
+Status: SKIPPED-CLI
+
+Reason: Vercel CLI not authenticated in this environment (interactive login required).
+
+Deliverables completed locally:
+- .env.example documents RESEND + LLM vars
+- README.md deploy section with manual Vercel steps
+- npm run build passes
+
+Manual steps for owner:
+1. vercel link && vercel env add (all vars from .env.example)
+2. vercel deploy --prod
+3. Proceed to task 45 DNS cutover
