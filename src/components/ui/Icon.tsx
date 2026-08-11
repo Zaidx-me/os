@@ -1,5 +1,6 @@
 import type { LucideProps } from "lucide-react";
 import {
+  Archive,
   AtSign,
   Award,
   BookOpen,
@@ -71,6 +72,7 @@ import {
  * a lucide import.
  */
 const ICONS = {
+  archive: Archive,
   "at-sign": AtSign,
   award: Award,
   "book-open": BookOpen,

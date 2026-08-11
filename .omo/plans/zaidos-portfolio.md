@@ -232,7 +232,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: all sections visible. failure: assert no string from the old template meta description appears in About DOM. Evidence .omo/evidence/task-17-zaidos-portfolio.txt
   Commit: Y | feat(apps): About window with bio, photo, and personality chips
 
-- [ ] 18. Projects app
+- [x] 18. Projects app
   What to do / Must NOT do: src/components/apps/ProjectsApp.tsx: card grid from content/projects.ts (icon, title, tagline, stack tags, status badge live|open-source|client|archived|in-progress); click -> detail pane (description, stack, links Live demo/Repo/Article with rel noopener new tabs). Filters: All / Live / Open source / Client / Archived. Featured first. zenith-build detail shows note "Deployed site is archived (404)". kens-sunrise + zaidtech labeled Client work. Footer: "More on GitHub" -> https://github.com/Zaidx-me?tab=repositories. MUST NOT display dead link zanith-build live URL as active; MUST NOT invent project descriptions beyond Findings.
   Parallelization: Wave 4 | Blocked by: 3,13,15 | Blocks: 44-48
   References (executor has NO interview context - be exhaustive): content/projects.ts; live URLs verified 2026-08-10 (whatbot/applicator/kens 200, zanith-build 404)

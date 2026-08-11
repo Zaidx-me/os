@@ -1,0 +1,83 @@
+Task 18 — Projects app
+======================
+Date: 2026-08-11
+Status: PASS
+
+Files created
+-------------
+- src/components/apps/ProjectsApp.tsx — card grid + filter tabs + detail pane.
+  Cards render from the content data layer (title, tagline, stack, status,
+  featured); featured projects sort first. Filter tabs mirror the status enum
+  (All / Live / Open source / Client / Archived). Clicking a card opens a
+  detail pane with the description, full stack, and real link buttons
+  (Live demo / Repo / Article / Design) that open in new tabs with
+  rel="noopener noreferrer". The archived zenith-build shows a
+  "Deployed site is archived (404)." note and never links a dead live URL.
+  Footer: "More on GitHub" -> https://github.com/Zaidx-me?tab=repositories.
+  All copy comes from content/projects.ts — no invented descriptions.
+- src/components/apps/ProjectsApp.test.tsx — Vitest: >=12 cards, featured
+  first; Archived filter -> zenith-build visible; QA failure: Live filter ->
+  archived card absent; detail pane stack + repo href
+  https://github.com/Zaidx-me/<repo> + target/rel; zenith-build archived note
+  + no live link; footer href.
+- e2e/projects.spec.ts — Playwright x2 (desktop+mobile): acceptance test
+  (>=12 cards, Archived filter shows zenith-build + hides applicator, Live
+  filter hides archived card) + detail-pane test (stack contains NestJS, repo
+  href https://github.com/Zaidx-me/whatbot, target=_blank, rel noopener) +
+  zenith-build archived-note/no-live-link test.
+
+Files modified
+--------------
+- src/components/ui/Icon.tsx — added the `archive` glyph (lucide Archive) to
+  the typed ICONS map / IconName union (used by the Archived status badge).
+
+Source of truth (no invented copy)
+----------------------------------
+- All 12 projects + statuses + stack + links: src/content/projects.ts (todo 3,
+  verified 2026-08-10; live URLs whatbot/applicator/kens 200, zanith-build 404).
+- zenith-build: status "archived" + repo only (validator rejects archived+
+  live) — the "Deployed site is archived (404)." note matches the plan wording.
+- kens-sunrise + zaidtech: status "client" (kens has a live link; zaidtech's
+  README live URL 404s so it has repo only). No invented detail.
+
+Acceptance mapping (plan line 239)
+----------------------------------
+- open Projects -> >=12 cards: e2e/projects.spec.ts:50 (cards count >= 12;
+  unit test asserts exactly projects.length = 12).
+- filter Archived -> zenith-build visible: e2e/projects.spec.ts:56 +
+  unit test.
+- click card -> detail shows stack + links with correct hrefs:
+  e2e/projects.spec.ts:68 (stack NestJS, repo href
+  https://github.com/Zaidx-me/whatbot) + unit test (all stack items present).
+
+QA scenarios (named as required by plan line 240)
+-------------------------------------------------
+- happy: "link hrefs match data (repo->https://github.com/Zaidx-me/<repo>)" ->
+  unit ProjectsApp.test.tsx repo-href assertion + e2e detail test.
+- failure: "filter Live -> archived card absent" -> e2e/projects.spec.ts:60
+  + unit filter test (applicator visible, zenith-build absent).
+
+Verification gates (ALL PASS)
+-----------------------------
+Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
+(e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/
+pwlibs/root/usr/lib/aarch64-linux-gnu,
+FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server reused on :3000)
+
+1. npm run test:unit
+   Test Files  20 passed (20)   (was 19)
+   Tests       215 passed (215) (was 209, +6 ProjectsApp)
+
+2. npm run typecheck (tsc --noEmit)
+   exit 0, no diagnostics
+
+3. npm run lint (eslint ProjectsApp.tsx, ProjectsApp.test.tsx, Icon.tsx,
+   projects.spec.ts)
+   exit 0, 0 problems
+
+4. npm run build
+   ✓ Compiled successfully; 6/6 static pages; exit 0
+
+5. npx playwright test e2e
+   128 passed (5.9m) — 64 per project x2 (desktop 1440x900, mobile 390x844);
+   122 baseline + 6 new projects tests.
