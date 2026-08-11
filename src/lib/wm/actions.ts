@@ -4,6 +4,7 @@ import {
   type WorkspaceId,
 } from "@/store/workspaces";
 import { getAppMeta } from "@/lib/apps";
+import { isVisible } from "@/lib/wm/selectors";
 
 /**
  * WM orchestrators — the ONLY entry points that mutate BOTH stores.
@@ -56,11 +57,25 @@ export function openApp(appId: string, ws?: WorkspaceId): string {
   return id;
 }
 
-/** Closes a window in both stores; focus falls back in the owning workspace. */
+/**
+ * Closes a window in both stores; focus falls back in the owning workspace.
+ * If the fallback landed on a MINIMIZED (invisible) window, focus is corrected
+ * to the next visible one — focus never rests on a hidden window (todo 16).
+ */
 export function closeWindow(id: string): void {
   // Order matters: wm.close reads the owning workspace for its promotion logic.
+  const owner = useWorkspacesStore.getState().getWindowWs(id);
   useWmStore.getState().close(id);
   useWorkspacesStore.getState().closeWindow(id);
+  if (owner === null) return;
+  const workspaces = useWorkspacesStore.getState();
+  // isVisible is defined against the ACTIVE workspace — only correct focus there.
+  if (owner !== workspaces.activeWs) return;
+  const slot = workspaces.workspaces[owner];
+  if (slot.focused !== null && !isVisible(slot.focused)) {
+    const next = slot.windows.find((w) => isVisible(w));
+    if (next !== undefined) workspaces.setFocused(next, owner);
+  }
 }
 
 /**

@@ -115,17 +115,19 @@ test.describe("window chrome (drag/resize/min/max/close)", () => {
     await expect(win).toHaveAttribute("data-maximized", "false");
   });
 
-  test("minimize hides (aria-hidden) and keeps the window tracked as a task", async ({
+  test("minimize hides the window and removes it from the workspace (task tracked in waybar)", async ({
     page,
   }) => {
     await bootToDesktop(page);
     const win = await openWindow(page, "terminal");
     await win.getByTestId("window-minimize").click();
-    await expect(win).toHaveAttribute("aria-hidden", "true");
+    // hidden instantly (visibility during the exit animation)…
     await expect(win).toBeHidden();
-    await expect(win).toHaveAttribute("data-minimized", "true");
-    // still mounted — the (todo 16) waybar task can restore it
-    await expect(win).toHaveCount(1);
+    // …then the window leaves the DOM — the waybar task is its only form now
+    await expect(win).toHaveCount(0, { timeout: 2000 });
+    const task = page.getByTestId("waybar-task-terminal");
+    await expect(task).toBeVisible();
+    await expect(task).toHaveAttribute("data-minimized", "true");
   });
 
   test("close removes the window", async ({ page }) => {

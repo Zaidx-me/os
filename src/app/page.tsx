@@ -6,6 +6,7 @@ import BootScreen from "@/components/wm/BootScreen";
 import ContextMenu from "@/components/wm/ContextMenu";
 import DesktopIcons from "@/components/wm/DesktopIcons";
 import Launcher from "@/components/wm/Launcher";
+import Switcher from "@/components/wm/Switcher";
 import Wallpaper from "@/components/wm/Wallpaper";
 import Waybar from "@/components/wm/Waybar";
 import { WorkspaceView } from "@/components/wm/WorkspaceView";
@@ -100,11 +101,7 @@ export default function Home() {
         useWmStore.getState().toggleFloat(id);
       },
       cycleWindows: () => {
-        const workspaces = useWorkspacesStore.getState();
-        const ws = workspaces.activeWs;
-        workspaces.focusNextInWs(ws);
-        const focused = useWorkspacesStore.getState().workspaces[ws].focused;
-        if (focused !== null) useWmStore.getState().focus(focused);
+        window.dispatchEvent(new CustomEvent("zaidos:toggle-switcher"));
       },
     });
     return dispose;
@@ -148,6 +145,7 @@ export default function Home() {
             <Waybar />
             <ContextMenu />
             <Launcher />
+            <Switcher />
           </motion.div>
         )}
       </AnimatePresence>

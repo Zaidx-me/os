@@ -3,11 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { AtSign, Command, Link, Power } from "lucide-react";
 import { motion } from "motion/react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { focusWindow } from "@/lib/wm/actions";
+import { isVisible } from "@/lib/wm/selectors";
 import { useBootStore } from "@/store/boot";
+import { useWmStore } from "@/store/wm";
 import {
   WORKSPACE_IDS,
   selectActiveWs,
+  selectWorkspace,
   useWorkspacesStore,
   workspaceLabel,
 } from "@/store/workspaces";
@@ -143,6 +148,10 @@ function drawSparkline(
 
 export default function Waybar() {
   const activeWs = useWorkspacesStore(selectActiveWs);
+  const { windows: wsWindows, focused } = useWorkspacesStore(
+    selectWorkspace(activeWs),
+  );
+  const wmWindows = useWmStore((s) => s.windows);
   const reducedMotion = usePrefersReducedMotion();
 
   const [now, setNow] = useState(() => new Date());
@@ -189,6 +198,21 @@ export default function Waybar() {
   const openLauncher = () => {
     // TODO(todo 11): Launcher listens for zaidos:toggle-launcher
     window.dispatchEvent(new CustomEvent("zaidos:toggle-launcher"));
+  };
+
+  /**
+   * Focused task -> minimize (toggle); otherwise focus (restores a minimized
+   * task). The !minimized guard: a focused-but-minimized task (last window
+   * hidden) must restore, not re-minimize.
+   */
+  const onTaskClick = (id: string, minimized: boolean) => {
+    const workspaces = useWorkspacesStore.getState();
+    const slot = workspaces.workspaces[workspaces.activeWs];
+    if (slot.focused === id && !minimized) {
+      useWmStore.getState().minimize(id);
+    } else {
+      focusWindow(id);
+    }
   };
 
   /** Log out: short fade overlay, then replay the boot sequence. The
@@ -240,6 +264,43 @@ export default function Waybar() {
               }`}
             >
               {workspaceLabel(ws)}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ---- window taskbar: one task per open window on this workspace ---- */}
+      <div
+        role="toolbar"
+        aria-label="Windows"
+        data-testid="waybar-tasks"
+        className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden"
+      >
+        {wsWindows.map((id) => {
+          const win = wmWindows[id];
+          if (win === undefined) return null;
+          const active = focused === id;
+          const visible = isVisible(id);
+          return (
+            <button
+              key={id}
+              type="button"
+              data-testid={`waybar-task-${win.appId}`}
+              data-window={id}
+              data-app={win.appId}
+              data-active={active ? "true" : "false"}
+              data-minimized={visible ? "false" : "true"}
+              aria-label={win.title}
+              title={win.title}
+              onClick={() => onTaskClick(id, !visible)}
+              className={`flex h-6 min-w-0 max-w-36 items-center gap-1.5 rounded px-1.5 transition-colors ${
+                active
+                  ? "bg-zaid-surface2 text-zaid-text"
+                  : "text-zaid-muted hover:bg-zaid-surface2/60 hover:text-zaid-text"
+              } ${visible ? "opacity-100" : "opacity-50"}`}
+            >
+              <AppIcon appId={win.appId} size={12} className="shrink-0" />
+              <span className="truncate">{win.title}</span>
             </button>
           );
         })}

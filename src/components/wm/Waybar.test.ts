@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Waybar from "@/components/wm/Waybar";
 import { useBootStore } from "@/store/boot";
+import { createInitialWmState, useWmStore } from "@/store/wm";
 import { createInitialWorkspaces, useWorkspacesStore } from "@/store/workspaces";
 
 /**
@@ -41,6 +42,7 @@ describe("Waybar", () => {
       workspaces: createInitialWorkspaces(),
       activeWs: 1,
     });
+    useWmStore.setState(createInitialWmState());
     HTMLCanvasElement.prototype.getContext = vi.fn(
       () => createCtxStub(),
     ) as unknown as typeof HTMLCanvasElement.prototype.getContext;
@@ -178,5 +180,44 @@ describe("Waybar", () => {
     act(() => {
       vi.advanceTimersByTime(3000);
     });
+  });
+
+  it("renders a task per open window on the active workspace (icon + title)", () => {
+    const id = useWorkspacesStore.getState().openInWorkspace("terminal", 1);
+    useWmStore.getState().open({ id, appId: "terminal", title: "Terminal" });
+    render(createElement(Waybar));
+
+    const task = screen.getByTestId("waybar-task-terminal");
+    expect(task).toHaveAttribute("data-window", id);
+    expect(task).toHaveAttribute("data-active", "true");
+    expect(task).toHaveAttribute("data-minimized", "false");
+    expect(task).toHaveTextContent("Terminal");
+  });
+
+  it("clicking the focused task minimizes the window (toggle) and dims the task", () => {
+    const id = useWorkspacesStore.getState().openInWorkspace("terminal", 1);
+    useWmStore.getState().open({ id, appId: "terminal", title: "Terminal" });
+    render(createElement(Waybar));
+
+    fireEvent.click(screen.getByTestId("waybar-task-terminal"));
+
+    expect(useWmStore.getState().windows[id].minimized).toBe(true);
+    expect(screen.getByTestId("waybar-task-terminal")).toHaveAttribute(
+      "data-minimized",
+      "true",
+    );
+  });
+
+  it("clicking a background (non-focused) task focuses that window", () => {
+    const termId = useWorkspacesStore.getState().openInWorkspace("terminal", 1);
+    useWmStore.getState().open({ id: termId, appId: "terminal", title: "Terminal" });
+    const chessId = useWorkspacesStore.getState().openInWorkspace("chess", 1);
+    useWmStore.getState().open({ id: chessId, appId: "chess", title: "Chess" });
+    render(createElement(Waybar));
+
+    fireEvent.click(screen.getByTestId("waybar-task-terminal"));
+
+    expect(useWorkspacesStore.getState().workspaces[1].focused).toBe(termId);
+    expect(useWmStore.getState().windows[chessId].minimized).toBe(false);
   });
 });
