@@ -5,12 +5,20 @@ import { useEffect, useState } from "react";
 import BootScreen from "@/components/wm/BootScreen";
 import ContextMenu from "@/components/wm/ContextMenu";
 import DesktopIcons from "@/components/wm/DesktopIcons";
+import Launcher from "@/components/wm/Launcher";
 import Wallpaper from "@/components/wm/Wallpaper";
 import Waybar from "@/components/wm/Waybar";
 import { WorkspaceView } from "@/components/wm/WorkspaceView";
 import { useIsHydrated } from "@/hooks/useIsHydrated";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { initHotkeys } from "@/lib/hotkeys";
+import { closeWindow, moveWindowToWorkspace, openApp } from "@/lib/wm/actions";
 import { useBootStore } from "@/store/boot";
+import { clamp, useWmStore } from "@/store/wm";
+import {
+  useWorkspacesStore,
+  type WorkspaceId,
+} from "@/store/workspaces";
 
 /**
  * ZaidOS desktop shell root (replaces the create-next-app landing page).
@@ -49,6 +57,57 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [booted, wasBootedAtMount, reducedMotion]);
 
+  // Global hotkeys (lib/hotkeys.ts) — wired only once the desktop is up, so
+  // boot-screen keys stay untouched.
+  useEffect(() => {
+    if (!booted) return;
+    const dispose = initHotkeys({
+      openTerminal: () => openApp("terminal"),
+      toggleLauncher: () =>
+        window.dispatchEvent(new CustomEvent("zaidos:toggle-launcher")),
+      selectWorkspace: (ws) => useWorkspacesStore.getState().setActive(ws),
+      closeFocused: () => {
+        const workspaces = useWorkspacesStore.getState();
+        const id = workspaces.workspaces[workspaces.activeWs].focused;
+        if (id !== null) closeWindow(id);
+      },
+      minimizeFocused: () => {
+        const workspaces = useWorkspacesStore.getState();
+        const id = workspaces.workspaces[workspaces.activeWs].focused;
+        if (id !== null) useWmStore.getState().minimize(id);
+      },
+      moveToWorkspace: (dir) => {
+        const workspaces = useWorkspacesStore.getState();
+        const id = workspaces.workspaces[workspaces.activeWs].focused;
+        if (id === null) return;
+        const target = clamp(
+          workspaces.activeWs + dir,
+          1,
+          5,
+        ) as WorkspaceId;
+        moveWindowToWorkspace(id, target);
+      },
+      toggleFloat: () => {
+        const workspaces = useWorkspacesStore.getState();
+        const id = workspaces.workspaces[workspaces.activeWs].focused;
+        if (id === null) return;
+        const win = useWmStore.getState().windows[id];
+        if (win === undefined) return;
+        useWmStore
+          .getState()
+          .setMode(id, win.mode === "float" ? "tile" : "float");
+      },
+      cycleWindows: () => {
+        const workspaces = useWorkspacesStore.getState();
+        const ws = workspaces.activeWs;
+        workspaces.focusNextInWs(ws);
+        const focused = useWorkspacesStore.getState().workspaces[ws].focused;
+        if (focused !== null) useWmStore.getState().focus(focused);
+      },
+    });
+    return dispose;
+  }, [booted]);
+
   // SSR / hydration gate — nothing renders until the client has hydrated.
   if (!hydrated) return null;
 
@@ -78,6 +137,7 @@ export default function Home() {
                 WorkspaceView z-20   (window layer — floats above the icons)
                 Waybar        z-40   (fixed top bar)
                 ContextMenu   z-50   (desktop right-click menu / modals)
+                Launcher      z-60/70 (app launcher overlay)
               ---------------------------------------------------------------
             */}
             <Wallpaper />
@@ -85,6 +145,7 @@ export default function Home() {
             <WorkspaceView />
             <Waybar />
             <ContextMenu />
+            <Launcher />
           </motion.div>
         )}
       </AnimatePresence>

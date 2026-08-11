@@ -176,7 +176,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: double-click opens app; menu items work. failure: right-click inside an open window -> no desktop menu. Evidence .omo/evidence/task-10-zaidos-portfolio.txt
   Commit: Y | feat(desktop): desktop icons with select/open and context menu
 
-- [ ] 11. Rofi-style app launcher (Super+Space)
+- [x] 11. Rofi-style app launcher (Super+Space)
   What to do / Must NOT do: src/components/wm/Launcher.tsx: centered glass panel, input, fuzzy search over apps (name/keywords) + commands ("open terminal", "matrix"), ArrowUp/Down + Enter + ESC, click-away closes, Mod+Space toggles, empty query = all apps grid. Modal (blocks window input while open). Fuzzy = simple subsequence scorer, no new dep. MUST NOT open while typing in terminal/inputs; launcher stops propagation.
   Parallelization: Wave 2 | Blocked by: 2,8 | Blocks: 13,16
   References (executor has NO interview context - be exhaustive): hotkey service (todo 12); command names from shell (todo 25)

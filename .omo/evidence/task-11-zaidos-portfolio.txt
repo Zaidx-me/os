@@ -1,0 +1,70 @@
+TASK 11 — Rofi-style app launcher (Super+Space) — 2026-08-11
+============================================================
+Plan: .omo/plans/zaidos-portfolio.md todo 11
+Status: DONE — launcher, fuzzy scorer, hotkey shell wiring, unit + e2e, all gates green
+
+FILES
+-----
+- src/lib/fuzzy.ts                     subsequence fuzzy scorer (scoreFuzzy) +
+                                       stable sortByScore. Empty query matches
+                                       everything at score 1. Rewards consecutive
+                                       runs, word-boundary hits, earlier positions.
+                                       No dependency.
+- src/lib/fuzzy.test.ts                12 vitest tests (subsequence, case
+                                       insensitivity, ordering, stability)
+- src/components/wm/Launcher.tsx       centered glass panel; input; empty query =
+                                       all-apps grid (11), non-empty = fuzzy-ranked
+                                       apps + commands; ArrowUp/Down/Enter/ESC;
+                                       click-away backdrop; setModalOpen(true) while
+                                       open (blocks hotkeys); input focused on open;
+                                       keydown stopPropagation so launcher keys never
+                                       leak to the window hotkey listener; listens
+                                       for the `zaidos:toggle-launcher` event (Waybar
+                                       button + Mod+Space hotkey both dispatch it).
+- src/components/wm/Launcher.test.ts   10 vitest tests
+- src/app/page.tsx                     mounts <Launcher/> (z-60/70) + wires
+                                       initHotkeys({openTerminal, toggleLauncher,
+                                       selectWorkspace, closeFocused, minimizeFocused,
+                                       moveToWorkspace, toggleFloat, cycleWindows})
+                                       once the desktop is booted. Handlers call the
+                                       wm/workspaces store actions / orchestrators
+                                       (closeWindow, moveWindowToWorkspace) — never
+                                       raw store mutations.
+- e2e/launcher.spec.ts                 6 playwright tests (desktop + mobile projects)
+
+COMMANDS (built-in, beyond the 11 apps)
+---------------------------------------
+  "open terminal"  -> openApp("terminal")
+  "matrix rain"    -> useWallpaperStore.setWallpaper("matrix")
+
+ACCEPTANCE MAPPING
+------------------
+- Mod+Space opens launcher; empty query = app grid                       [e2e]
+- type "term" -> Terminal ranks first (launcher-result-terminal)         [e2e+unit]
+- Enter opens the terminal window (ws-window data-app=terminal)          [e2e+unit]
+- ESC closes the launcher                                                [e2e]
+- click-away closes the launcher                                         [e2e+unit]
+- "chess" launches the chess app                                         [e2e+unit]
+- typing does NOT leak keystrokes to a focused window underneath
+  (document.activeElement stays the launcher input)                      [e2e]
+- modal blocks hotkeys while open (setModalOpen)                         [unit]
+- MUST NOT open while typing in inputs: hotkey service ignores editable
+  targets (isEditableTarget, todo 12) — no launcher-specific code needed [pre-existing]
+
+VERIFICATION GATES (ALL PASS)
+-----------------------------
+1. npx vitest run        -> 14 files, 156 tests passed (22 new for todo 11)
+2. npx tsc --noEmit      -> exit 0
+3. npm run lint          -> exit 0, 0 warnings (react-hooks/set-state-in-effect
+                            fixed by resetting the cursor in onChange, not an effect)
+4. npm run build         -> exit 0 (6/6 static pages)
+5. npx playwright test   -> 50 passed (desktop + mobile projects; 12 launcher tests)
+
+NOTES
+-----
+- e2e env on this container: LD_LIBRARY_PATH=/tmp/opencode/deps/usr/lib/aarch64-linux-gnu:...
+  FONTCONFIG_FILE=/tmp/opencode/fontconfig/fonts.conf
+  PLAYWRIGHT_BROWSERS_PATH=/config/.cache/ms-playwright HOME=/tmp/opencode
+- Mod = Ctrl+Alt on Linux, so e2e presses Control+Alt+Space.
+- flakiness fixed: ESC test waits for launcher-input focus (focus lands in an
+  effect) before pressing Escape, so the keypress target is deterministic.
