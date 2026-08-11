@@ -5,7 +5,7 @@ import type { Project } from './types';
  *
  * Facts sourced from https://zaidx.me (home + project pages), the GitHub
  * READMEs, and live URL checks (2026-08-10):
- * - whatbot.zaidx.me 200, applicator.netlify.app 200, kens.netlify.app 200,
+ * - whatbot.zaidx.me 200, applicator.netlify.app 200, kenspk.netlify.app 200,
  *   pustacks.netlify.app 200, zanith-build.vercel.app 404 (zenith-build archived),
  *   zaidkaproject.netlify.app 404 (zaidtech repo README link is dead — no live link).
  */
@@ -147,14 +147,14 @@ export const projects: Project[] = [
     featured: false,
   },
   {
-    id: 'kens-sunrise',
-    title: "Ken's Sunrise",
-    tagline: 'Chinese Takeaway Website — Chester-le-Street',
+    id: 'kens-pk',
+    title: "Ken's FastFood",
+    tagline: 'Restaurant in Gujranwala',
     description:
-      "A client website for Ken's Sunrise Chinese Takeaway in Chester-le-Street, featuring the full menu, opening hours, and contact details.",
+      "A client website for Ken's in Gujranwala, featuring the full menu, opening hours, and contact details.",
     stack: ['HTML', 'CSS', 'JavaScript'],
     links: {
-      live: 'https://kens.netlify.app',
+      live: 'https://kenspk.netlify.app',
     },
     status: 'client',
     featured: false,

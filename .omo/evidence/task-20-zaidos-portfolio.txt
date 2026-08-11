@@ -1,6 +1,7 @@
 Task 20 — Experience & Education app
 ====================================
-Date: 2026-08-11
+Date: 2026-08-11 (content-sync refresh — user edited the content post-commit;
+tests + e2e + this evidence were re-synced to the shipped data and re-verified)
 Status: PASS
 
 Files created
@@ -11,14 +12,15 @@ Files created
   factual bullets. Unknown dates render "—", never "undefined". Icons per
   group (graduation-cap / briefcase / globe) via the Icon map.
 - src/components/apps/ExperienceApp.test.tsx — Vitest: >=3 entries incl.
-  BSIT + Tech Bridge; education labeled with org; QA happy: factual org
-  names (Tech Bridge Consultancy) and no invented employer for the
-  org-less freelance entry; QA failure: "undefined" never in DOM, tech-bridge
-  period renders "—".
+  BSIT + the freelance graphic-design and C++ roles; education labeled with
+  org; QA happy: factual org names (Self Employed) and no invented employer
+  for the org-less C++ entry; QA failure: "undefined" never in DOM,
+  freelance-graphic-design period renders "—", current entries show the
+  badge + "Current".
 - e2e/experience.spec.ts — Playwright x2 (desktop+mobile): acceptance test
-  (>=3 entries incl. BSIT + Tech Bridge, education group labeled with org) +
-  QA happy/failure test (org names factual; "—" for unknown date; no
-  "undefined" text).
+  (>=3 entries incl. BSIT + freelance graphic-design + project-on-demand,
+  education group labeled with org) + QA happy/failure test (org names
+  factual; "—" for unknown date; no "undefined" text).
 
 Source of truth (no invented copy)
 ----------------------------------
@@ -26,50 +28,58 @@ Source of truth (no invented copy)
   (todo 3, sourced from the zaidx.me home bio + GitHub README). No invented
   employers, dates, or achievements. Periods were never published, so the
   UI renders "—" for unknown dates.
-- The "Side projects (whatbot, applicator highlights)" category from the plan
-  has no entry in experience.ts — NOT added (would invent data). The 3 data
-  types (education/work/freelance) are rendered as-is.
+- CONTENT-SYNC NOTE (2026-08-11): the owner edited experience.ts after the
+  original commit — "Tech Bridge Internship" became the self-employed
+  "Graphic Design Intern" (id 'freelance-graphic-design', org "Self
+  Employed") and "Freelance Mobile/Shopify" became "project-on-demand"
+  (freelance C++ games). The entry id 'worked with some friends' contained
+  spaces (unusable as a DOM testid) and was normalized to
+  'freelance-graphic-design' (display text untouched). BSIT dropped the
+  "Gujranwala Campus" suffix (org now "University of the Punjab"). Tests +
+  e2e + this evidence were updated to the shipped content, never the other
+  way around. Typos and em-dash spacing in the owner's copy were left as-is
+  (reported to the owner, not silently "fixed").
 
 Acceptance mapping (plan line 255)
 ----------------------------------
-- open Experience -> timeline shows >=3 entries incl. BSIT + Tech Bridge:
+- open Experience -> timeline shows >=3 entries incl. BSIT + freelance roles:
   e2e/experience.spec.ts:43 (count >= 3) + unit test.
 - education labeled: e2e asserts experience-group-education contains
-  "Education" + the Punjab org; unit test asserts the same.
+  "Education" + "University of the Punjab"; unit test asserts the same.
 
 QA scenarios (named as required by plan line 256)
 -------------------------------------------------
-- happy: "all entries render factual org names" -> e2e/experience.spec.ts:61
-  (tech-bridge org = "Tech Bridge Consultancy") + unit test (same, plus the
-  freelance entry renders NO org line because it has none — no invented org).
+- happy: "all entries render factual org names" -> e2e/experience.spec.ts:62
+  (freelance-graphic-design org = "Self Employed") + unit test (same, plus
+  the org-less C++ entry renders NO org line — no invented org).
 - failure: "unknown date renders as '—' not 'undefined'" -> e2e asserts
-  experience-period-tech-bridge-intern is exactly "—" and the app body
-  contains no "undefined"; unit test asserts both.
+  experience-period-freelance-graphic-design is exactly "—" and the app body
+  contains no "undefined"; unit test asserts both, plus the current badge
+  (experience-current-project-on-demand) and "Current" period for ongoing
+  entries.
 
-Verification gates (ALL PASS)
------------------------------
+Verification gates (ALL PASS — re-run after the content-sync refresh)
+--------------------------------------------------------------------
 Command: export PATH="/tmp/node-v22.17.1-linux-arm64/bin:$PATH"
 (e2e additionally: LD_LIBRARY_PATH=/tmp/opencode/pwlibs/l:/tmp/opencode/
 pwlibs/root/usr/lib/aarch64-linux-gnu,
 FONTCONFIG_FILE=/tmp/opencode/fc/fonts.conf; dev server reused on :3000)
 
 1. npm run test:unit
-   Test Files  22 passed (22)   (was 21)
-   Tests       223 passed (223) (was 219, +4 ExperienceApp)
+   Test Files  25 passed (25)
+   Tests       243 passed (243)
 
 2. npm run typecheck (tsc --noEmit)
    exit 0, no diagnostics
 
-3. npm run lint (eslint ExperienceApp.tsx, ExperienceApp.test.tsx,
-   experience.spec.ts)
+3. npm run lint (eslint on all changed/new app + content + e2e files)
    exit 0, 0 problems
 
 4. npm run build
-   ✓ Compiled successfully; 6/6 static pages; exit 0
+   ✓ Compiled successfully; 6/6 static pages + /api/contact dynamic; exit 0
 
 5. npx playwright test e2e
-   136 passed (6.0m) — 68 per project x2 (desktop 1440x900, mobile 390x844);
-   132 baseline + 4 new experience tests.
+   150 passed (7.0m) — 75 per project x2 (desktop 1440x900, mobile 390x844).
 
 Implementation notes
 --------------------
@@ -77,3 +87,6 @@ Implementation notes
   ongoing work. Period line renders `entry.period ?? (entry.current ?
   "Current" : "—")` — so ongoing entries say "Current" and unknown-date
   non-current entries say "—".
+- Entry ids are technical keys (kebab-case) — the normalized
+  'freelance-graphic-design' keeps the display text ("Graphic Design
+  Intern") in the owner's own words while staying DOM/testid-safe.

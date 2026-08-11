@@ -35,12 +35,12 @@ async function openExperience(page: import("@playwright/test").Page) {
 
 /**
  * Task 20 acceptance: open Experience -> timeline shows >=3 entries incl.
- * BSIT + Tech Bridge; education labeled.
+ * BSIT + freelance graphic design + C++ freelance; education labeled.
  */
 test.describe("experience window (todo 20)", () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test("timeline renders >=3 entries incl. BSIT and Tech Bridge with education labeled", async ({
+  test("timeline renders >=3 entries incl. BSIT, graphic design, and C++ freelance with education labeled", async ({
     page,
   }) => {
     await openExperience(page);
@@ -50,12 +50,15 @@ test.describe("experience window (todo 20)", () => {
 
     await expect(page.getByTestId("experience-entry-bsit-punjab")).toBeVisible();
     await expect(
-      page.getByTestId("experience-entry-tech-bridge-intern"),
+      page.getByTestId("experience-entry-freelance-graphic-design"),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("experience-entry-project-on-demand"),
     ).toBeVisible();
 
     const education = page.getByTestId("experience-group-education");
     await expect(education).toContainText("Education");
-    await expect(education).toContainText("University of the Punjab, Gujranwala Campus");
+    await expect(education).toContainText("University of the Punjab");
   });
 
   test("QA happy: factual org names render; QA failure: unknown date is '—' not 'undefined'", async ({
@@ -64,10 +67,10 @@ test.describe("experience window (todo 20)", () => {
     await openExperience(page);
 
     await expect(
-      page.getByTestId("experience-org-tech-bridge-intern"),
-    ).toHaveText("Tech Bridge Consultancy");
+      page.getByTestId("experience-org-freelance-graphic-design"),
+    ).toHaveText("Self Employed");
     await expect(
-      page.getByTestId("experience-period-tech-bridge-intern"),
+      page.getByTestId("experience-period-freelance-graphic-design"),
     ).toHaveText("—");
 
     const body = page.getByTestId("app-content-experience");

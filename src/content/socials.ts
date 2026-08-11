@@ -29,7 +29,7 @@ export const socials: Social[] = [
     id: 'threads',
     label: 'Threads',
     handle: '@zaidxme',
-    url: 'https://threads.net/@zaidxme',
+    url: 'https://threads.com/zaidxme',
   },
   {
     id: 'snapchat',

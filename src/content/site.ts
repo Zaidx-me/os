@@ -23,18 +23,27 @@ export const site = {
    * TODO: replace with the real contact email before launch — this placeholder
    * is never used for sending; the contact route reads CONTACT_TO_EMAIL from env.
    */
-  contactEmail: 'hello@zaidx.me',
+  contactEmail: 'owner@zaidx.me',
 
   bio: [
-    "I'm Zaid — an Information Technology student at the University of the Punjab, currently working as a mobile and Shopify developer. Being comfortable with both graphic design and code lets me rapidly prototype and validate complete digital experiences.",
-    "By day I'm a 4th-semester BSIT student; by night an overengineer who ships things nobody asked for but somehow ships anyway. My daily driver is CachyOS + Hyprland — ricing as a form of procrastination with extra steps. I open every chess game with the London System, watch MMA, read Urdu poetry, and build C++ games with SFML. I'm always down for new projects, so feel free to drop me a line.",
+    "I'm Zaid an Information Technology student at the University of the Punjab, currently working as a mobile developer and Software Engineer. Being comfortable with both graphic design and code lets me rapidly prototype and validate complete digital experiences.",
+    "By day I'm a 5th-semester BSIT student; by night an overengineer who self deploy things, I own many websites one of finest products are Applicator and Whatbot, ships things nobody asked for but somehow ships anyway. My daily driver is CachyOS + Niri, ricing as a form of procrastination with extra steps. I open every chess game with the London System, watch MMA, read Urdu poetry, and build C++ games with SFML. I'm always down for new projects, so feel free to drop me a line.",
   ],
 
   personalityChips: [
-    'Chess — London System',
+    'Chess',
+    'Self Deploy',
     'MMA',
-    'Urdu poetry',
+    'Philosophy',
     'CachyOS + Hyprland ricing',
     'C++/SFML games',
   ],
 } as const;
+
+/**
+ * Real resume PDF served from public/resume/zaid-resume.pdf when the user
+ * adds it. null = absent (the Resume app's Download PDF falls back to
+ * window.print()). Data-layer fact only — never probed at runtime, because
+ * a HEAD request to a missing asset logs a 404 console error.
+ */
+export const resumePdfUrl: string | null = null;
