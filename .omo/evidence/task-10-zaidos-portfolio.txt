@@ -1,0 +1,75 @@
+TASK 10 — Desktop icons + right-click context menu — 2026-08-11
+================================================================
+Plan: .omo/plans/zaidos-portfolio.md todo 10
+Status: DONE — icons, context menu, shell mount, unit + e2e, all gates green
+
+FILES
+-----
+- src/lib/apps.ts                     app registry (id/title/keywords for all 11
+                                       apps) — shared by icons, launcher, taskbar.
+                                       todo 15 extends it with lazy components.
+- src/components/wm/DesktopIcons.tsx  icon grid: single-click select (accent ring),
+                                       double-click open, Enter opens, desktop
+                                       right-click surface (dispatches
+                                       zaidos:desktop-context, prevents native menu),
+                                       refresh spin (skipped under reduced motion).
+- src/components/wm/ContextMenu.tsx   desktop menu: Open Terminal / Change Wallpaper
+                                       (4-variant submenu) / Refresh / About ZaidOS /
+                                       Reboot / Shut down (joke dialog + power-off
+                                       fade). setModalOpen() while open; closes on
+                                       ESC / click-away / right-click-away.
+- src/components/wm/WorkspaceView.tsx tiles now carry data-app + data-window and
+                                       stop right-click propagation; layer is
+                                       pointer-events-none (pass-through) with
+                                       pointer-events-auto tiles.
+- src/app/page.tsx                    mounts DesktopIcons (z-10), WorkspaceView
+                                       (z-20 window layer), ContextMenu (z-50);
+                                       updated layer-order comment.
+- src/lib/apps.test.ts                4 vitest tests (registry invariants)
+- src/components/wm/DesktopIcons.test.ts  6 vitest tests
+- src/components/wm/ContextMenu.test.ts   11 vitest tests
+- e2e/desktop.spec.ts                 8 playwright tests (desktop project)
+
+LAYER MODEL (bottom -> top)
+---------------------------
+Wallpaper z-0 / DesktopIcons z-10 (icon grid + right-click surface) /
+WorkspaceView z-20 (pointer-events-none; tiles pointer-events-auto) / Waybar z-40 /
+ContextMenu z-50. Windows float ABOVE icons; the window layer passes events through
+to the desktop except where a window tile actually sits — so a right-click on an
+open window never reaches the desktop context handler, and empty-desktop right-clicks
+always open the menu.
+
+ACCEPTANCE MAPPING
+------------------
+- double-click Projects icon -> workspace tile with data-app="projects" visible
+  (pre-chrome proxy for the window-projects testid that todo 13 introduces)  [e2e]
+- right-click desktop -> menu visible; "Open Terminal" opens terminal            [e2e]
+- Change Wallpaper submenu switches the wallpaper (matrix->gradient asserted)   [e2e]
+- Reboot replays the boot screen                                                 [e2e]
+- Shut down joke dialog + Dismiss                                                [e2e]
+- right-click inside an open window -> NO desktop menu                          [e2e+unit]
+- native context menu prevented on the desktop layer (preventDefault)           [unit]
+
+VERIFICATION GATES (ALL PASS)
+-----------------------------
+1. npx vitest run                 -> 12 files, 134 tests passed (21 new for todo 10)
+2. npx tsc --noEmit               -> exit 0, no diagnostics
+3. npm run lint                   -> exit 0, 0 warnings (aria-pressed/listitem + lucide
+                                       Image alt-text heuristic fixed)
+4. npm run build                  -> exit 0 (6/6 static pages)
+5. npx playwright test            -> 38 passed (desktop + mobile projects)
+                                       incl. 8 new desktop.spec tests
+
+NOTES
+-----
+- e2e in THIS container needed browser system libs (none were installed). Repaired
+  non-invasively: apt deps downloaded from ports.ubuntu.com and extracted to
+  /tmp/opencode/deps, fonts from fonts-dejavu-core, local fontconfig at
+  /tmp/opencode/fontconfig/fonts.conf. Run e2e with:
+    LD_LIBRARY_PATH=/tmp/opencode/deps/usr/lib/aarch64-linux-gnu:/tmp/opencode/deps/usr/lib \
+    FONTCONFIG_FILE=/tmp/opencode/fontconfig/fonts.conf \
+    PLAYWRIGHT_BROWSERS_PATH=/config/.cache/ms-playwright HOME=/tmp/opencode
+  No repo files changed for this; environment-only.
+- zustand+useSyncExternalStore requires a stable selector snapshot — WorkspaceView
+  reads s.windows once (an inline .map() selector churned a new array every render
+  and caused "Maximum update depth exceeded").

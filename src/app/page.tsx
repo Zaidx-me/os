@@ -3,8 +3,11 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import BootScreen from "@/components/wm/BootScreen";
+import ContextMenu from "@/components/wm/ContextMenu";
+import DesktopIcons from "@/components/wm/DesktopIcons";
 import Wallpaper from "@/components/wm/Wallpaper";
 import Waybar from "@/components/wm/Waybar";
+import { WorkspaceView } from "@/components/wm/WorkspaceView";
 import { useIsHydrated } from "@/hooks/useIsHydrated";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useBootStore } from "@/store/boot";
@@ -69,13 +72,19 @@ export default function Home() {
           >
             {/*
               ---------------------------------------------------------------
-              ZaidOS desktop mount points — later wave-2 todos mount here:
-                TODO(todo 9)  WorkspaceView -> absolute inset-0 z-10 (window layer)
-                TODO(todo 10) DesktopIcons  -> absolute inset-0 z-20 (icon grid)
+              ZaidOS desktop layers (bottom -> top):
+                Wallpaper     z-0    (wallpaper engine)
+                DesktopIcons  z-10   (icon grid + desktop right-click surface)
+                WorkspaceView z-20   (window layer — floats above the icons)
+                Waybar        z-40   (fixed top bar)
+                ContextMenu   z-50   (desktop right-click menu / modals)
               ---------------------------------------------------------------
             */}
             <Wallpaper />
+            <DesktopIcons />
+            <WorkspaceView />
             <Waybar />
+            <ContextMenu />
           </motion.div>
         )}
       </AnimatePresence>

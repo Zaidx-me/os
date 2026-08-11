@@ -168,7 +168,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: open in ws1, switch ws3, back -> window persists. failure: empty ws shows hint; close focused -> focus moves to remaining window. Evidence .omo/evidence/task-9-zaidos-portfolio.txt
   Commit: Y | feat(desktop): 5-workspace model with focus and move semantics
 
-- [ ] 10. Desktop icons + right-click context menu
+- [x] 10. Desktop icons + right-click context menu
   What to do / Must NOT do: src/components/wm/DesktopIcons.tsx: icon grid (11 apps, selectable), single-click select (accent ring), double-click open, Enter opens selected. src/components/wm/ContextMenu.tsx: desktop right-click menu: Open Terminal, Change Wallpaper (4 submenu), Refresh (icons spin), About ZaidOS (opens Settings), Reboot (replay boot), Shut down (joke dialog + power-off anim). Close on click-away/ESC. MUST NOT show native context menu on desktop (preventDefault desktop-only); right-click inside windows does NOT open desktop menu.
   Parallelization: Wave 2 | Blocked by: 2 | Blocks: 13,45
   References (executor has NO interview context - be exhaustive): appIds (todo 15 registry), wallpaper store (7), wm store (12)
