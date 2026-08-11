@@ -67,6 +67,8 @@ export interface WorkspacesStore {
   moveWindow(id: string, ws: WorkspaceId): void;
   /** Cycles focus within `ws`'s ordered list. */
   focusNextInWs(ws: WorkspaceId): void;
+  /** Marks `id` as focused in `ws` (defaults to activeWs); no-op if absent. */
+  setFocused(id: string, ws?: WorkspaceId): void;
   /** Owning workspace of a window, or null if it isn't open anywhere. */
   getWindowWs(id: string): WorkspaceId | null;
 }
@@ -183,6 +185,18 @@ export const useWorkspacesStore = create<WorkspacesStore>((set, get) => ({
         },
       };
     });
+  },
+
+  setFocused: (id, ws) => {
+    const resolved = isWorkspaceId(ws) ? ws : get().activeWs;
+    const slot = get().workspaces[resolved];
+    if (!slot.windows.includes(id)) return; // not a member here — safe no-op
+    set((s) => ({
+      workspaces: {
+        ...s.workspaces,
+        [resolved]: { ...slot, focused: id },
+      },
+    }));
   },
 
   getWindowWs: (id) => findOwningWorkspace(get().workspaces, id),

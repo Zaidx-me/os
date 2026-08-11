@@ -6,6 +6,10 @@ import {
 } from "@/lib/wm/actions";
 import {
   clampWindowBounds,
+  dragBounds,
+  maximizeBounds,
+  MAXIMIZE_GAP,
+  resizeBounds,
   useWmStore,
   VIEWPORT_MARGIN,
   WAYBAR_H,
@@ -237,6 +241,58 @@ describe("wm store — setBounds / clampWindowBounds", () => {
     wm().reclampToViewport();
     expect(wm().windows[id]).toEqual(before);
     expect(wm().nextZ).toBe(1); // no state churn at all
+  });
+});
+
+describe("wm geometry helpers — maximize/drag/resize (todo 13)", () => {
+  const VP = { vw: 1440, vh: 900 };
+  const FLOAT = { x: 120, y: 120, w: 640, h: 480 };
+
+  it("maximizeBounds fills the workspace minus waybar and 8px gutter", () => {
+    expect(maximizeBounds(VP)).toEqual({
+      x: MAXIMIZE_GAP,
+      y: WAYBAR_H + MAXIMIZE_GAP,
+      w: VP.vw - MAXIMIZE_GAP * 2,
+      h: VP.vh - WAYBAR_H - MAXIMIZE_GAP * 2,
+    });
+  });
+
+  it("dragBounds translates freely inside the viewport", () => {
+    expect(dragBounds(FLOAT, 50, 30, VP)).toEqual({ x: 170, y: 150 });
+  });
+
+  it("dragBounds clamps above the waybar and inside the viewport", () => {
+    expect(dragBounds(FLOAT, -200, -500, VP)).toEqual({ x: 0, y: WAYBAR_H });
+    expect(dragBounds(FLOAT, 10_000, 10_000, VP)).toEqual({
+      x: VP.vw - FLOAT.w,
+      y: VP.vh - FLOAT.h,
+    });
+  });
+
+  it("SE resize grows width and height", () => {
+    expect(resizeBounds(FLOAT, "se", 100, 80, VP)).toEqual({
+      x: 120,
+      y: 120,
+      w: 740,
+      h: 560,
+    });
+  });
+
+  it("NW resize keeps the SE corner anchored", () => {
+    expect(resizeBounds(FLOAT, "nw", -100, -80, VP)).toEqual({
+      x: 20,
+      y: 40,
+      w: 740,
+      h: 560,
+    });
+  });
+
+  it("resize clamps to the 360x240 minimum", () => {
+    const result = resizeBounds(FLOAT, "nw", 400, 400, VP);
+    expect(result.w).toBe(360);
+    expect(result.h).toBe(240);
+    expect(result.x).toBe(FLOAT.x + (FLOAT.w - 360));
+    expect(result.y).toBe(FLOAT.y + (FLOAT.h - 240));
   });
 });
 

@@ -31,6 +31,18 @@ export const MIN_WINDOW_H = 240;
 /** Margin kept between a window and the viewport edges. */
 export const VIEWPORT_MARGIN = 16;
 
+/**
+ * Gutter a fullscreen (maximized) window keeps around itself — 8px, matching
+ * the --gap-window token (todo 13 maximize / todo 14 tile math).
+ */
+export const MAXIMIZE_GAP = 8;
+
+/**
+ * Resize handle directions (todo 13). Each name is the edge/corner the handle
+ * sits on; `dir.includes("e")` etc. drives the resize math in resizeBounds.
+ */
+export type ResizeDir = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
+
 /** Default open size until the app registry (todo 15) supplies defaultSize. */
 export const DEFAULT_WINDOW_SIZE = { w: 640, h: 480 } as const;
 
@@ -98,6 +110,64 @@ export function clampWindowBounds(
   return {
     w: clamp(bounds.w, Math.min(MIN_WINDOW_W, maxW), maxW),
     h: clamp(bounds.h, Math.min(MIN_WINDOW_H, maxH), maxH),
+  };
+}
+
+/** Bounds a maximized window fills: workspace minus the waybar and gutter. */
+export function maximizeBounds(vp: Viewport): {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+} {
+  return {
+    x: MAXIMIZE_GAP,
+    y: WAYBAR_H + MAXIMIZE_GAP,
+    w: vp.vw - MAXIMIZE_GAP * 2,
+    h: vp.vh - WAYBAR_H - MAXIMIZE_GAP * 2,
+  };
+}
+
+/** Drag position: clamped to the viewport, never above the waybar (todo 13). */
+export function dragBounds(
+  start: { x: number; y: number; w: number; h: number },
+  dx: number,
+  dy: number,
+  vp: Viewport,
+): { x: number; y: number } {
+  return {
+    x: clamp(start.x + dx, 0, vp.vw - start.w),
+    y: clamp(start.y + dy, WAYBAR_H, vp.vh - start.h),
+  };
+}
+
+/**
+ * Resize position/size for `dir` with dx/dy pointer deltas. West/north edges
+ * stay anchored (the opposite edge is fixed) and the size is clamped through
+ * clampWindowBounds before the anchored position is recomputed.
+ */
+export function resizeBounds(
+  start: { x: number; y: number; w: number; h: number },
+  dir: ResizeDir,
+  dx: number,
+  dy: number,
+  vp: Viewport,
+): { x: number; y: number; w: number; h: number } {
+  const raw = { w: start.w, h: start.h };
+  if (dir.includes("e")) raw.w = start.w + dx;
+  if (dir.includes("w")) raw.w = start.w - dx;
+  if (dir.includes("s")) raw.h = start.h + dy;
+  if (dir.includes("n")) raw.h = start.h - dy;
+  const { w, h } = clampWindowBounds(raw, vp);
+  let x = start.x;
+  let y = start.y;
+  if (dir.includes("w")) x = start.x + (start.w - w);
+  if (dir.includes("n")) y = start.y + (start.h - h);
+  return {
+    x: clamp(x, 0, vp.vw - w),
+    y: clamp(y, WAYBAR_H, vp.vh - h),
+    w,
+    h,
   };
 }
 

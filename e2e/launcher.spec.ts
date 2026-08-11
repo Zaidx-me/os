@@ -8,6 +8,25 @@ async function bootToDesktop(page: import("@playwright/test").Page) {
   await expect(page.getByTestId("desktop")).toBeVisible({ timeout: 2000 });
 }
 
+/**
+ * Opens the launcher with Mod+Space (Control+Alt+Space on non-mac). The
+ * hotkey listener attaches in a React effect AFTER the desktop paints, so a
+ * one-shot keypress can land before it is wired. Poll instead: press only
+ * while the launcher is closed, so a missed keydown self-heals on retry.
+ */
+async function openLauncher(page: import("@playwright/test").Page) {
+  await expect
+    .poll(
+      async () => {
+        if (await page.getByTestId("launcher").isVisible()) return true;
+        await page.keyboard.press("Control+Alt+Space");
+        return page.getByTestId("launcher").isVisible();
+      },
+      { timeout: 5000 },
+    )
+    .toBe(true);
+}
+
 test.describe("app launcher (Mod+Space)", () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
@@ -16,7 +35,7 @@ test.describe("app launcher (Mod+Space)", () => {
   }) => {
     await bootToDesktop(page);
 
-    await page.keyboard.press("Control+Alt+Space");
+    await openLauncher(page);
     await expect(page.getByTestId("launcher")).toBeVisible({ timeout: 2000 });
     await expect(page.getByTestId("launcher-grid")).toBeVisible();
     await expect(page.getByTestId("launcher-input")).toBeFocused();
@@ -27,7 +46,7 @@ test.describe("app launcher (Mod+Space)", () => {
   }) => {
     await bootToDesktop(page);
 
-    await page.keyboard.press("Control+Alt+Space");
+    await openLauncher(page);
     await page.getByTestId("launcher-input").fill("term");
 
     const options = page.locator('[data-testid^="launcher-result-"]');
@@ -38,7 +57,7 @@ test.describe("app launcher (Mod+Space)", () => {
 
     await page.keyboard.press("Enter");
 
-    await expect(page.getByTestId("ws-window").filter({ has: page.locator('text=terminal') })).toBeVisible({
+    await expect(page.getByTestId("window-terminal")).toBeVisible({
       timeout: 2000,
     });
   });
@@ -46,8 +65,7 @@ test.describe("app launcher (Mod+Space)", () => {
   test("ESC closes the launcher", async ({ page }) => {
     await bootToDesktop(page);
 
-    await page.keyboard.press("Control+Alt+Space");
-    await expect(page.getByTestId("launcher")).toBeVisible();
+    await openLauncher(page);
     // The input gains focus asynchronously (focus effect) — wait for it so the
     // Escape keypress lands on a focused element deterministically.
     await expect(page.getByTestId("launcher-input")).toBeFocused();
@@ -60,8 +78,7 @@ test.describe("app launcher (Mod+Space)", () => {
   test("click-away closes the launcher", async ({ page }) => {
     await bootToDesktop(page);
 
-    await page.keyboard.press("Control+Alt+Space");
-    await expect(page.getByTestId("launcher")).toBeVisible();
+    await openLauncher(page);
 
     await page.getByTestId("launcher-backdrop").click({ position: { x: 10, y: 10 } });
 
@@ -71,11 +88,11 @@ test.describe("app launcher (Mod+Space)", () => {
   test("'chess' launches the chess app", async ({ page }) => {
     await bootToDesktop(page);
 
-    await page.keyboard.press("Control+Alt+Space");
+    await openLauncher(page);
     await page.getByTestId("launcher-input").fill("chess");
     await page.keyboard.press("Enter");
 
-    await expect(page.getByTestId("ws-window").filter({ has: page.locator('text=chess') })).toBeVisible({
+    await expect(page.getByTestId("window-chess")).toBeVisible({
       timeout: 2000,
     });
   });
@@ -87,9 +104,9 @@ test.describe("app launcher (Mod+Space)", () => {
 
     // Open a terminal window first so there IS a focused window underneath.
     await page.getByTestId("desktop-icon-terminal").dblclick();
-    await expect(page.getByTestId("ws-window").filter({ has: page.locator('text=terminal') })).toBeVisible();
+    await expect(page.getByTestId("window-terminal")).toBeVisible();
 
-    await page.keyboard.press("Control+Alt+Space");
+    await openLauncher(page);
     const input = page.getByTestId("launcher-input");
     await expect(input).toBeFocused();
 

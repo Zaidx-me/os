@@ -40,9 +40,7 @@ test.describe("desktop icons + context menu", () => {
     const icon = page.getByTestId("desktop-icon-projects");
     await icon.dblclick();
 
-    // Pre-window-chrome proxy for the window-projects tile (todo 13 replaces
-    // this with a real window chrome bearing data-testid="window-projects").
-    await expect(page.getByTestId("ws-window").filter({ has: page.locator('text=projects') })).toBeVisible({
+    await expect(page.getByTestId("window-projects")).toBeVisible({
       timeout: 2000,
     });
   });
@@ -68,7 +66,7 @@ test.describe("desktop icons + context menu", () => {
       .click({ button: "right", position: { x: 1100, y: 500 } });
     await page.getByTestId("context-menu-open-terminal").click();
 
-    await expect(page.getByTestId("ws-window").filter({ has: page.locator('text=terminal') })).toBeVisible({
+    await expect(page.getByTestId("window-terminal")).toBeVisible({
       timeout: 2000,
     });
   });
@@ -128,10 +126,10 @@ test.describe("desktop icons + context menu", () => {
 
     // Open a terminal window.
     await page.getByTestId("desktop-icon-terminal").dblclick();
-    await expect(page.getByTestId("ws-window").filter({ has: page.locator('text=terminal') })).toBeVisible();
+    await expect(page.getByTestId("window-terminal")).toBeVisible();
 
-    // Right-click the window tile — no desktop context menu may appear.
-    const tile = page.getByTestId("ws-window").first();
+    // Right-click the window — no desktop context menu may appear.
+    const tile = page.getByTestId("window-terminal");
     await tile.click({ button: "right" });
     await expect(page.getByTestId("context-menu")).toBeHidden();
   });

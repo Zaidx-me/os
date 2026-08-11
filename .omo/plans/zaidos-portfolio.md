@@ -192,7 +192,7 @@ Your next move: say **start work** to begin execution, or **run a high-accuracy 
   QA scenarios (name the exact tool + invocation): happy: focus twice doesn't grow z unbounded. failure: closing focused window focuses next-highest (no dangling focus). Evidence .omo/evidence/task-12-zaidos-portfolio.txt
   Commit: Y | feat(wm): window store with z-order and global hotkey service
 
-- [ ] 13. Window chrome component (drag/resize/min/max/close)
+- [x] 13. Window chrome component (drag/resize/min/max/close)
   What to do / Must NOT do: src/components/wm/Window.tsx: titlebar (AppIcon + title + controls minimize/maximize/close, rice-style square buttons) + content area. Drag = manual pointer math on titlebar (pointer capture, clamp to viewport minus waybar, 40px edge zone triggers tile preview from todo 14). Resize = 8 invisible handles (cursor styles), min 360x240. Motion: open scale 0.96->1 + fade 200ms, close reverse, focus z+highlight, maximize fills workspace minus waybar+gaps. Double-click title toggles maximize. Close restores focus to previous window. MUST NOT drag while maximized (restore first); MUST NOT use framer-motion drag (manual pointer keeps tiling deterministic).
   Parallelization: Wave 3 | Blocked by: 4,12 | Blocks: 17-48
   References (executor has NO interview context - be exhaustive): Pointer events https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events ; Motion https://motion.dev/docs/react

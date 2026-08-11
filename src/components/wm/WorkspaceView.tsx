@@ -1,6 +1,7 @@
 "use client";
 
-import { useWmStore } from "@/store/wm";
+import { AnimatePresence } from "motion/react";
+import Window from "@/components/wm/Window";
 import {
   selectActiveWs,
   selectWorkspace,
@@ -8,21 +9,22 @@ import {
 } from "@/store/workspaces";
 
 /**
- * Renders the ACTIVE workspace's window stack. Windows themselves arrive in
- * todo 13 (window chrome); for now each window renders as a placeholder tile
- * keyed by its window id, labelled with its appId (data-app — the pre-chrome
- * proxy for the window-<appId> testid that todo 13's chrome introduces). Tiles
- * stop right-click propagation so the desktop context menu never opens from
- * inside a window (todo 10 acceptance).
+ * Renders the ACTIVE workspace's window stack as real window chrome (todo 13).
  *
- * Component only — reads both stores, never mutates them.
+ * Each window id is a Window component keyed by its win-<n> id, animated in
+ * with AnimatePresence (open scale+fade, close reverse). Windows render above
+ * the desktop icons (the layer is z-20, pointer-events-none; each Window
+ * re-enables pointer events for its own frame) and below the waybar.
+ *
+ * Component only — reads both stores, never mutates them. Membership comes
+ * from workspaces (todo 9); geometry from wm (todo 12). An exiting window is
+ * kept mounted for its close animation by Window's own snapshot, so the store
+ * drops it from both stores immediately and this list only carries the ids
+ * that still belong to the active workspace.
  */
 export function WorkspaceView() {
   const activeWs = useWorkspacesStore(selectActiveWs);
   const { windows } = useWorkspacesStore(selectWorkspace(activeWs));
-  // Stable snapshot — an inline map here would churn a new array every render.
-  const windowsState = useWmStore((s) => s.windows);
-  const appIds = windows.map((id) => windowsState[id]?.appId ?? id);
 
   return (
     <div
@@ -35,22 +37,12 @@ export function WorkspaceView() {
             Nothing here yet. Press Super+Space
           </p>
         </div>
-      ) : (
-        <div className="flex flex-wrap gap-[var(--gap-window)] p-[var(--gap-window)]">
-          {windows.map((id, i) => (
-            <div
-              key={id}
-              data-testid="ws-window"
-              data-window
-              data-app={appIds[i]}
-              onContextMenu={(e) => e.stopPropagation()}
-              className="window-glass hairline pointer-events-auto flex h-40 w-64 items-center justify-center rounded-[var(--radius-window)] font-mono text-sm text-zaid-muted"
-            >
-              {appIds[i]}
-            </div>
-          ))}
-        </div>
-      )}
+      ) : null}
+      <AnimatePresence>
+        {windows.map((id) => (
+          <Window key={id} windowId={id} />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,7 +1,14 @@
-import { act, render, screen } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from "@testing-library/react";
 import { createElement } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { WorkspaceView } from "@/components/wm/WorkspaceView";
+import { openApp } from "@/lib/wm/actions";
+import { useWmStore } from "./wm";
 import {
   createInitialWorkspaces,
   selectActiveWs,
@@ -235,6 +242,24 @@ describe("workspaces store — focusNextInWs", () => {
   });
 });
 
+describe("workspaces store — setFocused", () => {
+  it("marks a member window as focused in its workspace", () => {
+    const [a, b] = open(1, 2); // focused = b
+    state().setFocused(a);
+    expect(state().workspaces[1].focused).toBe(a);
+    state().setFocused(b, 1);
+    expect(state().workspaces[1].focused).toBe(b);
+  });
+
+  it("is a safe no-op for ids that are not members of the target workspace", () => {
+    const [a] = open(1, 1);
+    state().setFocused(a, 2); // a lives in ws 1
+    expect(state().workspaces[2].focused).toBeNull();
+    state().setFocused("win-999");
+    expect(state().workspaces[1].focused).toBe(a);
+  });
+});
+
 describe("workspaces store — getWindowWs / selectors", () => {
   it("returns null for ids that are not open anywhere", () => {
     expect(state().getWindowWs("win-999")).toBeNull();
@@ -278,9 +303,15 @@ describe("workspaces store — invariant: exactly one workspace", () => {
   });
 });
 
-describe("WorkspaceView (component stub)", () => {
-  // Rendered via createElement so this test file stays .ts (Vite only
-  // transforms JSX inside .tsx files).
+describe("WorkspaceView (window chrome)", () => {
+  beforeEach(() => {
+    useWmStore.setState({ windows: {}, nextZ: 0 });
+    useWorkspacesStore.setState({
+      workspaces: createInitialWorkspaces(),
+      activeWs: 1,
+    });
+  });
+
   it("renders the launcher hint on an empty active workspace", () => {
     render(createElement(WorkspaceView));
     expect(screen.getByTestId("ws-empty-hint")).toHaveTextContent(
@@ -288,28 +319,27 @@ describe("WorkspaceView (component stub)", () => {
     );
   });
 
-  it("renders only the active workspace's windows as placeholder tiles", () => {
-    let a = "";
-    let b = "";
+  it("renders only the active workspace's windows as real chrome", async () => {
     act(() => {
-      a = state().openInWorkspace("terminal", 1);
-      b = state().openInWorkspace("chess", 1);
-      state().openInWorkspace("chat", 2); // other workspace: must NOT render
+      openApp("terminal", 1);
+      openApp("chess", 1);
+      openApp("chat", 2); // other workspace: must NOT render
     });
     const { rerender } = render(createElement(WorkspaceView));
-    const tiles = screen.getAllByTestId("ws-window");
-    expect(tiles).toHaveLength(2);
-    expect(new Set(tiles.map((t) => t.textContent))).toEqual(new Set([a, b]));
+    expect(screen.getByTestId("window-terminal")).toBeInTheDocument();
+    expect(screen.getByTestId("window-chess")).toBeInTheDocument();
+    expect(screen.queryByTestId("window-chat")).toBeNull();
 
-    // switching active workspace re-renders its windows
+    // switching the active workspace swaps which windows render
     act(() => state().setActive(2));
     rerender(createElement(WorkspaceView));
-    expect(screen.getAllByTestId("ws-window")).toHaveLength(1);
+    expect(screen.getByTestId("window-chat")).toBeInTheDocument();
+    await waitForElementToBeRemoved(() => screen.getByTestId("window-terminal"));
 
     // empty workspace shows the hint again
     act(() => state().setActive(3));
     rerender(createElement(WorkspaceView));
+    await waitForElementToBeRemoved(() => screen.getByTestId("window-chat"));
     expect(screen.getByTestId("ws-empty-hint")).toBeInTheDocument();
-    expect(screen.queryByTestId("ws-window")).toBeNull();
   });
 });

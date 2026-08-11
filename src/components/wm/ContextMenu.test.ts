@@ -141,11 +141,11 @@ describe("ContextMenu", () => {
       ),
     );
 
-    // Open a window so the workspace view renders a real tile.
+    // Open a window so the workspace view renders a real window.
     act(() => {
       openApp("terminal");
     });
-    const tile = screen.getByTestId("ws-window");
+    const tile = screen.getByTestId("window-terminal");
     expect(tile).toHaveAttribute("data-app", "terminal");
 
     // Right-clicking the window tile must never surface the desktop menu.

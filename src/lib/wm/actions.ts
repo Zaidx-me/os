@@ -48,6 +48,20 @@ export function closeWindow(id: string): void {
   useWorkspacesStore.getState().closeWindow(id);
 }
 
+/**
+ * Focuses a window in both stores (workspaces.focused + wm raise/restore).
+ * Clicking a window/titlebar/handle calls this — NEVER a raw store action.
+ * Cross-workspace focus is refused: only the ACTIVE workspace can raise.
+ */
+export function focusWindow(id: string): void {
+  const workspaces = useWorkspacesStore.getState();
+  const owner = workspaces.getWindowWs(id);
+  if (owner === null) return; // not open anywhere — safe no-op
+  if (owner !== workspaces.activeWs) return; // cross-workspace raise forbidden
+  workspaces.setFocused(id, owner);
+  useWmStore.getState().focus(id);
+}
+
 /** Moves a window to another workspace and re-clamps/raises it (visible only). */
 export function moveWindowToWorkspace(id: string, ws: WorkspaceId): void {
   useWorkspacesStore.getState().moveWindow(id, ws);
