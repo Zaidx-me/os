@@ -48,7 +48,29 @@ export function SettingsApp() {
 
   return (
     <OsAppShell testId="app-content-settings">
-      <div className="flex h-full min-h-0">
+      <div className="flex h-full min-h-0 flex-col">
+        <nav
+          aria-label="Settings sections"
+          className="flex shrink-0 gap-1 overflow-x-auto border-b border-zaid-border bg-zaid-surface2/50 p-2 sm:hidden"
+        >
+          {TABS.map((label) => (
+            <button
+              key={label}
+              type="button"
+              data-testid={`settings-tab-${label.toLowerCase()}-mobile`}
+              onClick={() => setTab(label)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                tab === label
+                  ? "bg-zaid-accent text-white"
+                  : "text-zaid-muted hover:bg-zaid-surface hover:text-zaid-text"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex min-h-0 flex-1">
         <aside className="hidden w-40 shrink-0 border-r border-zaid-border bg-zaid-surface2/50 p-3 sm:block">
           {TABS.map((label) => (
             <button
@@ -67,9 +89,11 @@ export function SettingsApp() {
           ))}
         </aside>
 
-        <div className="min-w-0 flex-1 overflow-y-auto p-5">
-          <h1 className="mb-1 font-sans text-lg font-semibold text-zaid-text">Settings</h1>
-          <p className="label-caps mb-6">System preferences</p>
+        <div className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-5">
+          <h1 className="mb-1 hidden font-sans text-lg font-semibold text-zaid-text sm:block">
+            Settings
+          </h1>
+          <p className="label-caps mb-4 sm:mb-6">System preferences</p>
 
           {tab === "Appearance" && (
             <>
@@ -172,6 +196,7 @@ export function SettingsApp() {
               </p>
             </OsPanel>
           )}
+        </div>
         </div>
       </div>
     </OsAppShell>

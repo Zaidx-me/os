@@ -29,7 +29,7 @@ export function ArticlesApp() {
       {open ? (
         <ArticleReader article={open} onBack={() => setOpenSlug(null)} />
       ) : (
-        <div className="flex flex-col gap-6 p-6">
+        <div className="flex flex-col gap-6 p-4 sm:p-6">
           <h2 className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-zaid-muted">
             <Icon name="book-open" size={14} />
             Articles

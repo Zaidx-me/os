@@ -68,7 +68,7 @@ export function ResumeApp() {
 
         <article
           data-testid="resume-sheet"
-          className="flex-1 overflow-y-auto p-6 print:overflow-visible print:p-8"
+          className="flex-1 overflow-y-auto p-4 print:overflow-visible print:p-8 sm:p-6"
         >
           <header className="flex flex-col gap-1 border-b border-zaid-border pb-4 print:border-neutral-300">
             <h1
@@ -85,7 +85,7 @@ export function ResumeApp() {
             </p>
             <p
               data-testid="resume-contact"
-              className="font-mono text-xs text-zaid-muted print:text-neutral-700"
+              className="break-words font-mono text-xs text-zaid-muted print:text-neutral-700"
             >
               {site.contactEmail} · {site.siteUrl.replace("https://", "")} ·{" "}
               {contact.map((s) => s.handle).join(" · ")}

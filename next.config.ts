@@ -1,10 +1,10 @@
 import type { NextConfig } from "next";
-import path from "node:path";
 
-/** NTFS/exFAT mounts often reject atomic renames in `.next/dev` — override via NEXT_DIST_DIR. */
+/** NTFS/exFAT mounts often reject atomic renames in `.next/dev` — dev-only via NEXT_DIST_DIR. */
 const distDir =
-  process.env.NEXT_DIST_DIR ??
-  path.join(process.cwd(), ".next");
+  process.env.NODE_ENV === "development" && process.env.NEXT_DIST_DIR
+    ? process.env.NEXT_DIST_DIR
+    : ".next";
 
 const nextConfig: NextConfig = {
   distDir,

@@ -38,7 +38,7 @@ export function ExperienceApp() {
       data-testid="app-content-experience"
       className="h-full w-full overflow-y-auto bg-zaid-surface"
     >
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-6 p-4 sm:p-6">
         {groups.map((group) => (
           <section
             key={group.type}

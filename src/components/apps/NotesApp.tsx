@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
+import { Icon } from "@/components/ui/Icon";
 import { OsAppShell, OsButton, OsStatusBar } from "@/components/os";
 import type { WindowAppProps } from "@/lib/apps";
 
@@ -44,11 +45,17 @@ export function NotesApp({ setTitle }: WindowAppProps) {
         updated: Date.now(),
       };
       setNotes([welcome]);
-      setActiveId("welcome");
+      const preferEditor =
+        typeof window !== "undefined" &&
+        window.matchMedia("(min-width: 768px)").matches;
+      setActiveId(preferEditor ? "welcome" : null);
       saveNotes([welcome]);
     } else {
       setNotes(loaded);
-      setActiveId(loaded[0]!.id);
+      const preferEditor =
+        typeof window !== "undefined" &&
+        window.matchMedia("(min-width: 768px)").matches;
+      setActiveId(preferEditor ? loaded[0]!.id : null);
     }
     hydrated.current = true;
   }, []);
@@ -107,8 +114,12 @@ export function NotesApp({ setTitle }: WindowAppProps) {
         </OsStatusBar>
       }
     >
-      <div className="flex h-full min-h-0">
-        <aside className="flex w-44 shrink-0 flex-col border-r border-zaid-border bg-zaid-surface2">
+      <div className="flex h-full min-h-0 flex-col md:flex-row">
+        <aside
+          className={`flex w-full shrink-0 flex-col border-zaid-border bg-zaid-surface2 md:w-44 md:border-r ${
+            activeId ? "hidden md:flex" : "flex min-h-0 flex-1"
+          }`}
+        >
           <div className="flex items-center justify-between border-b border-zaid-border px-2 py-2">
             <span className="text-xs font-semibold text-zaid-text">Notes</span>
             <OsButton
@@ -150,7 +161,25 @@ export function NotesApp({ setTitle }: WindowAppProps) {
         </aside>
 
         {active ? (
-          <div className="flex min-w-0 flex-1 flex-col bg-white p-3">
+          <div
+            className={`min-w-0 flex-1 flex-col bg-white p-3 ${
+              activeId ? "flex" : "hidden md:flex"
+            }`}
+          >
+            <div className="mb-2 flex items-center gap-2 md:hidden">
+              <button
+                type="button"
+                data-testid="notes-back"
+                onClick={() => setActiveId(null)}
+                aria-label="Back to notes"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zaid-muted hover:bg-zaid-surface2"
+              >
+                <Icon name="chevron-left" size={18} />
+              </button>
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-zaid-text">
+                {active.title}
+              </span>
+            </div>
             <input
               data-testid="notes-title"
               value={active.title}
@@ -166,7 +195,7 @@ export function NotesApp({ setTitle }: WindowAppProps) {
             />
           </div>
         ) : (
-          <div className="flex flex-1 items-center justify-center bg-white text-sm text-zaid-muted">
+          <div className="hidden flex-1 items-center justify-center bg-white text-sm text-zaid-muted md:flex">
             {hydrated.current ? "Create a note to get started." : "Loading…"}
           </div>
         )}

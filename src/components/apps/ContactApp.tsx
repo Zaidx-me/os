@@ -128,7 +128,7 @@ export function ContactApp() {
       data-testid="app-content-contact"
       className="h-full w-full overflow-y-auto bg-zaid-surface"
     >
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-6 p-4 sm:p-6">
         <section className="flex flex-col gap-2">
           <h2 className="font-mono text-xs uppercase tracking-wider text-zaid-muted">
             Contact

@@ -44,9 +44,9 @@ export function MonitorApp(_props: WindowAppProps) {
   return (
     <div
       data-testid="app-content-monitor"
-      className="h-full overflow-y-auto bg-zaid-bg p-4 font-mono text-xs text-zaid-text"
+      className="h-full overflow-y-auto bg-zaid-bg p-3 sm:p-4 font-mono text-xs text-zaid-text"
     >
-      <pre className="leading-relaxed">
+      <pre className="overflow-x-auto leading-relaxed">
         {`ZaidOS System Monitor — ${formatUptime(uptime)}
 
 CPU  [${bar(cpu)}] ${cpu}%

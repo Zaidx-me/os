@@ -142,14 +142,17 @@ export function FilesApp(_props: WindowAppProps) {
             <RefreshCw size={16} />
           </OsButton>
           <OsButton variant="default" data-testid="files-new-folder" onClick={newFolder}>
-            <FolderPlus size={14} /> New folder
+            <FolderPlus size={14} />
+            <span className="hidden sm:inline">New folder</span>
           </OsButton>
           <OsButton variant="default" data-testid="files-new-file" onClick={newFile}>
-            <FilePlus size={14} /> New file
+            <FilePlus size={14} />
+            <span className="hidden sm:inline">New file</span>
           </OsButton>
           {selected && (
             <OsButton variant="danger" data-testid="files-delete" onClick={deleteSelected}>
-              <Trash2 size={14} /> Delete
+              <Trash2 size={14} />
+              <span className="hidden sm:inline">Delete</span>
             </OsButton>
           )}
           <nav

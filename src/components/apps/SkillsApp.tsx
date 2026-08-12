@@ -85,7 +85,7 @@ export function SkillsApp() {
       data-testid="app-content-skills"
       className="h-full w-full overflow-y-auto bg-zaid-surface"
     >
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-6 p-4 sm:p-6">
         {skillGroups.map((group) => (
           <section
             key={group.id}
@@ -100,18 +100,18 @@ export function SkillsApp() {
                 <span
                   key={skill.name}
                   data-testid={`skills-chip-${slugify(skill.name)}`}
-                  className="hairline flex items-center gap-1.5 rounded-lg px-2.5 py-1.5"
+                  className="hairline flex max-w-full flex-col gap-0.5 rounded-lg px-2.5 py-1.5 sm:flex-row sm:items-center sm:gap-1.5"
                 >
-                  <Icon
-                    name={SKILL_ICONS[skill.name] ?? "code"}
-                    size={14}
-                    className="shrink-0 text-zaid-accent"
-                  />
-                  <span className="font-mono text-xs text-zaid-text">
-                    {skill.name}
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <Icon
+                      name={SKILL_ICONS[skill.name] ?? "code"}
+                      size={14}
+                      className="shrink-0 text-zaid-accent"
+                    />
+                    <span className="font-mono text-xs text-zaid-text">{skill.name}</span>
                   </span>
-                  <span className="font-mono text-[10px] text-zaid-muted">
-                    — {skill.note}
+                  <span className="font-mono text-[10px] leading-snug text-zaid-muted sm:truncate">
+                    {skill.note}
                   </span>
                 </span>
               ))}

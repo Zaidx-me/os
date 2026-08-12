@@ -19,7 +19,7 @@ export function AboutApp() {
       data-testid="app-content-about"
       className="h-full w-full overflow-y-auto bg-zaid-surface"
     >
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-6 p-4 sm:p-6">
         <header className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
           <div className="relative h-36 w-28 shrink-0 overflow-hidden rounded-lg hairline">
             <Image

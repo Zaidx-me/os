@@ -110,7 +110,10 @@ export function ProjectsApp() {
       return;
     }
     if (selectedId === null || !visible.some((p) => p.id === selectedId)) {
-      setSelectedId(visible[0]!.id);
+      const preferAutoSelect =
+        typeof window !== "undefined" &&
+        window.matchMedia("(min-width: 768px)").matches;
+      setSelectedId(preferAutoSelect ? visible[0]!.id : null);
     }
   }, [visible, selectedId]);
 
@@ -118,7 +121,7 @@ export function ProjectsApp() {
     <OsAppShell
       testId="app-content-projects"
       toolbar={
-        <OsToolbar className="gap-2">
+        <OsToolbar className="gap-2 overflow-x-auto">
           {FILTER_LABELS.map((tab) => (
             <OsButton
               key={tab.value}
@@ -148,8 +151,12 @@ export function ProjectsApp() {
         </OsStatusBar>
       }
     >
-      <div className="flex h-full min-h-0">
-        <div className="flex w-full min-w-0 flex-col border-r border-zaid-border md:w-72 md:shrink-0">
+      <div className="flex h-full min-h-0 flex-col md:flex-row">
+        <div
+          className={`flex w-full min-w-0 flex-col border-zaid-border md:w-72 md:shrink-0 md:border-r ${
+            selectedId ? "hidden md:flex" : "flex min-h-0 flex-1"
+          }`}
+        >
           <ul className="min-h-0 flex-1 overflow-y-auto">
             {visible.map((project) => {
               const active = selectedId === project.id;
@@ -199,11 +206,24 @@ export function ProjectsApp() {
           </ul>
         </div>
 
-        <div className="min-w-0 flex-1 overflow-y-auto bg-white p-4">
+        <div
+          className={`min-w-0 flex-1 overflow-y-auto bg-white p-4 ${
+            selectedId ? "flex flex-col" : "hidden md:block"
+          }`}
+        >
           {selected ? (
             <section data-testid="projects-detail" className="flex flex-col gap-4">
-              <div className="flex items-start gap-3 border-b border-zaid-border pb-3">
-                <FolderGit2 size={28} className="shrink-0 text-zaid-accent" />
+              <div className="flex items-start gap-2 border-b border-zaid-border pb-3 md:gap-3">
+                <button
+                  type="button"
+                  data-testid="projects-back"
+                  onClick={() => setSelectedId(null)}
+                  aria-label="Back to projects"
+                  className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zaid-muted hover:bg-zaid-surface2 md:hidden"
+                >
+                  <Icon name="chevron-left" size={18} />
+                </button>
+                <FolderGit2 size={28} className="hidden shrink-0 text-zaid-accent sm:block" />
                 <div className="min-w-0 flex-1">
                   <h2 className="text-lg font-semibold text-zaid-text">{selected.title}</h2>
                   <p className="text-sm text-zaid-muted">{selected.tagline}</p>
