@@ -1,0 +1,46 @@
+import { getAppIcon } from "./appIcons.js";
+
+/** macOS-style icons — local SVG/PNG only (no remote CDN). */
+export const MAC_ICONS = {
+  finder: getAppIcon("Finder"),
+  safari: getAppIcon("Safari"),
+  messages: getAppIcon("Messages"),
+  mail: getAppIcon("Mail"),
+  maps: getAppIcon("Maps"),
+  photos: getAppIcon("Photos"),
+  facetime: getAppIcon("FaceTime"),
+  phone: getAppIcon("Phone"),
+  calendar: getAppIcon("Calendar"),
+  contacts: getAppIcon("Contacts"),
+  notes: getAppIcon("Notes"),
+  reminders: getAppIcon("Reminders"),
+  music: getAppIcon("Music"),
+  settings: getAppIcon("Settings"),
+  trash: getAppIcon("Trash"),
+  launchpad: getAppIcon("Launchpad"),
+  textEdit: getAppIcon("TextEdit"),
+  preview: getAppIcon("PDFViewer"),
+  terminal: getAppIcon("Terminal"),
+  folder: getAppIcon("Finder"),
+  github: getAppIcon("Projects"),
+  linkedin: getAppIcon("Contact"),
+  appStore: getAppIcon("Settings"),
+  pages: getAppIcon("Resume"),
+  numbers: getAppIcon("Skills"),
+  keynote: getAppIcon("Chess"),
+  podcasts: getAppIcon("Music"),
+  tv: getAppIcon("Photos"),
+};
+
+export const ZAID_ICONS = {
+  about: getAppIcon("About"),
+  projects: getAppIcon("Projects"),
+  articles: getAppIcon("Articles"),
+  experience: getAppIcon("Experience"),
+  resume: getAppIcon("Resume"),
+  skills: getAppIcon("Skills"),
+  chat: getAppIcon("ZaidGPT"),
+  contact: getAppIcon("Contact"),
+  chess: getAppIcon("Chess"),
+  terminal: getAppIcon("Terminal"),
+};

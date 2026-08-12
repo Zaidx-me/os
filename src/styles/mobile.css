@@ -1,0 +1,778 @@
+/* ---- ZaidOS mobile (iOS-style) ---- */
+.mobile-shell {
+  min-height: 100dvh;
+  min-height: 100svh;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 1023px), (pointer: coarse) {
+  html,
+  body,
+  #root {
+    overflow: hidden;
+    height: 100dvh;
+    overscroll-behavior: none;
+  }
+}
+
+.mobile-lock {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.mobile-lock-time {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+
+.mobile-lock-date {
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+.mobile-live-card {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.mobile-widget-row {
+  touch-action: pan-y;
+}
+
+.live-projects-widget {
+  touch-action: pan-x;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ios-cc-sheet {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(48px) saturate(1.9);
+  -webkit-backdrop-filter: blur(48px) saturate(1.9);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.dark .ios-cc-sheet {
+  background: rgba(30, 30, 32, 0.82);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.ios-cc-module {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.dark .ios-cc-module {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.ios-cc-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.25rem;
+  min-height: 4.25rem;
+  border-radius: 14px;
+  border: none;
+  padding: 0.65rem 0.75rem;
+  background: rgba(120, 120, 128, 0.16);
+  color: rgba(28, 28, 30, 0.92);
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.dark .ios-cc-tile {
+  background: rgba(120, 120, 128, 0.24);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.ios-cc-tile--on {
+  background: rgba(10, 132, 255, 0.92);
+  color: white;
+}
+
+.ios-cc-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ios-cc-tile-label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ios-cc-tile-sub {
+  font-size: 10px;
+  opacity: 0.72;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ios-cc-quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: transparent;
+  padding: 0.35rem;
+  color: rgba(28, 28, 30, 0.9);
+}
+
+.dark .ios-cc-quick-btn {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.ios-cc-quick-icon {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(120, 120, 128, 0.2);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ios-cc-quick-label {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.mobile-app-content {
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-browser iframe {
+  min-height: 0;
+}
+
+.mobile-home {
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-app-tile {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ios-icon-label {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.ios-status-bar {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.ios-status-time {
+  min-width: 4rem;
+}
+
+.ios-status-trailing {
+  width: 66px;
+  justify-content: flex-end;
+}
+
+.ios-home-indicator {
+  width: 134px;
+  height: 5px;
+  border-radius: 2.5px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.ios-home-indicator--dark {
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.ios-home-indicator-host {
+  padding-top: 12px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.ios-home-indicator--dragging {
+  transform-origin: center;
+}
+
+.ios-dock {
+  bottom: calc(2.85rem + env(safe-area-inset-bottom, 0px));
+}
+
+.ios-dock-inner {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.12),
+    0 8px 28px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+}
+
+.ios-dock-icon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ios-dock-library {
+  display: flex;
+  height: 2.875rem;
+  width: 2.875rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+}
+
+.ios-assistive-ball {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0;
+  border-radius: 9999px;
+  background: rgba(72, 72, 78, 0.42);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.22);
+  -webkit-tap-highlight-color: transparent;
+  cursor: default;
+}
+
+.ios-assistive-ball-ring {
+  position: absolute;
+  inset: 11%;
+  border-radius: 9999px;
+  border: 2px solid rgba(20, 20, 22, 0.72);
+  background: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.ios-assistive-ball-core {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.ios-assistive-ball-left {
+  left: 6px;
+}
+
+.ios-assistive-ball-right {
+  right: 6px;
+}
+
+.ios-assistive-backdrop {
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.ios-assistive-menu {
+  position: fixed;
+  z-index: 81;
+  width: min(280px, calc(100vw - 80px));
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(32px) saturate(1.8);
+  -webkit-backdrop-filter: blur(32px) saturate(1.8);
+  padding: 14px 12px 12px;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.ios-assistive-menu--left {
+  left: calc(6px + 58px + 8px);
+}
+
+.ios-assistive-menu--right {
+  right: calc(6px + 58px + 8px);
+}
+
+.ios-assistive-menu-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 6px;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(20, 20, 22, 0.75);
+}
+
+.ios-assistive-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 8px;
+}
+
+.ios-assistive-menu-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  padding: 2px 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ios-assistive-menu-icon {
+  display: flex;
+  height: 52px;
+  width: 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(28, 28, 30, 0.92);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ios-assistive-menu-cell:active .ios-assistive-menu-icon {
+  transform: scale(0.9);
+}
+
+.ios-assistive-menu-label {
+  max-width: 72px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: rgba(28, 28, 30, 0.88);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.ios-switcher-card {
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+}
+
+.ios-switcher-card--active {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.mobile-app-fullscreen {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-app-fullscreen.mobile-app-screen--floating-back {
+  padding-top: calc(env(safe-area-inset-top) + 3.25rem);
+}
+
+.mobile-floating-back-host {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iMessage-style ZaidGPT */
+.chat-app {
+  touch-action: manipulation;
+}
+
+.chat-bubble--user {
+  background: #34c759;
+  color: #fff;
+  border-radius: 18px 18px 4px 18px;
+}
+
+.chat-bubble--bot {
+  background: #3a3a3c;
+  color: #fff;
+  border-radius: 18px 18px 18px 4px;
+}
+
+.chat-typing-dot {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.55);
+  animation: chat-typing-bounce 1.2s ease-in-out infinite;
+}
+
+.chat-typing-dot--2 {
+  animation-delay: 0.15s;
+}
+
+.chat-typing-dot--3 {
+  animation-delay: 0.3s;
+}
+
+@keyframes chat-typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+
+.mobile-app-native {
+  height: 100%;
+  width: 100%;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Hide desktop chrome on mobile widths even if mounted */
+@media (max-width: 1023px), (pointer: coarse) {
+  .desktop-area .mac-dock-host,
+  .desktop-area > nav,
+  .desktop-area [class*="TopBar"] {
+    display: none !important;
+  }
+}
+
+.mobile-app-screen {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-app-body {
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-app-scroll {
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.mobile-filter-row {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-filter-row::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-segmented {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.chess-square-light {
+  background: #f0d9b5;
+}
+
+.chess-square-dark {
+  background: #b58863;
+}
+
+.chess-board-shell {
+  contain: layout style;
+}
+
+.chess-board {
+  touch-action: manipulation;
+  aspect-ratio: 1 / 1;
+}
+
+.chess-square {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  border: none;
+  min-width: 0;
+  min-height: 0;
+}
+
+.chess-square--selected {
+  box-shadow: inset 0 0 0 2px #60a5fa;
+}
+
+.chess-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72%;
+  height: 72%;
+  font-size: clamp(1.25rem, 5.8vw, 2rem);
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols2", "Apple Symbols", sans-serif;
+}
+
+.chess-glyph--white {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.chess-glyph--black {
+  color: #1a1a1a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.chess-glyph--sm {
+  width: auto;
+  height: auto;
+  font-size: 1rem;
+  display: inline-flex;
+}
+
+.chess-glyph--thinking {
+  animation: chess-piece-think 0.85s ease-in-out infinite;
+}
+
+.chess-glyph--recent {
+  animation: chess-piece-land 0.35s ease-out;
+}
+
+.chess-board--thinking .chess-glyph:not(.chess-glyph--thinking) {
+  opacity: 0.72;
+}
+
+@keyframes chess-piece-think {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.03);
+  }
+}
+
+@keyframes chess-piece-land {
+  0% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.chess-move-recent {
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.45);
+}
+
+.chess-square-last-from {
+  box-shadow: inset 0 0 0 9999px rgba(255, 255, 80, 0.28);
+}
+
+.chess-square-last-to {
+  box-shadow: inset 0 0 0 9999px rgba(155, 199, 0, 0.45);
+}
+
+/* Music — mobile player + library spacing */
+.mobile-app-embedded main.flex-1 {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
+}
+
+.mobile-app-embedded .music-mobile-player {
+  max-width: calc(100% - 1.5rem);
+}
+
+/* Paginated iOS home */
+.mobile-home-pages {
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-home-page {
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-app-chrome {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-app-chrome-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-app-screen {
+  touch-action: pan-y pinch-zoom;
+}
+
+
+.mobile-page-dots {
+  pointer-events: auto;
+}
+
+.mobile-page-dot,
+.mobile-widget-dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.mobile-page-dot.is-active,
+.mobile-widget-dot.is-active {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.05);
+}
+
+.ios-app-icon-wrap {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+.ios-app-icon {
+  -webkit-user-drag: none;
+  user-select: none;
+  object-fit: contain;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 100%);
+}
+
+/* Embedded macOS apps on mobile — strip desktop chrome, full bleed */
+.mobile-app-embedded {
+  -webkit-overflow-scrolling: touch;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.mobile-app-native.mobile-app-embedded > * {
+  min-height: 100%;
+  height: 100% !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+}
+
+.mobile-app-embedded aside {
+  display: none !important;
+}
+
+.mobile-app-embedded header[class*="window-drag-handle"] {
+  height: 44px !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+.mobile-app-embedded .window-drag-handle .group.mr-4 {
+  display: none !important;
+}
+
+.mobile-app-embedded .flex.h-full.w-full > .flex-1,
+.mobile-app-embedded .flex.h-full > .flex-1,
+.mobile-app-embedded main {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Music — single-column library + now playing */
+.mobile-app-embedded .h-full.w-full.flex {
+  flex-direction: column;
+}
+
+.mobile-app-embedded .h-full.w-full.flex > .flex-1.overflow-hidden {
+  min-height: 0;
+}
+
+/* Photos — grid fills width when sidebar hidden */
+.mobile-app-embedded .flex.h-full.w-full {
+  flex-direction: column;
+}
+
+/* Settings — stack overview hero + details */
+.mobile-app-embedded .flex.items-start.gap-8 {
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 1rem !important;
+}
+
+.mobile-app-embedded .flex.items-start.gap-8 .shrink-0 img {
+  width: 5rem;
+  height: 5rem;
+}
+
+.mobile-app-embedded .flex.items-start.gap-8 .flex-1 .flex {
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.mobile-app-embedded .flex.items-start.gap-8 .flex-1 .flex > span:first-child {
+  width: auto;
+  font-size: 0.7rem;
+}
+
+.mobile-app-embedded .flex.justify-center.gap-1 {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.mobile-app-embedded .flex.justify-center.gap-1 button {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.mobile-app-embedded [class*="grid-cols-5"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.mobile-app-embedded header .w-44 {
+  width: 100% !important;
+  max-width: 12rem;
+}
+
+.mobile-app-embedded header .px-6 {
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}

@@ -1,56 +1,54 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+node_modules
+dist
+dist-ssr
+*.local
 
-# testing
+# env (keep example)
+.env
+.env.*
+!.env.example
+
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# testing / CI artifacts
 /coverage
 /test-results/
 /playwright-report/
 
-# next.js
+# legacy Next.js artifacts (should not regenerate)
 /.next/
-/out/
 **/.next/
+/out/
 
 # External dev cache / mirrored paths (NTFS dev quirk — never commit)
 /home/
 /run/
 **/zaidos-next-dev/
 
-# production
-/build
-
 # misc
 .DS_Store
 *.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-!.env.example
-
-# vercel
-.vercel
-
-# typescript
 *.tsbuildinfo
-next-env.d.ts
+.vercel
 
 # generated evidence dumps
 .omo/evidence/lh-baseline.json
 
 # editor / agent
 .cursor/
+
+# local scratch / duplicate trees
+tmp/
+macos-sim/
+
+# wallpaper originals — app serves /Wallpaper/optimized/*.webp
+public/Wallpaper/*
+!public/Wallpaper/optimized/
+!public/Wallpaper/optimized/**
