@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { projects, site } from "../content/index.ts";
 import { openExternalUrlWithConfirm, openProjectLive } from "../lib/openBrowser.js";
+import { openArticle } from "../lib/openArticle.js";
 import { useIsMobile } from "../../hooks/useIsMobile.js";
 
 const FILTERS = [
@@ -142,8 +143,10 @@ function ProjectActions({ project, variant = "card" }) {
         </button>
       )}
       {project.links.article && (
-        <a
-          href={project.links.article}
+        <button
+          type="button"
+          data-testid="projects-link-article"
+          onClick={() => openArticle(project.links.article)}
           className={
             variant === "card"
               ? rowClass
@@ -159,7 +162,7 @@ function ProjectActions({ project, variant = "card" }) {
                 <span className="block text-[15px] font-semibold text-gray-900 dark:text-white">Article</span>
                 <span className="block text-[12px] text-gray-500">Read on ZaidOS</span>
               </span>
-              <ExternalLink size={15} className="shrink-0 text-gray-400" />
+              <BookOpen size={15} className="shrink-0 text-gray-400" />
             </>
           ) : (
             <>
@@ -167,7 +170,7 @@ function ProjectActions({ project, variant = "card" }) {
               Article
             </>
           )}
-        </a>
+        </button>
       )}
     </div>
   );

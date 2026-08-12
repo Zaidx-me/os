@@ -150,7 +150,7 @@ export default function ChatApp({ onBack }) {
   const send = useCallback(
     async (text) => {
       const trimmed = text.trim();
-      if (!trimmed || typing) return;
+      if (!trimmed || typing || streamingId) return;
 
       const userMsg = {
         id: `${Date.now()}-u`,
@@ -176,7 +176,7 @@ export default function ChatApp({ onBack }) {
         setStatus((prev) => ({ ...prev, llm: true, offline: false, api: true, loading: false }));
       } else if (llm?.llmAvailable === false) {
         setStatus((prev) => ({ ...prev, llm: false, offline: false, api: true, loading: false }));
-      } else if (llm?.llmAvailable === null) {
+      } else {
         void refreshStatus();
       }
 
@@ -204,7 +204,7 @@ export default function ChatApp({ onBack }) {
       setStreamingId(null);
       inputRef.current?.focus();
     },
-    [messages, typing, refreshStatus],
+    [messages, typing, streamingId, refreshStatus],
   );
 
   async function emailTranscript(e) {
@@ -305,7 +305,12 @@ export default function ChatApp({ onBack }) {
 
         {messages.map((m, i) => {
           const isUser = m.role === "user";
-          const botParts = isUser ? null : parseChatResponse(m.content, m.thinking);
+          const isStreaming = m.id === streamingId;
+          const botParts = isUser
+            ? null
+            : isStreaming
+              ? { content: m.content, thinking: m.thinking }
+              : parseChatResponse(m.content, m.thinking);
           const showTime =
             i === 0 ||
             (messages[i - 1] && m.ts - messages[i - 1].ts > 5 * 60 * 1000);
@@ -351,7 +356,7 @@ export default function ChatApp({ onBack }) {
               type="button"
               data-testid={`chat-chip-${q.toLowerCase().replace(/\s+/g, "-")}`}
               onClick={() => send(q)}
-              disabled={typing}
+              disabled={typing || streamingId}
               className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-200 active:bg-white/15 disabled:opacity-40"
             >
               {q}
@@ -371,12 +376,12 @@ export default function ChatApp({ onBack }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="iMessage"
-            disabled={typing}
+            disabled={typing || streamingId}
             className="min-h-[36px] flex-1 rounded-full border border-white/10 bg-[#2c2c2e] px-4 py-2 text-[15px] text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500/50 disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!input.trim() || typing}
+            disabled={!input.trim() || typing || streamingId}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-500 text-white disabled:bg-gray-600 disabled:opacity-50 active:scale-95"
             aria-label="Send"
           >

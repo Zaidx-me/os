@@ -43,13 +43,36 @@ export function openExternalUrl(url) {
 }
 
 let externalLinkPromptHandler = null;
+const externalLinkPromptQueue = [];
+let externalLinkPromptActive = false;
+
+function drainExternalLinkPromptQueue() {
+  if (externalLinkPromptActive || !externalLinkPromptQueue.length || !externalLinkPromptHandler) {
+    return;
+  }
+
+  const { url, resolve } = externalLinkPromptQueue.shift();
+  externalLinkPromptActive = true;
+
+  externalLinkPromptHandler(url)
+    .then(resolve)
+    .finally(() => {
+      externalLinkPromptActive = false;
+      drainExternalLinkPromptQueue();
+    });
+}
 
 export function setExternalLinkPromptHandler(handler) {
   externalLinkPromptHandler = handler;
+  drainExternalLinkPromptQueue();
 }
 
 export function clearExternalLinkPromptHandler() {
   externalLinkPromptHandler = null;
+  while (externalLinkPromptQueue.length) {
+    externalLinkPromptQueue.shift().resolve(false);
+  }
+  externalLinkPromptActive = false;
 }
 
 /** Ask before opening a URL that cannot load inside ZaidOS. */
@@ -58,7 +81,10 @@ export function confirmExternalUrl(url) {
   if (!target || typeof window === "undefined") return Promise.resolve(false);
 
   if (externalLinkPromptHandler) {
-    return externalLinkPromptHandler(target);
+    return new Promise((resolve) => {
+      externalLinkPromptQueue.push({ url: target, resolve });
+      drainExternalLinkPromptQueue();
+    });
   }
 
   return Promise.resolve(

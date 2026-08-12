@@ -13,6 +13,7 @@ import {
 } from "../zaidos/mobile/registry.js";
 import { hideMobileBrowserChrome, enterFullscreen } from "../zaidos/lib/fullscreen.js";
 import { PENDING_KEY } from "../zaidos/lib/openBrowser.js";
+import { PENDING_ARTICLE_SLUG_KEY } from "../zaidos/lib/openArticle.js";
 
 const EDGE_BACK_PX = 28;
 const EDGE_BACK_DX = 72;
@@ -118,13 +119,21 @@ export default function MobileShell({
       setAppPayload(e.detail?.file ?? null);
       setActiveApp("PDFViewer");
     };
+    const onOpenArticle = (e) => {
+      const slug = e.detail?.slug;
+      if (slug) sessionStorage.setItem(PENDING_ARTICLE_SLUG_KEY, slug);
+      setAppPayload(null);
+      setActiveApp("Articles");
+    };
     window.addEventListener("zaidos:open-browser", onOpenBrowser);
     window.addEventListener("zaidos:open-app", onOpenApp);
+    window.addEventListener("zaidos:open-article", onOpenArticle);
     window.addEventListener("zaidos:open-editor", onOpenEditor);
     window.addEventListener("zaidos:open-pdf", onOpenPdf);
     return () => {
       window.removeEventListener("zaidos:open-browser", onOpenBrowser);
       window.removeEventListener("zaidos:open-app", onOpenApp);
+      window.removeEventListener("zaidos:open-article", onOpenArticle);
       window.removeEventListener("zaidos:open-editor", onOpenEditor);
       window.removeEventListener("zaidos:open-pdf", onOpenPdf);
     };

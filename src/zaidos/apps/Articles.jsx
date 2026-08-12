@@ -1,12 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { articles } from "../content/index.ts";
 import { getArticleBody } from "../lib/article-bodies.js";
+import { consumePendingArticleSlug, PENDING_ARTICLE_SLUG_KEY } from "../lib/openArticle.js";
 
 export default function ArticlesApp() {
-  const [openSlug, setOpenSlug] = useState(null);
+  const [openSlug, setOpenSlug] = useState(() => consumePendingArticleSlug());
   const open = openSlug ? articles.find((a) => a.slug === openSlug) : null;
+
+  useEffect(() => {
+    function onOpenArticle(e) {
+      const slug = e.detail?.slug ?? sessionStorage.getItem(PENDING_ARTICLE_SLUG_KEY);
+      sessionStorage.removeItem(PENDING_ARTICLE_SLUG_KEY);
+      if (slug) setOpenSlug(slug);
+    }
+
+    window.addEventListener("zaidos:open-article", onOpenArticle);
+    return () => window.removeEventListener("zaidos:open-article", onOpenArticle);
+  }, []);
 
   if (open) {
     const body = getArticleBody(open.slug);

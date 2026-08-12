@@ -274,20 +274,24 @@ export function Safari({
   const deferToExternalBrowser = useCallback(async (targetUrl) => {
     setIsLoading(false);
     const confirmed = await confirmExternalUrl(targetUrl);
-    if (!confirmed) {
+
+    const resetToHome = () => {
       setShowStart(true);
       setCurrentUrl(HOME_URL);
       setFrameSrc(null);
       setIsLoading(false);
       setEmbedNote(null);
+      setHistory([HOME_URL]);
+      setHistoryIndex(0);
+    };
+
+    if (!confirmed) {
+      resetToHome();
       return;
     }
 
     openExternalUrl(targetUrl);
-    setFrameSrc(null);
-    setCurrentUrl(HOME_URL);
-    setIsLoading(false);
-    setEmbedNote(null);
+    resetToHome();
   }, []);
 
   const navigate = useCallback((inputUrl) => {
