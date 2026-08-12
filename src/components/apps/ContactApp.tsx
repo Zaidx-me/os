@@ -87,24 +87,39 @@ export function ContactApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...fields, website }),
       });
+
+      let payload: { error?: string; message?: string } = {};
+      try {
+        payload = (await response.json()) as typeof payload;
+      } catch {
+        payload = {};
+      }
+
       if (!response.ok) {
         if (response.status === 429) {
           setSubmit({
             status: "error",
-            hint: "You're sending too fast — wait a moment.",
+            hint: payload.error ?? "You're sending too fast — wait a moment.",
             mailto: null,
           });
           return;
         }
+        const serverHint =
+          typeof payload.error === "string"
+            ? payload.error
+            : response.status === 501
+              ? "Email delivery isn't configured on this server yet."
+              : "The server couldn't send it — try again in a bit.";
         setSubmit({
           status: "error",
-          hint: "The server couldn't send it — try again in a bit.",
+          hint: serverHint,
           mailto: response.status === 501 ? mailtoHref(fields) : null,
         });
         return;
       }
       setSubmit({ status: "success" });
       setFields(EMPTY_FIELDS);
+      setWebsite("");
     } catch {
       setSubmit({
         status: "error",

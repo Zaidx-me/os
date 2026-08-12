@@ -118,13 +118,16 @@ describe("POST /api/contact", () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(mockSend).toHaveBeenCalledWith({
-      from: "ZaidOS Portfolio <onboarding@resend.dev>",
-      to: "owner@zaidx.me",
-      subject: "Portfolio contact: Hello",
-      replyTo: "zaid@example.com",
-      text: "Name: Zaid\nEmail: zaid@example.com\n\nHi",
-    });
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "ZaidOS Portfolio <onboarding@resend.dev>",
+        to: "owner@zaidx.me",
+        subject: "Portfolio contact: Hello",
+        replyTo: "zaid@example.com",
+        text: "Name: Zaid\nEmail: zaid@example.com\n\nHi",
+        html: expect.stringContaining("Zaid"),
+      }),
+    );
   });
 
   it("returns 500 when Resend reports an error", async () => {

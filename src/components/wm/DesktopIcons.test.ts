@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import DesktopIcons from "@/components/wm/DesktopIcons";
-import { APPS } from "@/lib/apps";
+import { DESKTOP_PINNED_APP_IDS } from "@/store/desktop-layout";
 import { useWmStore } from "@/store/wm";
 import { createInitialWorkspaces, useWorkspacesStore } from "@/store/workspaces";
 
@@ -22,14 +22,12 @@ describe("DesktopIcons", () => {
     });
   });
 
-  it("renders one icon per registered app", () => {
+  it("renders pinned desktop icons only", () => {
     render(createElement(DesktopIcons));
-    for (const app of APPS) {
-      expect(screen.getByTestId(`desktop-icon-${app.id}`)).toBeInTheDocument();
-      expect(screen.getByTestId(`desktop-icon-${app.id}`)).toHaveAccessibleName(
-        app.title,
-      );
+    for (const appId of DESKTOP_PINNED_APP_IDS) {
+      expect(screen.getByTestId(`desktop-icon-${appId}`)).toBeInTheDocument();
     }
+    expect(screen.queryByTestId("desktop-icon-calculator")).not.toBeInTheDocument();
   });
 
   it("single-click selects an icon (accent ring) and click-away deselects", () => {

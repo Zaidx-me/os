@@ -1,9 +1,8 @@
 import type { Social } from './types';
 
 /**
- * Social handles, verified from https://zaidx.me (header icons), the GitHub
- * profile README, and the plan Findings: GitHub/LinkedIn = zaidx-me,
- * Instagram/Threads/Snapchat = zaidxme, Twitter = zaidxme,
+ * Social handles, verified from https://zaidx.me (header icons) and the GitHub
+ * profile README: GitHub/LinkedIn = zaidx-me, Twitter = zaidxme,
  * Linktree = linktr.ee/zaidx.me.
  */
 export const socials: Social[] = [
@@ -18,24 +17,6 @@ export const socials: Social[] = [
     label: 'LinkedIn',
     handle: 'zaidx-me',
     url: 'https://linkedin.com/in/zaidx-me',
-  },
-  {
-    id: 'instagram',
-    label: 'Instagram',
-    handle: '@zaidxme',
-    url: 'https://instagram.com/zaidxme',
-  },
-  {
-    id: 'threads',
-    label: 'Threads',
-    handle: '@zaidxme',
-    url: 'https://threads.com/zaidxme',
-  },
-  {
-    id: 'snapchat',
-    label: 'Snapchat',
-    handle: 'zaidxme',
-    url: 'https://snapchat.com/add/zaidxme',
   },
   {
     id: 'twitter',

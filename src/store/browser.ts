@@ -18,10 +18,14 @@ export interface BrowserState {
   activeTabId: string;
   addTab: (url?: string) => string;
   closeTab: (id: string) => void;
+  closeAllTabs: () => void;
   setActiveTab: (id: string) => void;
   navigate: (url: string, tabId?: string) => void;
   goBack: (tabId?: string) => void;
   goForward: (tabId?: string) => void;
+  goToHistoryIndex: (index: number, tabId?: string) => void;
+  clearTabHistory: (tabId?: string) => void;
+  removeHistoryEntry: (index: number, tabId?: string) => void;
   setTabTitle: (title: string, tabId?: string) => void;
   setTabLoading: (loading: boolean, tabId?: string) => void;
   reset: () => void;
@@ -103,6 +107,11 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
     });
   },
 
+  closeAllTabs() {
+    const tab = createTab();
+    set({ tabs: [tab], activeTabId: tab.id });
+  },
+
   setActiveTab(id) {
     set({ activeTabId: id });
   },
@@ -148,6 +157,61 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
           url: nextUrl,
           title: isStartPage(nextUrl) ? "New Tab" : hostnameOf(nextUrl),
           loading: true,
+        };
+      }),
+    }));
+  },
+
+  goToHistoryIndex(index, tabId) {
+    const id = tabId ?? get().activeTabId;
+    set((s) => ({
+      tabs: patchTab(s.tabs, id, (tab) => {
+        if (index < 0 || index >= tab.history.length) return tab;
+        const url = tab.history[index]!;
+        return {
+          ...tab,
+          historyIndex: index,
+          url,
+          title: isStartPage(url) ? "New Tab" : hostnameOf(url),
+          loading: index !== tab.historyIndex,
+        };
+      }),
+    }));
+  },
+
+  clearTabHistory(tabId) {
+    const id = tabId ?? get().activeTabId;
+    set((s) => ({
+      tabs: patchTab(s.tabs, id, (tab) => ({
+        ...tab,
+        history: [tab.url],
+        historyIndex: 0,
+      })),
+    }));
+  },
+
+  removeHistoryEntry(index, tabId) {
+    const id = tabId ?? get().activeTabId;
+    set((s) => ({
+      tabs: patchTab(s.tabs, id, (tab) => {
+        if (index < 0 || index >= tab.history.length) return tab;
+        const history = tab.history.filter((_, i) => i !== index);
+        if (history.length === 0) {
+          return { ...tab, url: BROWSER_START, title: "New Tab", history: [BROWSER_START], historyIndex: 0 };
+        }
+        const removedBeforeCurrent = index < tab.historyIndex;
+        const removedCurrent = index === tab.historyIndex;
+        let historyIndex = tab.historyIndex;
+        if (removedBeforeCurrent) historyIndex -= 1;
+        if (removedCurrent) historyIndex = Math.min(historyIndex, history.length - 1);
+        const url = history[historyIndex]!;
+        return {
+          ...tab,
+          history,
+          historyIndex,
+          url,
+          title: isStartPage(url) ? "New Tab" : hostnameOf(url),
+          loading: removedCurrent,
         };
       }),
     }));

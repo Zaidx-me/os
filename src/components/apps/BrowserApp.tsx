@@ -4,13 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  Clock,
   ExternalLink,
   Globe,
   Home,
   Loader2,
+  MoreHorizontal,
   Plus,
   RotateCw,
   Search,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -44,6 +47,11 @@ function domainLabel(url: string): string {
   } catch {
     return url;
   }
+}
+
+function historyLabel(url: string): string {
+  if (url === BROWSER_START) return "New Tab";
+  return domainLabel(url);
 }
 
 function EmbedFallback({ url }: { url: string }) {
@@ -154,6 +162,154 @@ function StartPage({ onNavigate }: { onNavigate: (url: string) => void }) {
   );
 }
 
+function HistoryPanel({ onClose }: { onClose: () => void }) {
+  const tabs = useBrowserStore((s) => s.tabs);
+  const activeTabId = useBrowserStore((s) => s.activeTabId);
+  const clearTabHistory = useBrowserStore((s) => s.clearTabHistory);
+  const removeHistoryEntry = useBrowserStore((s) => s.removeHistoryEntry);
+  const closeAllTabs = useBrowserStore((s) => s.closeAllTabs);
+  const closeTab = useBrowserStore((s) => s.closeTab);
+  const goToHistoryIndex = useBrowserStore((s) => s.goToHistoryIndex);
+
+  const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0]!;
+
+  return (
+    <div
+      data-testid="browser-history-panel"
+      className="absolute inset-0 z-20 flex flex-col bg-zaid-surface"
+    >
+      <header className="flex shrink-0 items-center justify-between border-b border-zaid-border px-3 py-2">
+        <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-zaid-muted">
+          <Clock size={14} />
+          History & tabs
+        </div>
+        <button
+          type="button"
+          data-testid="browser-history-close"
+          aria-label="Close panel"
+          onClick={onClose}
+          className="rounded-md p-1.5 text-zaid-muted hover:bg-zaid-bg"
+        >
+          <X size={16} />
+        </button>
+      </header>
+
+      <div className="flex shrink-0 flex-wrap gap-2 border-b border-zaid-border p-3">
+        <button
+          type="button"
+          data-testid="browser-clear-history"
+          onClick={() => clearTabHistory()}
+          className="browser-action-chip"
+        >
+          <Trash2 size={14} />
+          Clear page history
+        </button>
+        <button
+          type="button"
+          data-testid="browser-close-all-tabs"
+          onClick={() => {
+            closeAllTabs();
+            onClose();
+          }}
+          className="browser-action-chip"
+        >
+          <X size={14} />
+          Close all tabs
+        </button>
+      </div>
+
+      <section className="min-h-0 flex-1 overflow-y-auto p-3">
+        <h3 className="mb-2 font-mono text-[10px] uppercase tracking-widest text-zaid-muted">
+          Open tabs ({tabs.length})
+        </h3>
+        <ul className="mb-4 flex flex-col gap-1">
+          {tabs.map((tab) => (
+            <li
+              key={tab.id}
+              className={`flex items-center gap-2 rounded-lg px-2 py-1.5 ${
+                tab.id === activeTabId ? "bg-zaid-accent/10" : "hover:bg-zaid-bg"
+              }`}
+            >
+              <Globe size={14} className="shrink-0 text-zaid-muted" />
+              <span className="min-w-0 flex-1 truncate font-mono text-xs">{tab.title}</span>
+              {tabs.length > 1 && (
+                <button
+                  type="button"
+                  data-testid={`browser-close-tab-${tab.id}`}
+                  aria-label={`Close ${tab.title}`}
+                  onClick={() => closeTab(tab.id)}
+                  className="rounded p-1 text-zaid-muted hover:bg-zaid-surface2"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        <h3 className="mb-2 font-mono text-[10px] uppercase tracking-widest text-zaid-muted">
+          This tab ({activeTab.history.length})
+        </h3>
+        <ul className="flex flex-col gap-1">
+          {[...activeTab.history].reverse().map((entry, reverseIndex) => {
+            const index = activeTab.history.length - 1 - reverseIndex;
+            const current = index === activeTab.historyIndex;
+            return (
+              <li
+                key={`${entry}-${index}`}
+                className={`flex items-center gap-2 rounded-lg px-2 py-1.5 ${
+                  current ? "bg-zaid-accent/10 ring-1 ring-zaid-accent/30" : "hover:bg-zaid-bg"
+                }`}
+              >
+                <button
+                  type="button"
+                  data-testid={`browser-history-entry-${index}`}
+                  onClick={() => {
+                    goToHistoryIndex(index);
+                    onClose();
+                  }}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                >
+                  {!isStartPage(entry) ? (
+                    <img
+                      src={faviconUrl(entry, 32)}
+                      alt=""
+                      width={14}
+                      height={14}
+                      className="shrink-0 rounded"
+                    />
+                  ) : (
+                    <Globe size={14} className="shrink-0 text-zaid-muted" />
+                  )}
+                  <span className="min-w-0 flex-1 truncate font-mono text-xs">
+                    {historyLabel(entry)}
+                  </span>
+                  {current ? (
+                    <span className="shrink-0 font-mono text-[9px] uppercase text-zaid-accent">
+                      Now
+                    </span>
+                  ) : null}
+                </button>
+                {activeTab.history.length > 1 && (
+                  <button
+                    type="button"
+                    data-testid={`browser-delete-history-${index}`}
+                    aria-label={`Remove ${historyLabel(entry)} from history`}
+                    onClick={() => removeHistoryEntry(index)}
+                    className="rounded p-1 text-zaid-muted hover:bg-zaid-surface2 hover:text-zaid-danger"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
 export function BrowserApp({ setTitle }: WindowAppProps) {
   const tabs = useBrowserStore((s) => s.tabs);
   const activeTabId = useBrowserStore((s) => s.activeTabId);
@@ -171,7 +327,7 @@ export function BrowserApp({ setTitle }: WindowAppProps) {
 
   const [draftAddress, setDraftAddress] = useState<string | null>(null);
   const [urlFocused, setUrlFocused] = useState(false);
-  const [bookmarksOpen, setBookmarksOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const lastTitleRef = useRef<string | null>(null);
 
@@ -218,23 +374,23 @@ export function BrowserApp({ setTitle }: WindowAppProps) {
     >
       <div
         data-testid="browser-tabs"
-        className="flex shrink-0 items-end gap-0.5 overflow-x-auto border-b border-zaid-border bg-zaid-bg px-1 pt-1"
+        className="browser-tab-strip flex shrink-0 items-end gap-1 overflow-x-auto px-2 pt-2"
       >
         {tabs.map((tab) => {
           const active = tab.id === activeTabId;
           return (
             <div
               key={tab.id}
-              className={`group flex max-w-[180px] shrink-0 items-center gap-1 rounded-t-md border border-b-0 px-2 py-1.5 font-mono text-[10px] ${
+              className={`group flex max-w-[160px] shrink-0 items-center gap-1 rounded-t-lg border border-b-0 px-2 py-1.5 ${
                 active
-                  ? "border-zaid-border bg-zaid-surface2 text-zaid-text"
-                  : "border-transparent bg-zaid-surface text-zaid-muted hover:bg-zaid-surface2"
+                  ? "border-zaid-border bg-zaid-surface text-zaid-text shadow-sm"
+                  : "border-transparent bg-zaid-bg/80 text-zaid-muted hover:bg-zaid-surface2"
               }`}
             >
               <button
                 type="button"
                 data-testid={`browser-tab-${tab.id}`}
-                className="flex min-w-0 flex-1 items-center gap-1 truncate"
+                className="flex min-w-0 flex-1 items-center gap-1 truncate font-mono text-[10px]"
                 onClick={() => setActiveTab(tab.id)}
               >
                 {tab.loading && active ? (
@@ -252,7 +408,7 @@ export function BrowserApp({ setTitle }: WindowAppProps) {
                     e.stopPropagation();
                     closeTab(tab.id);
                   }}
-                  className="rounded p-0.5 opacity-0 hover:bg-zaid-bg group-hover:opacity-100"
+                  className="rounded p-0.5 opacity-60 hover:bg-zaid-bg group-hover:opacity-100"
                 >
                   <X size={12} />
                 </button>
@@ -265,78 +421,24 @@ export function BrowserApp({ setTitle }: WindowAppProps) {
           data-testid="browser-new-tab"
           aria-label="New tab"
           onClick={() => addTab()}
-          className="mb-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zaid-muted hover:bg-zaid-surface2"
+          className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zaid-muted hover:bg-zaid-surface2"
         >
-          <Plus size={14} />
+          <Plus size={16} />
         </button>
       </div>
 
       <div
         data-testid="browser-toolbar"
-        className="flex shrink-0 flex-col gap-2 border-b border-zaid-border bg-zaid-surface2 p-2 sm:flex-row sm:items-center"
+        className="flex shrink-0 flex-col gap-2 border-b border-zaid-border bg-zaid-surface2/80 p-2"
       >
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            data-testid="browser-back"
-            aria-label="Back"
-            disabled={activeTab.historyIndex <= 0}
-            onClick={() => goBack()}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-zaid-muted hover:bg-zaid-bg disabled:opacity-30"
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <button
-            type="button"
-            data-testid="browser-forward"
-            aria-label="Forward"
-            disabled={activeTab.historyIndex >= activeTab.history.length - 1}
-            onClick={() => goForward()}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-zaid-muted hover:bg-zaid-bg disabled:opacity-30"
-          >
-            <ArrowRight size={16} />
-          </button>
-          <button
-            type="button"
-            data-testid="browser-refresh"
-            aria-label="Refresh"
-            onClick={() => {
-              setTabLoading(true);
-              setIframeKey((k) => k + 1);
-            }}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-zaid-muted hover:bg-zaid-bg"
-          >
-            <RotateCw size={16} />
-          </button>
-          <button
-            type="button"
-            data-testid="browser-home"
-            aria-label="Start page"
-            onClick={() => goTo(BROWSER_START)}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-zaid-muted hover:bg-zaid-bg"
-          >
-            <Home size={16} />
-          </button>
-          <button
-            type="button"
-            data-testid="browser-toggle-bookmarks"
-            aria-label="Toggle bookmarks bar"
-            aria-pressed={bookmarksOpen}
-            onClick={() => setBookmarksOpen((v) => !v)}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-zaid-muted hover:bg-zaid-bg"
-          >
-            <Plus size={16} />
-          </button>
-        </div>
-
         <form
-          className="flex min-w-0 flex-1 items-center gap-2"
+          className="flex min-w-0 items-center gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             goTo(address || BROWSER_START);
           }}
         >
-          <div className="browser-url-pill min-w-0 flex-1">
+          <div className="browser-url-pill min-w-0 flex-1 shadow-sm">
             {!urlFocused && !isStart && address ? (
               <img
                 src={faviconUrl(url, 32)}
@@ -346,7 +448,7 @@ export function BrowserApp({ setTitle }: WindowAppProps) {
                 className="shrink-0 rounded"
               />
             ) : (
-              <Globe size={16} className="shrink-0 text-zaid-muted" />
+              <Search size={16} className="shrink-0 text-zaid-muted" />
             )}
             <input
               data-testid="browser-url-input"
@@ -371,26 +473,95 @@ export function BrowserApp({ setTitle }: WindowAppProps) {
             Go
           </button>
         </form>
+
+        <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              data-testid="browser-back"
+              aria-label="Back"
+              disabled={activeTab.historyIndex <= 0}
+              onClick={() => goBack()}
+              className="browser-tool-btn disabled:opacity-30"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <button
+              type="button"
+              data-testid="browser-forward"
+              aria-label="Forward"
+              disabled={activeTab.historyIndex >= activeTab.history.length - 1}
+              onClick={() => goForward()}
+              className="browser-tool-btn disabled:opacity-30"
+            >
+              <ArrowRight size={18} />
+            </button>
+            <button
+              type="button"
+              data-testid="browser-refresh"
+              aria-label="Refresh"
+              onClick={() => {
+                setTabLoading(true);
+                setIframeKey((k) => k + 1);
+              }}
+              className="browser-tool-btn"
+            >
+              <RotateCw size={16} />
+            </button>
+            <button
+              type="button"
+              data-testid="browser-home"
+              aria-label="Start page"
+              onClick={() => goTo(BROWSER_START)}
+              className="browser-tool-btn"
+            >
+              <Home size={16} />
+            </button>
+          </div>
+          <div className="flex items-center gap-0.5">
+            {!isStart && (
+              <button
+                type="button"
+                data-testid="browser-open-external-toolbar"
+                aria-label="Open in new tab"
+                onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+                className="browser-tool-btn"
+              >
+                <ExternalLink size={16} />
+              </button>
+            )}
+            <button
+              type="button"
+              data-testid="browser-history-menu"
+              aria-label="History and tabs"
+              aria-pressed={historyOpen}
+              onClick={() => setHistoryOpen((v) => !v)}
+              className={`browser-tool-btn ${historyOpen ? "bg-zaid-accent/15 text-zaid-accent" : ""}`}
+            >
+              <MoreHorizontal size={18} />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {bookmarksOpen && (
-        <div data-testid="browser-bookmarks-bar" className="browser-bookmarks-bar">
-          {EMBED_BOOKMARKS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              data-testid={`browser-bar-${item.id}`}
-              onClick={() => goTo(item.url)}
-              className="browser-bookmark-chip hover:border-zaid-accent"
-            >
-              <img src={faviconUrl(item.url, 32)} alt="" width={16} height={16} className="rounded" />
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="browser-bookmarks-bar shrink-0">
+        {EMBED_BOOKMARKS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            data-testid={`browser-bar-${item.id}`}
+            onClick={() => goTo(item.url)}
+            className="browser-bookmark-chip hover:border-zaid-accent"
+          >
+            <img src={faviconUrl(item.url, 32)} alt="" width={16} height={16} className="rounded" />
+            {item.label}
+          </button>
+        ))}
+      </div>
 
       <div className="relative min-h-0 flex-1">
+        {historyOpen && <HistoryPanel onClose={() => setHistoryOpen(false)} />}
+
         {isStart ? (
           <StartPage onNavigate={goTo} />
         ) : phase === "checking" || (activeTab.loading && phase !== "blocked") ? (
@@ -434,3 +605,7 @@ export function BrowserApp({ setTitle }: WindowAppProps) {
 }
 
 export default BrowserApp;
+
+function isStartPage(url: string): boolean {
+  return url === BROWSER_START;
+}

@@ -1,32 +1,53 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { AppId } from "@/components/ui/AppIcon";
-import { APP_IDS } from "@/components/ui/AppIcon";
 
-export const DESKTOP_LAYOUT_KEY = "zaidos-desktop-layout";
+export const DESKTOP_LAYOUT_KEY = "zaidos-desktop-layout-v2";
+
+/** Portfolio apps on the desktop — everything else lives in Launcher/Dock. */
+export const DESKTOP_PINNED_APP_IDS: AppId[] = [
+  "terminal",
+  "browser",
+  "files",
+  "projects",
+  "resume",
+  "contact",
+  "articles",
+  "chat",
+];
 
 export interface IconPosition {
   x: number;
   y: number;
 }
 
-const COL_W = 96;
-const ROW_H = 96;
-const PAD = 16;
-const TOP = 8;
+const COL_W = 84;
+const ROW_H = 92;
+const PAD_TOP = 20;
+const PAD_RIGHT = 24;
+const ROWS_PER_COL = 6;
+/** Reference width for macOS-style right-column defaults. */
+const REF_WIDTH = 1280;
 
-/** Default grid positions for desktop icons (below menu bar). */
+/** Default positions: right-aligned columns like macOS desktop icons. */
 export function defaultIconPositions(): Record<string, IconPosition> {
   const positions: Record<string, IconPosition> = {};
-  APP_IDS.forEach((id, index) => {
-    const col = Math.floor(index / 8);
-    const row = index % 8;
+  DESKTOP_PINNED_APP_IDS.forEach((id, index) => {
+    const col = Math.floor(index / ROWS_PER_COL);
+    const row = index % ROWS_PER_COL;
     positions[id] = {
-      x: PAD + col * COL_W,
-      y: TOP + row * ROW_H,
+      x: REF_WIDTH - PAD_RIGHT - COL_W - col * COL_W,
+      y: PAD_TOP + row * ROW_H,
     };
   });
   return positions;
+}
+
+export function snapIconPosition(pos: IconPosition): IconPosition {
+  return {
+    x: Math.max(8, Math.round((pos.x - 8) / COL_W) * COL_W + 8),
+    y: Math.max(8, Math.round((pos.y - PAD_TOP) / ROW_H) * ROW_H + PAD_TOP),
+  };
 }
 
 interface DesktopLayoutState {
@@ -51,7 +72,10 @@ export const useDesktopLayoutStore = create<DesktopLayoutState>()(
       merge: (persisted, current) => {
         const saved = persisted as Partial<DesktopLayoutState> | null;
         const base = defaultIconPositions();
-        const merged = { ...base, ...(saved?.positions ?? {}) };
+        const merged: Record<string, IconPosition> = { ...base };
+        for (const id of DESKTOP_PINNED_APP_IDS) {
+          if (saved?.positions?.[id]) merged[id] = saved.positions[id]!;
+        }
         return { ...current, positions: merged };
       },
     },
@@ -62,5 +86,7 @@ export function getIconPosition(
   positions: Record<string, IconPosition>,
   appId: AppId | string,
 ): IconPosition {
-  return positions[appId] ?? defaultIconPositions()[appId] ?? { x: PAD, y: TOP };
+  return positions[appId] ?? defaultIconPositions()[appId] ?? { x: PAD_RIGHT, y: PAD_TOP };
 }
+
+export { COL_W, ROW_H };

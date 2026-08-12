@@ -1,25 +1,21 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { Globe, Grid3X3 } from "lucide-react";
-import { motion } from "motion/react";
+import { Grid3X3 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import type { AppId } from "@/components/ui/AppIcon";
 import IosStatusBar from "@/components/wm/IosStatusBar";
-import IosHomeIndicator from "@/components/wm/IosHomeIndicator";
-import IosAssistiveTouch from "@/components/wm/IosAssistiveTouch";
+import MobileNavBar from "@/components/wm/MobileNavBar";
 import WindowHost from "@/components/wm/WindowHost";
 import Wallpaper from "@/components/wm/Wallpaper";
 import { APPS, getAppMeta } from "@/lib/apps";
-import MobileAppLaunchOverlay from "@/components/wm/MobileAppLaunchOverlay";
 import { motionTokens, OS_STAGGER_MS } from "@/lib/motion/spring";
-import { localRectFromElement } from "@/lib/wm/mobile-open";
-import type { LocalRect } from "@/lib/wm/mobile-open";
-import { playMobileGenieDismiss } from "@/lib/wm/genie";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import OsServices from "@/components/os/OsServices";
+import { useBrowserStore } from "@/store/browser";
 
 const IOS_DOCK_APPS: { id: AppId; testId?: string }[] = [
   { id: "browser", testId: "mobile-nav-browser" },
@@ -30,73 +26,48 @@ const IOS_DOCK_APPS: { id: AppId; testId?: string }[] = [
 
 const HOME_APPS = APPS.slice(0, 16);
 
-function ApplicatorWidget({ onOpen }: { onOpen: (el: HTMLElement) => void }) {
-  const [ready, setReady] = useState(false);
-  const ref = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const id = window.setTimeout(() => setReady(true), 600);
-    return () => window.clearTimeout(id);
-  }, []);
-
-  return (
-    <button
-      ref={ref}
-      type="button"
-      data-testid="mobile-live-applicator"
-      onClick={() => ref.current && onOpen(ref.current)}
-      className="ios-widget mx-auto mt-auto flex w-full max-w-xs flex-col gap-2 rounded-[24px] p-4 text-left active:scale-[0.99]"
-    >
-      {!ready ? (
-        <div className="ios-widget-shimmer h-16 rounded-2xl" aria-hidden="true" />
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: motionTokens.duration.base }}
-          className="flex items-start gap-3"
-        >
-          <AppIcon appId="browser" size={36} />
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-bold text-white">Applicator</p>
-            <p className="text-xs text-white/75">Open live demo in Safari</p>
-          </div>
-          <Globe size={16} className="mt-1 shrink-0 text-white/80" />
-        </motion.div>
-      )}
-    </button>
-  );
-}
+const APP_TRANSITION = {
+  duration: 0.2,
+  ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+};
 
 function IOSHomeScreen({
   onOpenApp,
   reducedMotion,
+  skipIntro,
 }: {
-  onOpenApp: (id: AppId, el: HTMLElement) => void;
+  onOpenApp: (id: AppId) => void;
   reducedMotion: boolean;
+  skipIntro: boolean;
 }) {
   return (
     <main
       data-testid="mobile-home"
-      className="mobile-home relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-40 pt-2"
+      className="mobile-home relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-[calc(8.5rem+env(safe-area-inset-bottom))] pt-2"
     >
-      <div className="mb-8 grid grid-cols-4 gap-x-4 gap-y-6">
+      <div className="grid grid-cols-4 gap-x-4 gap-y-6">
         {HOME_APPS.map((app, index) => (
           <motion.button
             key={app.id}
             type="button"
-            initial={reducedMotion ? false : { opacity: 0, scale: 0.8 }}
+            initial={
+              reducedMotion || skipIntro ? false : { opacity: 0, scale: 0.8 }
+            }
             animate={{ opacity: 1, scale: 1 }}
-            transition={{
-              ...motionTokens.spring.smooth,
-              delay: index * (OS_STAGGER_MS / 1000),
-            }}
+            transition={
+              reducedMotion || skipIntro
+                ? { duration: 0 }
+                : {
+                    ...motionTokens.spring.smooth,
+                    delay: index * (OS_STAGGER_MS / 1000),
+                  }
+            }
             data-testid={
               ["terminal", "chat"].includes(app.id)
                 ? `mobile-quick-${app.id}`
                 : `mobile-app-${app.id}`
             }
-            onClick={(e) => onOpenApp(app.id, e.currentTarget)}
+            onClick={() => onOpenApp(app.id)}
             className="mobile-app-tile flex flex-col items-center gap-1.5 active:scale-[0.92]"
           >
             <AppIcon appId={app.id} size={60} />
@@ -106,8 +77,6 @@ function IOSHomeScreen({
           </motion.button>
         ))}
       </div>
-
-      <ApplicatorWidget onOpen={(el) => onOpenApp("browser", el)} />
     </main>
   );
 }
@@ -122,21 +91,19 @@ function readDeepLinkApp(): AppId | null {
 }
 
 function IOSDock({
-  activeApp,
-  onToggleApp,
+  onOpenApp,
   onApps,
 }: {
-  activeApp: AppId | null;
-  onToggleApp: (id: AppId, el: HTMLElement) => void;
+  onOpenApp: (id: AppId) => void;
   onApps: () => void;
 }) {
   return (
     <nav
-      data-testid="mobile-bottom-nav"
-      className="ios-dock pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(1.75rem+env(safe-area-inset-bottom))] pt-2"
+      data-testid="mobile-dock"
+      className="ios-dock pointer-events-none fixed inset-x-0 z-[60] px-4"
       aria-label="Dock"
     >
-      <div className="ios-dock-inner pointer-events-auto mx-auto flex max-w-[22rem] items-end justify-between gap-1 px-3 py-2">
+      <div className="ios-dock-inner pointer-events-auto mx-auto flex max-w-[20rem] items-end justify-between gap-1 px-2.5 py-1.5">
         {IOS_DOCK_APPS.map(({ id, testId }) => (
           <button
             key={id}
@@ -144,23 +111,21 @@ function IOSDock({
             data-testid={testId ?? `mobile-dock-${id}`}
             data-dock-app={id}
             aria-label={getAppMeta(id)?.title ?? id}
-            aria-current={activeApp === id ? "true" : undefined}
-            onClick={(e) => onToggleApp(id, e.currentTarget)}
+            onClick={() => onOpenApp(id)}
             className="ios-dock-icon-btn active:scale-[0.92]"
           >
-            <AppIcon appId={id} size={50} className="ios-dock-icon" />
-            {activeApp === id && <span className="mac-dock-dot" aria-hidden="true" />}
+            <AppIcon appId={id} size={46} className="ios-dock-icon" />
           </button>
         ))}
         <button
           type="button"
-          data-testid="mobile-nav-apps"
+          data-testid="mobile-dock-apps"
           aria-label="App Library"
           onClick={onApps}
           className="ios-dock-icon-btn active:scale-[0.92]"
         >
           <span className="ios-dock-library">
-            <Grid3X3 size={22} className="text-white" strokeWidth={2.2} />
+            <Grid3X3 size={18} className="text-white" strokeWidth={2.2} />
           </span>
         </button>
       </div>
@@ -172,13 +137,18 @@ export default function MobileShell() {
   const reducedMotion = useReducedMotion();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeApp, setActiveApp] = useState<AppId | null>(() => readDeepLinkApp());
-  const [launch, setLaunch] = useState<{ appId: AppId; rect: LocalRect } | null>(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [hasVisitedHome, setHasVisitedHome] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
-  const appScreenRef = useRef<HTMLDivElement>(null);
-  const screenRef = useRef<HTMLDivElement>(null);
+  const pendingDrawerRef = useRef(false);
+
+  const browserTabs = useBrowserStore((s) => s.tabs);
+  const browserActiveId = useBrowserStore((s) => s.activeTabId);
 
   useFocusTrap(drawerRef, drawerOpen && activeApp === null);
+
+  useEffect(() => {
+    if (!activeApp) setHasVisitedHome(true);
+  }, [activeApp]);
 
   useEffect(() => {
     const onOpenBrowserEvt = () => {
@@ -189,35 +159,9 @@ export default function MobileShell() {
     return () => window.removeEventListener("zaidos:open-browser", onOpenBrowserEvt);
   }, []);
 
-  const openAppFromHome = useCallback((appId: AppId, target: HTMLElement) => {
-    setDrawerOpen(false);
-    const container = screenRef.current;
-    if (!container) {
-      setActiveApp(appId);
-      return;
-    }
-    const iconWrap =
-      (target.querySelector('[role="img"]')?.parentElement as HTMLElement | null) ?? target;
-    const rect = localRectFromElement(iconWrap, container);
-    const cr = container.getBoundingClientRect();
-    setContainerSize({
-      width: cr.width || container.clientWidth || rect.width,
-      height: cr.height || container.clientHeight || rect.height,
-    });
-    setLaunch({ appId, rect });
-  }, []);
-
-  const finishLaunch = useCallback(() => {
-    setLaunch((current) => {
-      if (current) setActiveApp(current.appId);
-      return null;
-    });
-  }, []);
-
   const openApp = useCallback((appId: AppId) => {
-    setActiveApp(appId);
     setDrawerOpen(false);
-    setLaunch(null);
+    setActiveApp(appId);
   }, []);
 
   const goHome = useCallback(() => {
@@ -225,55 +169,48 @@ export default function MobileShell() {
     setDrawerOpen(false);
   }, []);
 
-  const goHomeViaIndicator = useCallback(
-    async (targetEl: HTMLElement) => {
-      if (drawerOpen) {
-        setDrawerOpen(false);
-        return;
-      }
-      if (!activeApp) return;
-
-      const screen = appScreenRef.current;
-      if (screen) await playMobileGenieDismiss(screen, targetEl);
-      goHome();
-    },
-    [activeApp, drawerOpen, goHome],
-  );
-
-  const assistiveBack = useCallback(() => {
-    if (activeApp === "browser") {
-      window.dispatchEvent(new CustomEvent("zaidos:mobile-back"));
+  const closeActiveApp = useCallback(() => {
+    if (drawerOpen) {
+      setDrawerOpen(false);
       return;
     }
-    if (activeApp) {
-      const ball = document.querySelector(
-        '[data-testid="ios-assistive-touch"]',
-      ) as HTMLElement | null;
-      if (ball) void goHomeViaIndicator(ball);
-      else goHome();
+    goHome();
+  }, [drawerOpen, goHome]);
+
+  const onAppExitComplete = useCallback(() => {
+    if (pendingDrawerRef.current) {
+      pendingDrawerRef.current = false;
+      setDrawerOpen(true);
     }
-  }, [activeApp, goHome, goHomeViaIndicator]);
-
-  const toggleDockApp = useCallback(
-    async (appId: AppId, dockBtn: HTMLElement) => {
-      if (activeApp === appId) {
-        const screen = appScreenRef.current;
-        if (screen) await playMobileGenieDismiss(screen, dockBtn);
-        setActiveApp(null);
-        setDrawerOpen(false);
-        return;
-      }
-      openApp(appId);
-    },
-    [activeApp, openApp],
-  );
-
-  const openLibrary = useCallback(() => {
-    setDrawerOpen(true);
-    setActiveApp(null);
   }, []);
 
+  const openLibrary = useCallback(() => {
+    if (activeApp) {
+      pendingDrawerRef.current = true;
+      goHome();
+      return;
+    }
+    setDrawerOpen(true);
+  }, [activeApp, goHome]);
+
+  const navBack = useCallback(() => {
+    if (activeApp === "browser") {
+      const tab = browserTabs.find((t) => t.id === browserActiveId);
+      if (tab && tab.historyIndex > 0) {
+        useBrowserStore.getState().goBack();
+        return;
+      }
+    }
+    if (activeApp) closeActiveApp();
+  }, [activeApp, browserActiveId, browserTabs, closeActiveApp]);
+
+  const canGoBack =
+    Boolean(activeApp) &&
+    (activeApp !== "browser" ||
+      (browserTabs.find((t) => t.id === browserActiveId)?.historyIndex ?? 0) > 0);
+
   const meta = activeApp ? getAppMeta(activeApp) : undefined;
+  const showHome = !activeApp;
 
   return (
     <div
@@ -281,7 +218,7 @@ export default function MobileShell() {
       id="main-content"
       className="mobile-shell relative flex h-dvh w-full flex-col overflow-hidden font-sans"
     >
-      <div ref={screenRef} className="mobile-screen relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="mobile-screen relative flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Wallpaper />
           <div className="absolute inset-0 bg-black/15" aria-hidden="true" />
@@ -290,59 +227,73 @@ export default function MobileShell() {
         <motion.div
           className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden"
           animate={{
-            scale: drawerOpen && !activeApp ? 0.92 : 1,
-            borderRadius: drawerOpen && !activeApp ? 10 : 0,
+            scale: drawerOpen && !activeApp ? 0.96 : 1,
+            borderRadius: drawerOpen && !activeApp ? 12 : 0,
           }}
-          transition={motionTokens.spring.hero}
+          transition={{ duration: reducedMotion ? 0 : 0.22, ease: APP_TRANSITION.ease }}
           style={{ transformOrigin: "center center" }}
         >
-          {!activeApp && !launch && <IosStatusBar />}
+          {showHome && <IosStatusBar />}
 
-          {launch && (
-            <MobileAppLaunchOverlay
-              appId={launch.appId}
-              startRect={launch.rect}
-              containerSize={containerSize}
-              onComplete={finishLaunch}
-            />
-          )}
-
-          {activeApp && meta ? (
-          <div
-            ref={appScreenRef}
-            className="relative z-10 flex min-h-0 flex-1 flex-col bg-zaid-surface pb-[calc(2rem+env(safe-area-inset-bottom))]"
-          >
-            <header className="flex shrink-0 items-center justify-center border-b border-zaid-border px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-              <span className="min-w-0 truncate text-center text-sm font-semibold">
-                {meta.title}
-              </span>
-            </header>
-            <div
-              data-testid={`mobile-page-${activeApp}`}
-              className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
-            >
-              <Suspense fallback={<div className="flex flex-1 items-center justify-center">Loading…</div>}>
-                <WindowHost windowId={`mobile-${activeApp}`} appId={activeApp} />
-              </Suspense>
-              {activeApp === "terminal" && (
-                <button
-                  type="button"
-                  data-testid="mobile-terminal-hint"
-                  className="shrink-0 border-t border-zaid-border bg-zaid-surface2 px-4 py-3 text-center text-xs text-zaid-muted"
-                  onClick={() =>
-                    (
-                      document.querySelector('[data-testid="terminal-input"]') as HTMLInputElement | null
-                    )?.focus()
-                  }
-                >
-                  Tap here to type commands
-                </button>
-              )}
-            </div>
-          </div>
-        ) : !launch ? (
-          <IOSHomeScreen onOpenApp={openAppFromHome} reducedMotion={reducedMotion} />
-        ) : null}
+          <AnimatePresence mode="wait" onExitComplete={onAppExitComplete}>
+            {activeApp && meta ? (
+              <motion.div
+                key={activeApp}
+                data-testid={`mobile-page-${activeApp}`}
+                initial={reducedMotion ? false : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reducedMotion ? undefined : { opacity: 0, y: 8 }}
+                transition={reducedMotion ? { duration: 0 } : APP_TRANSITION}
+                className="relative z-10 flex min-h-0 flex-1 flex-col bg-zaid-surface pb-[calc(2.75rem+env(safe-area-inset-bottom))]"
+              >
+                <header className="flex shrink-0 items-center justify-center border-b border-zaid-border px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+                  <span className="min-w-0 truncate text-center text-sm font-semibold">
+                    {meta.title}
+                  </span>
+                </header>
+                <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                  <Suspense
+                    fallback={
+                      <div className="flex flex-1 items-center justify-center">Loading…</div>
+                    }
+                  >
+                    <WindowHost windowId={`mobile-${activeApp}`} appId={activeApp} />
+                  </Suspense>
+                  {activeApp === "terminal" && (
+                    <button
+                      type="button"
+                      data-testid="mobile-terminal-hint"
+                      className="shrink-0 border-t border-zaid-border bg-zaid-surface2 px-4 py-3 text-center text-xs text-zaid-muted"
+                      onClick={() =>
+                        (
+                          document.querySelector(
+                            '[data-testid="terminal-input"]',
+                          ) as HTMLInputElement | null
+                        )?.focus()
+                      }
+                    >
+                      Tap here to type commands
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            ) : showHome ? (
+              <motion.div
+                key="home"
+                initial={false}
+                animate={{ opacity: 1 }}
+                exit={reducedMotion ? undefined : { opacity: 0 }}
+                transition={APP_TRANSITION}
+                className="flex min-h-0 flex-1 flex-col"
+              >
+                <IOSHomeScreen
+                  onOpenApp={openApp}
+                  reducedMotion={reducedMotion}
+                  skipIntro={hasVisitedHome}
+                />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </motion.div>
 
         {drawerOpen && !activeApp && (
@@ -361,8 +312,8 @@ export default function MobileShell() {
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              transition={motionTokens.spring.hero}
-              className="fixed inset-x-0 bottom-0 z-50 max-h-[80dvh] overflow-y-auto rounded-t-3xl bg-zaid-surface p-5 pb-44"
+              transition={{ duration: reducedMotion ? 0 : 0.25, ease: APP_TRANSITION.ease }}
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[80dvh] overflow-y-auto rounded-t-3xl bg-zaid-surface p-5 pb-[calc(2.75rem+env(safe-area-inset-bottom))]"
             >
               <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-zaid-border" />
               <p className="mb-4 text-lg font-semibold">App Library</p>
@@ -390,22 +341,15 @@ export default function MobileShell() {
           <div className="pointer-events-none absolute inset-0 z-[5] bg-black/30" aria-hidden="true" />
         )}
 
-        {!activeApp && (
-          <IOSDock
-            activeApp={activeApp}
-            onToggleApp={(id, el) => void toggleDockApp(id, el)}
-            onApps={openLibrary}
-          />
+        {showHome && !drawerOpen && (
+          <IOSDock onOpenApp={openApp} onApps={openLibrary} />
         )}
 
-        <IosHomeIndicator variant={activeApp ? "dark" : "light"} decorative />
-
-        <IosAssistiveTouch
-          onHome={goHomeViaIndicator}
-          onBack={assistiveBack}
-          onAppSwitcher={openLibrary}
-          onSearch={openLibrary}
-          onSettings={() => openApp("settings")}
+        <MobileNavBar
+          canGoBack={canGoBack}
+          onHome={closeActiveApp}
+          onBack={navBack}
+          onApps={openLibrary}
         />
       </div>
       <OsServices />

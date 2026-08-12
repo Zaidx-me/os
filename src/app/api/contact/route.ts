@@ -29,6 +29,14 @@ const attempts = new Map<string, number[]>();
 
 export const dynamic = "force-dynamic";
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function clientIp(request: Request): string {
   return (
     request.headers.get("cf-connecting-ip") ??
@@ -119,6 +127,7 @@ export async function POST(request: Request) {
       subject: `Portfolio contact: ${subject}`,
       replyTo: email,
       text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
+      html: `<p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(email)}</p><hr/><p>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>`,
     });
 
     if (error) {
