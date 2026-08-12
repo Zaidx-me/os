@@ -16,7 +16,7 @@ export const defaultMemoji = memoji.amber;
 const linkedin = socials.find((s) => s.id === 'linkedin')!;
 
 /** Bump when seed contacts change so localStorage picks up new defaults. */
-export const contactsSeedVersion = 'zaid-v2';
+export const contactsSeedVersion = 'zaid-v3';
 
 /** Legacy mock contact ids — cleared from localStorage when detected. */
 export const legacyContactIds = [
@@ -38,7 +38,7 @@ export const systemContacts = [
     phone: '',
     email: 'hello@zaidx.me',
     workEmail: site.contactEmail,
-    address: 'Gujranwala, Punjab, Pakistan',
+    address: 'Lahore, Punjab, Pakistan',
     birthday: '',
     notes: `${site.roleLine}. Portfolio: ${site.siteUrl}`,
   },
