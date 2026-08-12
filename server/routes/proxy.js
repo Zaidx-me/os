@@ -46,6 +46,9 @@ proxyRouter.get("/", async (req, res) => {
     }
 
     let html = new TextDecoder().decode(buffer);
+    // Drop upstream CSP meta tags so module scripts can load via <base href>.
+    html = html.replace(/<meta[^>]*http-equiv=["']content-security-policy["'][^>]*>/gi, "");
+
     const parsed = new URL(url);
     const base = `<base href="${parsed.origin}/"><meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">`;
     if (/<head[^>]*>/i.test(html)) {

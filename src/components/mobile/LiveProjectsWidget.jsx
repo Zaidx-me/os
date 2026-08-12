@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Globe } from "lucide-react";
 import { projects } from "../../zaidos/content/index.ts";
-import { openBrowser } from "../../zaidos/lib/openBrowser.js";
+import { openProjectLive } from "../../zaidos/lib/openBrowser.js";
 
 const LIVE = projects.filter((p) => p.status === "live" && p.links.live);
 const AUTO_MS = 6000;
@@ -54,7 +54,7 @@ export default function LiveProjectsWidget() {
             goTo(dx < 0 ? index + 1 : index - 1);
             return;
           }
-          if (!dragRef.current.moved) openBrowser(project.links.live);
+          if (!dragRef.current.moved) openProjectLive(project.links.live);
         }}
         onPointerCancel={() => {
           dragRef.current = { startX: 0, moved: false };

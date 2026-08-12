@@ -11,32 +11,17 @@ import {
   FiX,
 } from "react-icons/fi";
 import { useAppStore } from "../store/Appstore";
-import { projects } from "../zaidos/content/index.ts";
-import { PENDING_KEY } from "../zaidos/lib/openBrowser.js";
+import { PENDING_KEY, confirmExternalUrl, openExternalUrl, prefersProxy } from "../zaidos/lib/openBrowser.js";
+import { site } from "../zaidos/content/site.ts";
 
 const HOME_URL = "https://www.google.com/webhp?igu=1";
 
-const WHITELIST = [
-  "https://www.google.com",
-  "https://developer.mozilla.org",
-  "https://github.com",
-  "https://zaidx.me",
-  "https://applicator.netlify.app",
-  "https://whatbot.zaidx.me",
-  "https://pustacks.netlify.app",
-  "https://kenspk.netlify.app",
+const FAVORITES = [
+  { id: "google", label: "Google", url: HOME_URL, gradient: "from-[#4285F4] to-[#1a73e8]" },
+  { id: "github", label: "GitHub", url: "https://github.com", gradient: "from-[#24292f] to-[#0d1117]" },
+  { id: "zaidx", label: "zaidx.me", url: site.siteUrl, gradient: "from-[#059669] to-[#047857]" },
+  { id: "mdn", label: "MDN", url: "https://developer.mozilla.org", gradient: "from-[#f97316] to-[#ea580c]" },
 ];
-
-const LIVE_BOOKMARKS = projects.filter((p) => p.links.live);
-
-function isWhitelisted(url) {
-  try {
-    const u = new URL(url);
-    return WHITELIST.some((w) => u.origin === new URL(w).origin);
-  } catch {
-    return false;
-  }
-}
 
 function isGoogleUrl(url) {
   try {
@@ -46,8 +31,79 @@ function isGoogleUrl(url) {
   }
 }
 
-function proxySrc(url) {
-  return `/api/proxy?url=${encodeURIComponent(url)}`;
+function isYouTubeUrl(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+    return host === "youtube.com" || host === "youtu.be" || host === "m.youtube.com" || host.endsWith(".youtube.com");
+  } catch {
+    return false;
+  }
+}
+
+function buildYouTubeEmbed(videoId, searchParams = new URLSearchParams()) {
+  const embed = new URL(`https://www.youtube.com/embed/${videoId}`);
+  const list = searchParams.get("list");
+  const start = searchParams.get("t") || searchParams.get("start");
+  if (list) embed.searchParams.set("list", list);
+  if (start) embed.searchParams.set("start", String(start).replace(/s$/i, ""));
+  embed.searchParams.set("rel", "0");
+  embed.searchParams.set("modestbranding", "1");
+  return embed.toString();
+}
+
+/** YouTube blocks the main site in iframes; /embed/ URLs work like Google result players. */
+function toYouTubeEmbedUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const id = parsed.pathname.slice(1).split("/")[0];
+      return id ? buildYouTubeEmbed(id, parsed.searchParams) : null;
+    }
+
+    if (!host.includes("youtube.com")) return null;
+
+    if (parsed.pathname.startsWith("/embed/")) {
+      return parsed.toString();
+    }
+
+    const watchId = parsed.searchParams.get("v");
+    if (watchId && parsed.pathname.startsWith("/watch")) {
+      return buildYouTubeEmbed(watchId, parsed.searchParams);
+    }
+
+    const shortsMatch = parsed.pathname.match(/^\/shorts\/([^/?#]+)/);
+    if (shortsMatch?.[1]) {
+      return buildYouTubeEmbed(shortsMatch[1], parsed.searchParams);
+    }
+
+    const liveMatch = parsed.pathname.match(/^\/live\/([^/?#]+)/);
+    if (liveMatch?.[1]) {
+      return buildYouTubeEmbed(liveMatch[1], parsed.searchParams);
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeGoogleUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes("google.com")) return url;
+
+    if (parsed.pathname === "/" || parsed.pathname === "") {
+      parsed.pathname = "/webhp";
+    }
+    if (!parsed.searchParams.has("igu")) {
+      parsed.searchParams.set("igu", "1");
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
 }
 
 function processUrl(input) {
@@ -60,6 +116,14 @@ function processUrl(input) {
 
   if (!processedUrl.startsWith("http://") && !processedUrl.startsWith("https://")) {
     processedUrl = `https://${processedUrl}`;
+  }
+
+  if (isGoogleUrl(processedUrl)) {
+    return normalizeGoogleUrl(processedUrl);
+  }
+
+  if (isYouTubeUrl(processedUrl)) {
+    return toYouTubeEmbedUrl(processedUrl) ?? processedUrl;
   }
 
   return processedUrl;
@@ -122,60 +186,64 @@ function StartPage({ isDarkMode, onNavigate }) {
   return (
     <div
       data-testid="browser-start-page"
-      className={`flex h-full flex-col gap-6 overflow-y-auto p-4 sm:p-8 ${isDarkMode ? "bg-[#1c1c1e]" : "bg-[#f5f5f7]"}`}
+      className={`flex h-full flex-col overflow-y-auto ${isDarkMode ? "bg-[#1c1c1e]" : "bg-[#f5f5f7]"}`}
     >
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 pt-4">
-        <p className={`text-center text-xl font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
-          Safari
-        </p>
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-8 px-6 py-10">
+        <div className="text-center">
+          <p className={`text-[28px] font-semibold tracking-tight ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+            Safari
+          </p>
+          <p className={`mt-1 text-sm ${isDarkMode ? "text-gray-500" : "text-gray-500"}`}>
+            Search the web or enter a URL
+          </p>
+        </div>
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
             onNavigate(query || HOME_URL);
           }}
-          className={`flex items-center gap-2 rounded-full border px-4 py-2.5 shadow-sm ${
-            isDarkMode ? "border-[#3d3d3f] bg-[#2c2c2e]" : "border-[#d0d0d0] bg-white"
+          className={`flex items-center gap-2.5 rounded-2xl border px-4 py-3 shadow-sm ${
+            isDarkMode ? "border-[#3d3d3f] bg-[#2c2c2e]" : "border-black/[0.06] bg-white"
           }`}
         >
           <FiLock size={14} className={isDarkMode ? "text-gray-500" : "text-gray-400"} />
           <input
             data-testid="browser-start-search"
             type="text"
-            placeholder="Search Google or type a URL"
+            placeholder="Search or enter website name"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className={`min-w-0 flex-1 bg-transparent text-sm outline-none ${isDarkMode ? "text-white placeholder-gray-500" : "text-gray-800 placeholder-gray-500"}`}
+            className={`min-w-0 flex-1 bg-transparent text-[15px] outline-none ${isDarkMode ? "text-white placeholder-gray-500" : "text-gray-800 placeholder-gray-400"}`}
           />
         </form>
-      </div>
 
-      <section className="mx-auto w-full max-w-3xl">
-        <h2 className={`mb-3 text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? "text-gray-500" : "text-gray-400"}`}>
-          Live projects
-        </h2>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {LIVE_BOOKMARKS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              data-testid={`browser-bookmark-${item.id}`}
-              onClick={() => onNavigate(item.links.live)}
-              className={`rounded-xl border p-4 text-left transition active:scale-[0.98] ${
-                isDarkMode
-                  ? "border-[#3d3d3f] bg-[#2c2c2e] hover:border-[#007AFF]"
-                  : "border-black/5 bg-white hover:border-[#007AFF]"
-              }`}
-            >
-              <span className={`block text-sm font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
-                {item.title}
-              </span>
-              <span className={`mt-1 line-clamp-2 text-[11px] ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                {item.tagline}
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
+        <section>
+          <h2 className={`mb-3 text-[11px] font-semibold uppercase tracking-widest ${isDarkMode ? "text-gray-500" : "text-gray-400"}`}>
+            Favorites
+          </h2>
+          <div className="grid grid-cols-4 gap-4 sm:grid-cols-4">
+            {FAVORITES.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                data-testid={`browser-favorite-${item.id}`}
+                onClick={() => onNavigate(item.url)}
+                className="group flex flex-col items-center gap-2 active:scale-95 transition-transform"
+              >
+                <span
+                  className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${item.gradient} text-lg font-bold text-white shadow-md group-hover:brightness-110`}
+                >
+                  {item.label.charAt(0)}
+                </span>
+                <span className={`max-w-[72px] truncate text-[11px] font-medium ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
@@ -199,13 +267,34 @@ export function Safari({
   const [downloadUrl, setDownloadUrl] = useState("");
   const [downloadStatus, setDownloadStatus] = useState(null);
   const [embedNote, setEmbedNote] = useState(null);
+  const [showStart, setShowStart] = useState(showStartPage);
   const iframeRef = useRef(null);
   const sessionRef = useRef(null);
 
-  const atStartPage = showStartPage && currentUrl === HOME_URL && !frameSrc;
+  const atStartPage = showStart && showStartPage && currentUrl === HOME_URL && !frameSrc;
+
+  const deferToExternalBrowser = useCallback(async (targetUrl) => {
+    setIsLoading(false);
+    const confirmed = await confirmExternalUrl(targetUrl);
+    if (!confirmed) {
+      setShowStart(true);
+      setCurrentUrl(HOME_URL);
+      setFrameSrc(null);
+      setIsLoading(false);
+      setEmbedNote(null);
+      return;
+    }
+
+    openExternalUrl(targetUrl);
+    setFrameSrc(null);
+    setCurrentUrl(HOME_URL);
+    setIsLoading(false);
+    setEmbedNote(null);
+  }, []);
 
   const navigate = useCallback((inputUrl) => {
     const processedUrl = processUrl(inputUrl);
+    setShowStart(false);
     setCurrentUrl(processedUrl);
     setIsLoading(true);
     setEmbedNote(null);
@@ -241,7 +330,7 @@ export function Safari({
   }, [navigate]);
 
   useEffect(() => {
-    if (showStartPage && currentUrl === HOME_URL) {
+    if (atStartPage) {
       setFrameSrc(null);
       setIsLoading(false);
       return;
@@ -253,12 +342,43 @@ export function Safari({
       setIsLoading(true);
       setEmbedNote(null);
 
-      if (isGoogleUrl(currentUrl) || isWhitelisted(currentUrl)) {
+      // Direct iframe only when the site allows embedding (Google + frame-friendly origins).
+      if (isGoogleUrl(currentUrl)) {
         if (!cancelled) {
           setFrameSrc(currentUrl);
           setIsLoading(false);
         }
         return;
+      }
+
+      if (isYouTubeUrl(currentUrl)) {
+        const embedUrl = toYouTubeEmbedUrl(currentUrl);
+        if (embedUrl && !cancelled) {
+          setFrameSrc(embedUrl);
+          setIsLoading(false);
+          return;
+        }
+        if (!cancelled) deferToExternalBrowser(currentUrl);
+        return;
+      }
+
+      if (prefersProxy(currentUrl)) {
+        if (!cancelled) deferToExternalBrowser(currentUrl);
+        return;
+      }
+
+      try {
+        const embedRes = await fetch(`/api/can-embed?url=${encodeURIComponent(currentUrl)}`);
+        if (embedRes.ok) {
+          const { embeddable } = await embedRes.json();
+          if (embeddable && !cancelled) {
+            setFrameSrc(currentUrl);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch {
+        /* continue to cloud browser / external fallback */
       }
 
       try {
@@ -282,28 +402,14 @@ export function Safari({
         /* fallback below */
       }
 
-      try {
-        const embedRes = await fetch(`/api/can-embed?url=${encodeURIComponent(currentUrl)}`);
-        const { embeddable } = await embedRes.json();
-        if (!cancelled) {
-          setFrameSrc(embeddable ? currentUrl : proxySrc(currentUrl));
-          if (!embeddable) setEmbedNote("Using proxy fallback");
-          setIsLoading(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setFrameSrc(proxySrc(currentUrl));
-          setEmbedNote("Using proxy fallback");
-          setIsLoading(false);
-        }
-      }
+      if (!cancelled) deferToExternalBrowser(currentUrl);
     }
 
     void resolveFrame();
     return () => {
       cancelled = true;
     };
-  }, [currentUrl, showStartPage]);
+  }, [currentUrl, atStartPage, deferToExternalBrowser]);
 
   useEffect(() => {
     return () => {
@@ -356,10 +462,11 @@ export function Safari({
   };
 
   const goHome = () => {
-    if (currentUrl === HOME_URL) {
+    if (atStartPage) {
       refresh();
       return;
     }
+    setShowStart(true);
     setCurrentUrl(HOME_URL);
     setFrameSrc(null);
     setIsLoading(false);
@@ -370,7 +477,7 @@ export function Safari({
   };
 
   const openExternal = () => {
-    window.open(currentUrl.replace("?igu=1", "").replace("&igu=1", ""), "_blank", "noopener,noreferrer");
+    openExternalUrl(getDisplayUrl());
   };
 
   const getDisplayUrl = () => currentUrl.replace("?igu=1", "").replace("&igu=1", "");
@@ -549,7 +656,9 @@ export function Safari({
               className={`h-full w-full border-none hide-scrollbar ${isDragging || isResizing ? "pointer-events-none" : ""}`}
               referrerPolicy="no-referrer"
               title="Safari Browser"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-presentation"
             />
           )
         )}

@@ -33,9 +33,9 @@ canEmbedRouter.get("/", async (req, res) => {
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
+    const timeout = setTimeout(() => controller.abort(), 6000);
     const response = await fetch(url, {
-      method: "HEAD",
+      method: "GET",
       redirect: "follow",
       signal: controller.signal,
       headers: { "User-Agent": "Mozilla/5.0 (compatible; ZaidOS-EmbedCheck/1.0)" },
@@ -46,6 +46,11 @@ canEmbedRouter.get("/", async (req, res) => {
       response.headers.get("x-frame-options"),
       response.headers.get("content-security-policy"),
     );
+    try {
+      await response.body?.cancel?.();
+    } catch {
+      /* ignore */
+    }
     cache.set(url, { embeddable, checkedAt: Date.now() });
     return res.json({ embeddable });
   } catch {

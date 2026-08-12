@@ -13,6 +13,7 @@ import MobileLockScreen from "./layouts/MobileLockScreen";
 import { useAppStore } from "./store/Appstore";
 import { useIsMobile } from "./hooks/useIsMobile";
 import AboutApp from "./zaidos/apps/About.jsx";
+import ExternalLinkPrompt from "./components/ExternalLinkPrompt.jsx";
 
 const INACTIVITY_TIMEOUT = 60 * 1000; // 1 minute in milliseconds
 
@@ -294,6 +295,8 @@ export default function App() {
           <LockScreen goNext={handleUnlock} isLocked={stage === "lock"} />
         </div>
       )}
+
+      {stage === "desktop" && <ExternalLinkPrompt />}
     </div>
   );
 }

@@ -12,6 +12,66 @@ function isMobileViewport() {
   );
 }
 
+/** Hosts that block iframe embedding — open in the system browser instead. */
+export function prefersProxy(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return (
+      host.endsWith(".netlify.app") ||
+      host.endsWith(".vercel.app") ||
+      host.endsWith(".pages.dev") ||
+      host.endsWith(".web.app") ||
+      host.endsWith(".github.io")
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Open URL in the system browser tab. */
+export function openExternalUrl(url) {
+  if (!url?.trim() || typeof window === "undefined") return;
+  const target = url.trim();
+  const link = document.createElement("a");
+  link.href = target;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+let externalLinkPromptHandler = null;
+
+export function setExternalLinkPromptHandler(handler) {
+  externalLinkPromptHandler = handler;
+}
+
+export function clearExternalLinkPromptHandler() {
+  externalLinkPromptHandler = null;
+}
+
+/** Ask before opening a URL that cannot load inside ZaidOS. */
+export function confirmExternalUrl(url) {
+  const target = url?.trim();
+  if (!target || typeof window === "undefined") return Promise.resolve(false);
+
+  if (externalLinkPromptHandler) {
+    return externalLinkPromptHandler(target);
+  }
+
+  return Promise.resolve(
+    window.confirm(`${target} can't be opened in ZaidOS. Open it in an external browser tab?`),
+  );
+}
+
+export async function openExternalUrlWithConfirm(url) {
+  const confirmed = await confirmExternalUrl(url);
+  if (confirmed) openExternalUrl(url);
+  return confirmed;
+}
+
 /** Open Safari in-place with optional URL (mobile shell + desktop window). */
 export function openBrowser(url) {
   if (typeof window === "undefined") return;
@@ -34,6 +94,11 @@ export function openBrowser(url) {
   } else {
     openApp("Safari", createElement(Safari));
   }
+}
+
+/** Open a project live URL after confirming an external tab when needed. */
+export function openProjectLive(url) {
+  void openExternalUrlWithConfirm(url);
 }
 
 export function peekPendingBrowserUrl() {

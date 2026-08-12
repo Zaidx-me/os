@@ -12,6 +12,7 @@ import {
   MOBILE_HOME_APPS,
 } from "../zaidos/mobile/registry.js";
 import { hideMobileBrowserChrome, enterFullscreen } from "../zaidos/lib/fullscreen.js";
+import { PENDING_KEY } from "../zaidos/lib/openBrowser.js";
 
 const EDGE_BACK_PX = 28;
 const EDGE_BACK_DX = 72;
@@ -98,7 +99,9 @@ export default function MobileShell({
   }, [peek, launchApp, onLaunchConsumed]);
 
   useEffect(() => {
-    const onOpenBrowser = () => {
+    const onOpenBrowser = (e) => {
+      const url = e.detail?.url;
+      if (url) sessionStorage.setItem(PENDING_KEY, url);
       setActiveApp("Safari");
     };
     const onOpenApp = (e) => {
