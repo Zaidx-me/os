@@ -1,9 +1,9 @@
-/** Lightweight asset paths — never load 6K originals by default. */
+/** Lightweight asset paths — never load multi-MB originals by default. */
 
 export const DEFAULT_DESKTOP_WALLPAPER = "/Wallpaper/optimized/GoldenGate_6k.webp";
 export const DEFAULT_LOCK_WALLPAPER = "/images/lockscreen-opt.webp";
 
-/** Gallery picks — optimized WebP only (≤ ~200KB each). */
+/** Gallery picks — optimized WebP only. */
 export const OPTIMIZED_WALLPAPERS = [
   { id: "golden-gate", label: "Golden Gate", path: "/Wallpaper/optimized/GoldenGate_6k.webp" },
   { id: "golden-dark", label: "Golden Gate Dark", path: "/Wallpaper/optimized/Golden_Dark_6k.webp" },
@@ -11,7 +11,7 @@ export const OPTIMIZED_WALLPAPERS = [
   { id: "air", label: "MacBook Air", path: "/Wallpaper/optimized/15-inch-MacBook-Air-wallpaper-1.webp" },
 ];
 
-/** Map legacy 6K paths saved in localStorage → optimized equivalent. */
+/** Map legacy paths saved in localStorage → optimized equivalent. */
 export const WALLPAPER_ALIASES = {
   "/Wallpaper/GoldenGate_6k.png": DEFAULT_DESKTOP_WALLPAPER,
   "/Wallpaper/Golden_Dark_6k.png": "/Wallpaper/optimized/Golden_Dark_6k.webp",
@@ -20,7 +20,6 @@ export const WALLPAPER_ALIASES = {
   "/images/lockscreen.jpg": DEFAULT_LOCK_WALLPAPER,
 };
 
-/** Prefer lightweight WebP — never load multi-MB PNG/JPEG on mobile. */
 export function resolveWallpaper(stored) {
   if (!stored) return DEFAULT_DESKTOP_WALLPAPER;
   if (WALLPAPER_ALIASES[stored]) return WALLPAPER_ALIASES[stored];
@@ -37,10 +36,42 @@ export function resolveWallpaper(stored) {
 
 export function resolveLockWallpaper(stored) {
   if (!stored) return DEFAULT_LOCK_WALLPAPER;
-  return WALLPAPER_ALIASES[stored] ?? stored;
+  return WALLPAPER_ALIASES[stored] ?? resolvePublicImage(stored);
 }
 
-/** Local WhiteSur SVG — no remote CDN fetches. */
+export function resolvePicture(stored) {
+  if (!stored) return stored;
+  if (stored.includes("/pictures/optimized/")) return stored;
+  const m = stored.match(/^\/pictures\/(.+)\.(jpg|jpeg|png)$/i);
+  if (m) return `/pictures/optimized/${m[1].replace(/\s+/g, "-")}.webp`;
+  return stored;
+}
+
+export function resolvePublicImage(stored) {
+  if (!stored) return stored;
+  if (stored.includes("/images/optimized/") || stored.endsWith(".webp")) return stored;
+  const m = stored.match(/^\/images\/(.+)\.(jpg|jpeg|png)$/i);
+  if (m) return `/images/optimized/${m[1].replace(/\s+/g, "-")}.webp`;
+  return stored;
+}
+
+/** Resolve any local public asset path to its optimized WebP equivalent. */
+export function resolveAsset(stored) {
+  if (!stored || stored.startsWith("data:") || stored.startsWith("http")) return stored;
+  if (stored.startsWith("/Wallpaper/")) return resolveWallpaper(stored);
+  if (stored.startsWith("/pictures/")) return resolvePicture(stored);
+  if (stored.startsWith("/images/")) return resolvePublicImage(stored);
+  return stored;
+}
+
+import { OPTIMIZED_WALLPAPER_PATHS } from "../../generated/wallpaper-manifest.js";
+
+export { OPTIMIZED_WALLPAPER_PATHS };
+
+export function listOptimizedWallpaperPaths() {
+  return [...OPTIMIZED_WALLPAPER_PATHS];
+}
+
 export const APP_ICON = (id) => `/icons/whitesur/${id}.svg`;
 
 export const DOCK_ICONS = {

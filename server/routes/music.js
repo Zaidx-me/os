@@ -44,7 +44,7 @@ async function fetchJamendo(clientId, search) {
       album: t.album_name || "Jamendo",
       duration: formatDuration(t.duration),
       src: t.audio,
-      art: t.image || "/pictures/mountains.jpg",
+      art: t.image || "/pictures/optimized/mountains.webp",
       license: t.license_ccurl,
       source: "jamendo",
     }));

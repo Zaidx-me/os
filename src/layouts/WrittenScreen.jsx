@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { DEFAULT_DESKTOP_WALLPAPER } from "../zaidos/lib/assets.js";
 
 export default function WrittenScreen({ goNext, goBack, selectedLanguage, selectedCountry }) {
   
@@ -15,7 +16,7 @@ export default function WrittenScreen({ goNext, goBack, selectedLanguage, select
   return (
     <div 
       className="w-screen h-screen flex flex-col items-center justify-center relative overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: "url('/Wallpaper/GoldenGate_6k.png')" }}
+      style={{ backgroundImage: `url('${DEFAULT_DESKTOP_WALLPAPER}')` }}
     >
       {/* Background Blur Overlay */}
       <div className="absolute inset-0 backdrop-blur-[60px] bg-black/5 z-0" />

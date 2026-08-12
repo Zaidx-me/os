@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState } from "react";
+import { resolveAsset } from "../zaidos/lib/assets.js";
 
 /**
  * Lazy-loaded image with async decode and optional unload when off-screen.
@@ -17,11 +18,12 @@ function OptimizedImage({
   ...rest
 }) {
   const ref = useRef(null);
+  const resolvedSrc = resolveAsset(src);
   const [visible, setVisible] = useState(loading === "eager");
   const [loadedSrc, setLoadedSrc] = useState(null);
 
   useEffect(() => {
-    if (loading === "eager" || !src) {
+    if (loading === "eager" || !resolvedSrc) {
       setVisible(true);
       return;
     }
@@ -41,25 +43,25 @@ function OptimizedImage({
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [loading, src]);
+  }, [loading, resolvedSrc]);
 
   useEffect(() => {
-    if (!visible || !src) return;
+    if (!visible || !resolvedSrc) return;
     let cancelled = false;
     const img = new Image();
     img.decoding = decoding;
     img.onload = () => {
-      if (!cancelled) setLoadedSrc(src);
+      if (!cancelled) setLoadedSrc(resolvedSrc);
     };
     img.onerror = onError;
-    img.src = src;
+    img.src = resolvedSrc;
     return () => {
       cancelled = true;
       img.onload = null;
       img.onerror = null;
       img.src = "";
     };
-  }, [visible, src, decoding, onError]);
+  }, [visible, resolvedSrc, decoding, onError]);
 
   return (
     <span ref={ref} className={`inline-block ${className}`} style={{ width, height }}>

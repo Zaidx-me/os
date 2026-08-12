@@ -1,86 +1,80 @@
-/**
- * Depth Wallpaper Presets
- * 
- * Maps wallpaper paths to their optimal depth effect settings.
- * `subjectTop` is the percentage from the TOP of the screen where the
- * foreground subject starts becoming visible (via gradient mask).
- * 
- * Lower values = subject extends higher up (more clock overlap).
- * Higher values = subject stays lower (less overlap).
- */
+import { resolveWallpaper } from "../zaidos/lib/assets.js";
 
-export const depthPresets = {
-  "/Wallpaper/big-sur-mountains-night-dark-macos-big-sur-stock-california-6016x6016-1493.jpg": {
+/**
+ * Depth Wallpaper Presets keyed by optimized WebP basename (without extension).
+ */
+export const depthPresetsBySlug = {
+  "big-sur-mountains-night-dark-macos-big-sur-stock-california-6016x6016-1493": {
     name: "Big Sur Mountains Night",
     subjectTop: 26,
     suitable: true,
   },
-  "/Wallpaper/macos-big-sur-stock-night-lone-tree-sedimentary-rocks-6016x6016-3776.jpg": {
+  "macos-big-sur-stock-night-lone-tree-sedimentary-rocks-6016x6016-3776": {
     name: "Big Sur Lone Tree",
     subjectTop: 30,
     suitable: true,
   },
-  "/Wallpaper/11-0-Big-Sur-Day-6k.jpg": {
+  "11-0-Big-Sur-Day-6k": {
     name: "Big Sur Day",
     subjectTop: 28,
     suitable: true,
   },
-  "/Wallpaper/GoldenGate_6k.png": {
+  GoldenGate_6k: {
     name: "Golden Gate",
     subjectTop: 34,
     suitable: true,
   },
-  "/Wallpaper/Golden_Dark_6k.png": {
+  Golden_Dark_6k: {
     name: "Golden Gate Dark",
     subjectTop: 34,
     suitable: true,
   },
-  "/Wallpaper/golden-gate-bridge-san-francicso-lg.jpg": {
+  "golden-gate-bridge-san-francicso-lg": {
     name: "Golden Gate Bridge",
     subjectTop: 36,
     suitable: true,
   },
-  "/Wallpaper/13-Ventura-Light.jpg": {
+  "13-Ventura-Light": {
     name: "Ventura Light",
     subjectTop: 30,
     suitable: true,
   },
-  "/Wallpaper/macOS-Catalina-Dark-Mode.jpg": {
+  "macOS-Catalina-Dark-Mode": {
     name: "Catalina Dark",
     subjectTop: 32,
     suitable: true,
   },
-  "/Wallpaper/26-Tahoe-Beach-Dawn-thumb.jpeg": {
+  "26-Tahoe-Beach-Dawn-thumb": {
     name: "Tahoe Beach Dawn",
     subjectTop: 35,
     suitable: true,
   },
-  "/Wallpaper/26-Tahoe-Light-6K-thumb.jpeg": {
+  "26-Tahoe-Light-6K-thumb": {
     name: "Tahoe Light",
     subjectTop: 32,
     suitable: true,
   },
-  "/Wallpaper/chris-brignola-n7n-nkadHRM-unsplash.jpg": {
+  "chris-brignola-n7n-nkadHRM-unsplash": {
     name: "Mountain Landscape",
     subjectTop: 28,
     suitable: true,
   },
-  "/Wallpaper/formula-1-formula-cars-ferrari-ferrari-f1-ferrari-formula-1-hd-wallpaper-79f662068bca0f4ad0cb02dae8b765b3.jpg": {
+  "formula-1-formula-cars-ferrari-ferrari-f1-ferrari-formula-1-hd-wallpaper-79f662068bca0f4ad0cb02dae8b765b3": {
     name: "Formula 1",
     subjectTop: 40,
     suitable: true,
   },
-  "/Wallpaper/macOS-Sonoma-light.jpg": {
+  "macOS-Sonoma-light": {
     name: "Sonoma Light",
     subjectTop: 30,
     suitable: true,
   },
-  "/Wallpaper/macOS-Sonomaa-dark.jpg": {
+  "macOS-Sonomaa-dark": {
     name: "Sonoma Dark",
     subjectTop: 30,
     suitable: true,
   },
-  "/Wallpaper/depth-mountain-peak.png": {
+  "depth-mountain-peak": {
     name: "Depth Mountain Peak",
     subjectTop: 25,
     suitable: true,
@@ -88,21 +82,26 @@ export const depthPresets = {
   },
 };
 
-/**
- * Get the depth preset for a given wallpaper path.
- * Returns the preset if found, or a default preset.
- */
+function wallpaperSlug(path) {
+  const resolved = resolveWallpaper(path);
+  const file = resolved.split("/").pop() ?? "";
+  return file.replace(/\.webp$/i, "");
+}
+
 export const getDepthPreset = (wallpaperPath) => {
-  return depthPresets[wallpaperPath] || {
-    name: "Custom",
-    subjectTop: 30,
-    suitable: true,
-  };
+  const slug = wallpaperSlug(wallpaperPath);
+  return (
+    depthPresetsBySlug[slug] || {
+      name: "Custom",
+      subjectTop: 30,
+      suitable: true,
+    }
+  );
 };
 
-/**
- * Check if a wallpaper has a depth-ready preset.
- */
 export const hasDepthPreset = (wallpaperPath) => {
-  return wallpaperPath in depthPresets;
+  return wallpaperSlug(wallpaperPath) in depthPresetsBySlug;
 };
+
+/** @deprecated use depthPresetsBySlug */
+export const depthPresets = depthPresetsBySlug;

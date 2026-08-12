@@ -6,7 +6,7 @@ export const MUSIC_LIBRARY = [
     album: "Examples",
     duration: "6:12",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    art: "/pictures/mountains.jpg",
+    art: "/pictures/optimized/mountains.webp",
   },
   {
     id: "song-2",
@@ -15,7 +15,7 @@ export const MUSIC_LIBRARY = [
     album: "Examples",
     duration: "8:38",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    art: "/pictures/river.jpg",
+    art: "/pictures/optimized/river.webp",
   },
   {
     id: "song-3",
@@ -24,6 +24,6 @@ export const MUSIC_LIBRARY = [
     album: "Examples",
     duration: "5:41",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    art: "/pictures/forest.jpg",
+    art: "/pictures/optimized/forest.webp",
   },
 ];

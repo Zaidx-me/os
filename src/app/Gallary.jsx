@@ -36,15 +36,9 @@ import {
   BsLayers
 } from "react-icons/bs";
 import { getDepthPreset } from "../constants/depthWallpapers";
+import { listOptimizedWallpaperPaths, resolveWallpaper } from "../zaidos/lib/assets.js";
 
-// Dynamically import all images from the Wallpaper folder
-const wallpaperModules = import.meta.glob('/public/Wallpaper/*.{jpg,jpeg,png,gif,webp}', { eager: true, query: '?url', import: 'default' });
-
-const getWallpaperImages = () => {
-  return Object.keys(wallpaperModules).map(path => path.replace('/public', ''));
-};
-
-const IMAGES = getWallpaperImages();
+const IMAGES = listOptimizedWallpaperPaths();
 
 // macOS Sidebar Toggle Icon
 const SidebarToggleIcon = () => (
@@ -219,14 +213,14 @@ export default function MacGallery({ windowId }) {
   };
 
   const setWallpaper = () => {
-    localStorage.setItem("desktop_wallpaper", selected);
+    localStorage.setItem("desktop_wallpaper", resolveWallpaper(selected));
     setTimeout(() => {
       window.dispatchEvent(new Event('wallpaperChanged'));
     }, 50);
   };
 
   const setLockscreen = (withDepth = false) => {
-    localStorage.setItem("lockscreen_wallpaper", selected);
+    localStorage.setItem("lockscreen_wallpaper", resolveWallpaper(selected));
     localStorage.setItem("lockscreen_depth_effect", withDepth ? "true" : "false");
     if (withDepth) {
       localStorage.setItem("lockscreen_depth_subject_top", depthSliderValue.toString());

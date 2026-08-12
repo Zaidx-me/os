@@ -52,3 +52,14 @@ macos-sim/
 public/Wallpaper/*
 !public/Wallpaper/optimized/
 !public/Wallpaper/optimized/**
+
+# picture originals — app serves /pictures/optimized/*.webp
+public/pictures/*
+!public/pictures/optimized/
+!public/pictures/optimized/**
+
+# image originals — app serves /images/optimized/*.webp (+ lockscreen-opt.webp)
+public/images/*
+!public/images/optimized/
+!public/images/optimized/**
+!public/images/lockscreen-opt.webp

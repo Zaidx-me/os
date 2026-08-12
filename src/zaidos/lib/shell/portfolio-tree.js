@@ -12,11 +12,11 @@ function file(content) {
 }
 
 const PICTURE_FILES = [
-  "coast.jpg",
-  "forest.jpg",
-  "portrait.jpg",
-  "puppy.jpg",
-  "river.jpg",
+  "coast.webp",
+  "forest.webp",
+  "portrait.webp",
+  "puppy.webp",
+  "river.webp",
 ];
 
 function projectReadme(title, tagline, description, links) {
@@ -48,7 +48,7 @@ export function buildPortfolioTree() {
 
   const pictureFiles = {};
   for (const name of PICTURE_FILES) {
-    pictureFiles[name] = file(`Image: /pictures/${name} — open in Photos.\n`);
+    pictureFiles[name] = file(`Image: /pictures/optimized/${name} — open in Photos.\n`);
   }
 
   return dir({

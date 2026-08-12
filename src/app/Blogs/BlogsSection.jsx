@@ -156,8 +156,8 @@ const defaultNotes = [
     date: "6/9/26",
     pinned: true,
     folder: "notes",
-    thumbnail: "/images/macos27.png",
-    images: ["/images/macos27.png"],
+    thumbnail: "/images/optimized/macos27.webp",
+    images: ["/images/optimized/macos27.webp"],
     updatedAt: "2026-06-09T10:00:00Z"
   }
 ];

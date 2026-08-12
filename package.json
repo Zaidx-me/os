@@ -11,7 +11,8 @@
     "start": "NODE_ENV=production node server/index.js",
     "lint": "eslint .",
     "preview": "vite preview",
-    "optimize:wallpapers": "node scripts/optimize-wallpapers.mjs"
+    "optimize:images": "node scripts/optimize-images.mjs",
+    "optimize:wallpapers": "node scripts/optimize-images.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "^2.1.16",

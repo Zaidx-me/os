@@ -18,23 +18,18 @@ import {
 } from "react-icons/fi";
 import { BsSortDown, BsSortUp, BsGrid3X3 } from "react-icons/bs";
 import { useAppStore } from "../store/Appstore";
-
-const wallpaperModules = import.meta.glob("/public/Wallpaper/*.{jpg,jpeg,png,gif,webp}", {
-  eager: true,
-  query: "?url",
-  import: "default",
-});
+import { listOptimizedWallpaperPaths, resolveWallpaper } from "../zaidos/lib/assets.js";
 
 const getWallpaperName = (path) => {
   const fileName = path.split("/").pop().split("?")[0].split(".")[0];
   return fileName.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
-const galleryWallpapers = Object.keys(wallpaperModules)
-  .map((path) => ({
-    id: path,
-    name: getWallpaperName(path),
-    src: path.replace("/public", ""),
+const galleryWallpapers = listOptimizedWallpaperPaths()
+  .map((src) => ({
+    id: src,
+    name: getWallpaperName(src),
+    src: resolveWallpaper(src),
   }))
   .sort((a, b) => a.name.localeCompare(b.name));
 

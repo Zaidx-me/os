@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { DEFAULT_DESKTOP_WALLPAPER } from '../zaidos/lib/assets.js';
 
 const avatars = [
   { id: 'panda', image: '/icons/panda.png', bg: 'bg-[#92e482]', color: '#92e482' },
@@ -91,7 +92,7 @@ export default function CreateAccountScreen({ goNext, goBack }) {
   return (
     <div
       className="w-screen h-screen flex flex-col items-center justify-center relative overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: "url('/Wallpaper/GoldenGate_6k.png')" }}
+      style={{ backgroundImage: `url('${DEFAULT_DESKTOP_WALLPAPER}')` }}
     >
       <div className="absolute inset-0 backdrop-blur-[60px] bg-black/5 z-0" />
 

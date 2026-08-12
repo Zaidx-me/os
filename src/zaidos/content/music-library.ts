@@ -9,7 +9,7 @@ export const MUSIC_LIBRARY: Omit<MusicTrack, "source">[] = [
     album: "Examples",
     duration: "6:12",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    art: "/pictures/mountains.jpg",
+    art: "/pictures/optimized/mountains.webp",
   },
   {
     id: "song-2",
@@ -18,7 +18,7 @@ export const MUSIC_LIBRARY: Omit<MusicTrack, "source">[] = [
     album: "Examples",
     duration: "8:38",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    art: "/pictures/river.jpg",
+    art: "/pictures/optimized/river.webp",
   },
   {
     id: "song-3",
@@ -27,7 +27,7 @@ export const MUSIC_LIBRARY: Omit<MusicTrack, "source">[] = [
     album: "Examples",
     duration: "5:41",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    art: "/pictures/forest.jpg",
+    art: "/pictures/optimized/forest.webp",
   },
   {
     id: "song-4",
@@ -36,7 +36,7 @@ export const MUSIC_LIBRARY: Omit<MusicTrack, "source">[] = [
     album: "Examples",
     duration: "5:05",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-    art: "/pictures/coast.jpg",
+    art: "/pictures/optimized/coast.webp",
   },
   {
     id: "song-5",
@@ -45,6 +45,6 @@ export const MUSIC_LIBRARY: Omit<MusicTrack, "source">[] = [
     album: "Examples",
     duration: "7:19",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-    art: "/pictures/portrait.jpg",
+    art: "/pictures/optimized/portrait.webp",
   },
 ];
