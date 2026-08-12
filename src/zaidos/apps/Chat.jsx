@@ -3,6 +3,7 @@ import { ArrowUp, ChevronLeft, LayoutGrid, Mail } from "lucide-react";
 import { site } from "../content/index.ts";
 import { matchChat } from "../lib/kb.js";
 import { fetchChatStatus, statusHint } from "../lib/apiStatus.js";
+import { formatChatResponse } from "../lib/formatChat.js";
 
 const QUICK = ["Who are you?", "Show projects", "Your skills", "How to hire you?"];
 const STORAGE_KEY = "zaidos-chat-history";
@@ -105,13 +106,13 @@ export default function ChatApp({ onBack, onSwitcher }) {
       if (status.llm) {
         const llm = await fetchLlm(history);
         if (llm) {
-          reply = llm.content;
+          reply = formatChatResponse(llm.content);
           source = llm.source;
         }
       }
 
       if (!reply) {
-        reply = matchChat(trimmed).response;
+        reply = formatChatResponse(matchChat(trimmed).response);
       }
 
       setTyping(false);
@@ -257,7 +258,10 @@ export default function ChatApp({ onBack, onSwitcher }) {
                     isUser ? "chat-bubble--user" : "chat-bubble--bot"
                   } ${m.id === streamingId && !m.content ? "min-h-[2.25rem]" : ""}`}
                 >
-                  {m.content || (m.id === streamingId ? "…" : "")}
+                  <p className="whitespace-pre-wrap break-words">
+                    {(isUser ? m.content : formatChatResponse(m.content)) ||
+                      (m.id === streamingId ? "…" : "")}
+                  </p>
                   {!isUser && m.content && m.source && (
                     <p className="mt-1 text-[10px] opacity-50">
                       {m.source === "llm" ? "AI" : "Offline"}

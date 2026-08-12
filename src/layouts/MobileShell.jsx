@@ -12,6 +12,7 @@ import {
   getMobileApp,
   MOBILE_HOME_APPS,
 } from "../zaidos/mobile/registry.js";
+import { hideMobileBrowserChrome, enterFullscreen } from "../zaidos/lib/fullscreen.js";
 
 const EDGE_BACK_PX = 28;
 const EDGE_BACK_DX = 72;
@@ -96,6 +97,11 @@ export default function MobileShell({
   }, []);
 
   useEffect(() => {
+    if (peek) return;
+    hideMobileBrowserChrome();
+  }, [peek]);
+
+  useEffect(() => {
     if (peek || !launchApp) return;
     setActiveApp(launchApp);
     pushRecent(launchApp);
@@ -155,6 +161,8 @@ export default function MobileShell({
   const openApp = useCallback(
     (id) => {
       if (!id || id === "Launchpad") return;
+      enterFullscreen();
+      hideMobileBrowserChrome();
       setAppPayload(null);
       setActiveApp(id);
       pushRecent(id);

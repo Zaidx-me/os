@@ -2,7 +2,7 @@
 .mobile-shell {
   min-height: 100dvh;
   min-height: 100svh;
-  touch-action: manipulation;
+  touch-action: pan-x pan-y;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -629,20 +629,24 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.mobile-home-track {
-  scrollbar-width: none;
+.mobile-home-viewport {
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
 }
 
-.mobile-home-track::-webkit-scrollbar {
-  display: none;
+.mobile-home-slider {
+  backface-visibility: hidden;
 }
 
 .mobile-home-page {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior-y: contain;
+  max-width: 100%;
+}
+
+.mobile-home-grid {
+  justify-items: center;
 }
 
 .mobile-app-chrome {
@@ -692,6 +696,13 @@
   user-select: none;
   object-fit: contain;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 100%);
+}
+
+.ios-app-icon-fallback {
+  -webkit-user-drag: none;
+  user-select: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 /* Embedded macOS apps on mobile — strip desktop chrome, full bleed */

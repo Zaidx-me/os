@@ -5,6 +5,7 @@ import {
   parseMessages,
   truncateHistory,
 } from "../lib/chat-prompt.js";
+import { formatChatResponse } from "../lib/format-chat-response.js";
 
 const LLM_TIMEOUT_MS = 15_000;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,8 +50,8 @@ chatRouter.post("/", async (req, res) => {
       body: JSON.stringify({
         model,
         messages: [{ role: "system", content: systemPrompt }, ...truncateHistory(messages)],
-        max_tokens: 512,
-        temperature: 0.7,
+        max_tokens: 400,
+        temperature: 0.35,
       }),
       signal: controller.signal,
     });
@@ -62,7 +63,8 @@ chatRouter.post("/", async (req, res) => {
     }
 
     const data = await llmRes.json();
-    const content = data.choices?.[0]?.message?.content?.trim();
+    const raw = data.choices?.[0]?.message?.content?.trim();
+    const content = formatChatResponse(raw);
     if (!content || content.includes(systemPrompt.slice(0, 40))) {
       return res.status(502).json({ mode: "kb", error: "Empty LLM response" });
     }

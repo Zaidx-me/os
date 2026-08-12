@@ -1,26 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { enterFullscreen } from "../zaidos/lib/fullscreen.js";
 
 export default function PowerScreen({ goNext, autoBoot = false, mobile = false }) {
   const [bootStarted, setBootStarted] = useState(autoBoot);
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
 
-  const enterFullscreen = () => {
-    const elem = document.documentElement;
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) {
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) {
-      elem.msRequestFullscreen();
-    }
-  };
-
   const startBoot = () => {
-    if (!mobile) enterFullscreen();
+    enterFullscreen();
     setBootStarted(true);
   };
+
+  useEffect(() => {
+    if (!bootStarted || !mobile) return;
+    enterFullscreen();
+  }, [bootStarted, mobile]);
 
   useEffect(() => {
     if (!bootStarted) return;

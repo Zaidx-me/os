@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import LazyWallpaper from "../components/LazyWallpaper.jsx";
 import IosStatusBar from "../components/mobile/IosStatusBar.jsx";
 import { DEFAULT_LOCK_WALLPAPER, resolveLockWallpaper } from "../zaidos/lib/assets.js";
+import { enterFullscreen, hideMobileBrowserChrome } from "../zaidos/lib/fullscreen.js";
 
 function formatClock(d) {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -26,6 +27,8 @@ export default function MobileLockScreen({ goNext }) {
   const finishUnlock = useCallback(() => {
     if (unlocking) return;
     setUnlocking(true);
+    enterFullscreen();
+    hideMobileBrowserChrome();
     window.setTimeout(() => goNext(), 180);
   }, [goNext, unlocking]);
 
