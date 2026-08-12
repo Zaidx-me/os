@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "../store/Appstore";
+import { useIsMobile } from "../hooks/useIsMobile.js";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -119,6 +120,7 @@ const TrafficLights = ({ windowId }) => {
 
 export default function MacGallery({ windowId }) {
   const isDarkMode = useAppStore((s) => s.isDarkMode);
+  const isMobile = useIsMobile();
   const [selected, setSelected] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeTab, setActiveTab] = useState("library");
@@ -133,6 +135,7 @@ export default function MacGallery({ windowId }) {
   const [zoomLevel, setZoomLevel] = useState(3); // 1 to 5
   const [lightboxZoom, setLightboxZoom] = useState(1);
   const [downloadNotification, setDownloadNotification] = useState(null);
+  const [showMobileActions, setShowMobileActions] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showLockScreenOptions, setShowLockScreenOptions] = useState(false);
   const [tempDepthMode, setTempDepthMode] = useState(false);
@@ -152,6 +155,7 @@ export default function MacGallery({ windowId }) {
   // Close depth popover when selected image changes
   useEffect(() => {
     setShowLockScreenOptions(false);
+    setShowMobileActions(false);
     // Auto-set optimal depth slider based on wallpaper preset
     if (selected) {
       const preset = getDepthPreset(selected);
@@ -286,6 +290,7 @@ export default function MacGallery({ windowId }) {
 
   // Grid columns class based on zoom level
   const getGridColsClass = () => {
+    if (isMobile) return "grid-cols-3 gap-[2px]";
     switch (zoomLevel) {
       case 1: return "grid-cols-8 gap-[2px]";
       case 2: return "grid-cols-6 gap-[2px]";
@@ -305,8 +310,8 @@ export default function MacGallery({ windowId }) {
       }}
     >
 
-      {/* Sidebar */}
-      {isSidebarOpen && (
+      {/* Sidebar — desktop only */}
+      {!isMobile && isSidebarOpen && (
         <aside
           className="w-52 h-full flex flex-col flex-shrink-0 border-r select-none window-drag-handle"
           style={{
@@ -459,12 +464,14 @@ export default function MacGallery({ windowId }) {
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {/* Toolbar Header */}
         <header
-          className="h-[52px] flex items-center justify-between px-5 select-none border-b border-black/[0.08] dark:border-white/10 window-drag-handle"
+          className={`flex items-center justify-between select-none border-b border-black/[0.08] dark:border-white/10 ${
+            isMobile ? "h-12 px-3" : "h-[52px] px-5 window-drag-handle"
+          }`}
           style={{ background: isDarkMode ? "#1e1e1e" : "#ffffff" }}
         >
           {/* Toolbar Left: Title & Subtitle */}
-          <div className="flex items-center gap-3">
-            {!isSidebarOpen && (
+          <div className="flex items-center gap-2 min-w-0">
+            {!isMobile && !isSidebarOpen && (
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors mr-1"
@@ -473,20 +480,21 @@ export default function MacGallery({ windowId }) {
                 <SidebarToggleIcon />
               </button>
             )}
-            <div className="flex flex-col items-start justify-center gap-0.5 leading-tight">
-              <span className={`text-[18px] font-bold capitalize ${isDarkMode ? "text-white" : "text-gray-800"}`}>
+            <div className="flex flex-col items-start justify-center gap-0.5 leading-tight min-w-0">
+              <span className={`font-bold capitalize truncate ${isMobile ? "text-[17px]" : "text-[18px]"} ${isDarkMode ? "text-white" : "text-gray-800"}`}>
                 {activeTab === "recentsaved" ? "Recently Saved" : activeTab === "deleted" ? "Recently Deleted" : activeTab === "people" ? "People & Pets" : activeTab}
               </span>
-              {activeTab === "library" && (
+              {!isMobile && activeTab === "library" && (
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium select-none">Jul 15 – 16, 2024</span>
               )}
-              {activeTab !== "library" && (
-                <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium select-none">{displayImages.length} items</span>
+              {(isMobile || activeTab !== "library") && (
+                <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium select-none">{displayImages.length} items</span>
               )}
             </div>
           </div>
 
-          {/* Toolbar Center: Zoom Controls & Filter Tab */}
+          {/* Toolbar Center: Zoom Controls & Filter Tab — desktop only */}
+          {!isMobile && (
           <div className="flex items-center gap-4">
             {/* Zoom Slider */}
             <div className="flex items-center gap-1.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-lg px-2 py-1">
@@ -520,9 +528,12 @@ export default function MacGallery({ windowId }) {
               </svg>
             </button>
           </div>
+          )}
 
           {/* Toolbar Right: Action Buttons */}
-          <div className="flex items-center gap-0.5">
+          <div className={`flex items-center ${isMobile ? "gap-1" : "gap-0.5"}`}>
+            {!isMobile && (
+              <>
             <button className="p-1.5 hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-md text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors" title="Slideshow">
               <SlideshowIcon />
             </button>
@@ -533,26 +544,32 @@ export default function MacGallery({ windowId }) {
               <FiMoreHorizontal size={15} />
             </button>
             <div className="w-px h-4 bg-gray-200 dark:bg-gray-800 mx-1.5" />
-            <button className="p-1.5 hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-md text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors" title="Get Info">
-              <FiInfo size={15} />
+              </>
+            )}
+            <button className={`hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-md text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors ${isMobile ? "p-2" : "p-1.5"}`} title="Get Info">
+              <FiInfo size={isMobile ? 18 : 15} />
             </button>
-            <button className="p-1.5 hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-md text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors" title="Share">
-              <FiShare size={14} />
+            <button className={`hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-md text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors ${isMobile ? "p-2" : "p-1.5"}`} title="Share">
+              <FiShare size={isMobile ? 17 : 14} />
             </button>
+            {!isMobile && (
+              <>
             <button className="p-1.5 hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-md text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors" title="Favorite">
               <BsHeart size={14} />
             </button>
             <button className="p-1.5 hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-md text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors" title="Rotate">
               <RotateIcon />
             </button>
-            <button className="p-1.5 hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-md text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors" title="Search">
-              <FiSearch size={14} />
+              </>
+            )}
+            <button className={`hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-md text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors ${isMobile ? "p-2" : "p-1.5"}`} title="Search">
+              <FiSearch size={isMobile ? 18 : 14} />
             </button>
           </div>
         </header>
 
         {/* Photos Grid Container */}
-        <div className="flex-1 overflow-y-auto p-2 notes-no-scrollbar" style={{ scrollbarWidth: "none" }}>
+        <div className={`flex-1 overflow-y-auto notes-no-scrollbar ${isMobile ? "p-0" : "p-2"}`} style={{ scrollbarWidth: "none" }}>
           {displayImages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-6 text-gray-400 dark:text-gray-500">
               {activeTab === "recentsaved" || activeTab === "downloads" ? (
@@ -627,15 +644,172 @@ export default function MacGallery({ windowId }) {
       <AnimatePresence>
         {selected && (
           <motion.div
-            className={`absolute inset-0 z-50 flex flex-col backdrop-blur-sm ${
-              isDarkMode ? "bg-black/95 text-white" : "bg-white/95 text-gray-800"
+            className={`absolute inset-0 z-50 flex flex-col ${
+              isMobile ? "bg-black text-white" : isDarkMode ? "bg-black/95 text-white backdrop-blur-sm" : "bg-white/95 text-gray-800 backdrop-blur-sm"
             }`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
           >
-            {/* Close button */}
+            {isMobile ? (
+              <>
+                {/* Mobile top bar */}
+                <div className="absolute inset-x-0 top-0 z-50 flex items-center justify-between px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 bg-gradient-to-b from-black/70 to-transparent">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(null)}
+                    className="min-h-11 px-2 text-[17px] font-medium text-[#0A84FF] active:opacity-70"
+                  >
+                    Done
+                  </button>
+                  <span className="text-[15px] font-semibold text-white/90 truncate max-w-[45%]">
+                    {getImageName(selected)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={downloadImage}
+                    className="flex h-11 w-11 items-center justify-center text-white active:opacity-70"
+                    title="Share"
+                  >
+                    <FiShare size={20} />
+                  </button>
+                </div>
+
+                {/* Image display — mobile */}
+                <div
+                  className="flex-1 flex items-center justify-center relative z-10 overflow-hidden touch-pan-y"
+                  onClick={() => setSelected(null)}
+                >
+                  <motion.img
+                    key={selected}
+                    src={selected}
+                    alt="Selected Photo"
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: lightboxZoom }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                    className="max-w-full max-h-full object-contain"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+
+                {/* Mobile bottom controls */}
+                <div className="absolute inset-x-0 bottom-0 z-50 bg-gradient-to-t from-black/85 via-black/50 to-transparent pt-10 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                  <p className="text-center text-[13px] text-white/70 mb-3">
+                    {selectedIndex + 1} of {displayImages.length}
+                  </p>
+                  <div className="flex items-center justify-around px-6">
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite(selected)}
+                      className="flex h-12 w-12 items-center justify-center rounded-full active:bg-white/10"
+                      title="Favorite"
+                    >
+                      {favorites.includes(selected) ? (
+                        <BsHeartFill size={24} className="text-red-500" />
+                      ) : (
+                        <BsHeart size={24} className="text-white" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileActions(true)}
+                      className="flex h-12 w-12 items-center justify-center rounded-full active:bg-white/10"
+                      title="More"
+                    >
+                      <FiMoreHorizontal size={24} className="text-white" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={downloadImage}
+                      className="flex h-12 w-12 items-center justify-center rounded-full active:bg-white/10"
+                      title="Download"
+                    >
+                      <BsDownload size={22} className="text-white" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigateImage(-1)}
+                      className="flex h-12 w-12 items-center justify-center rounded-full active:bg-white/10"
+                      title="Previous"
+                    >
+                      <FiChevronLeft size={26} className="text-white" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigateImage(1)}
+                      className="flex h-12 w-12 items-center justify-center rounded-full active:bg-white/10"
+                      title="Next"
+                    >
+                      <FiChevronRight size={26} className="text-white" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mobile actions sheet */}
+                <AnimatePresence>
+                  {showMobileActions && (
+                    <>
+                      <motion.button
+                        type="button"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-[60] bg-black/40"
+                        onClick={() => setShowMobileActions(false)}
+                        aria-label="Close actions"
+                      />
+                      <motion.div
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        exit={{ y: "100%" }}
+                        transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                        className="absolute inset-x-0 bottom-0 z-[70] rounded-t-2xl bg-[#2c2c2e] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/25" />
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => { setWallpaper(); setShowMobileActions(false); }}
+                            className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-[17px] text-white active:bg-white/10"
+                          >
+                            <BsDisplay size={20} />
+                            Set as Desktop Wallpaper
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setShowMobileActions(false); setShowLockScreenOptions(true); }}
+                            className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-[17px] text-white active:bg-white/10"
+                          >
+                            <BsLock size={20} />
+                            Set as Lock Screen
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { downloadImage(); setShowMobileActions(false); }}
+                            className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-[17px] text-white active:bg-white/10"
+                          >
+                            <BsDownload size={20} />
+                            Download
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowMobileActions(false)}
+                          className="mt-3 w-full rounded-xl bg-white/10 py-3.5 text-[17px] font-semibold text-white active:bg-white/15"
+                        >
+                          Cancel
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </>
+            ) : (
+              <>
+            {/* Close button — desktop */}
             <button
               onClick={() => setSelected(null)}
               className={`absolute top-4 left-4 z-50 p-2 rounded-full transition-all ${
@@ -647,7 +821,7 @@ export default function MacGallery({ windowId }) {
               <FiX size={18} />
             </button>
 
-            {/* Navigation arrows */}
+            {/* Navigation arrows — desktop */}
             <button
               onClick={() => navigateImage(-1)}
               className={`absolute left-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full transition-all ${
@@ -669,7 +843,7 @@ export default function MacGallery({ windowId }) {
               <FiChevronRight size={22} />
             </button>
 
-            {/* Image display */}
+            {/* Image display — desktop */}
             <div className="flex-1 flex items-center justify-center px-12 pt-12 pb-2 relative z-10 overflow-hidden" onClick={() => setSelected(null)}>
               <motion.img
                 key={selected}
@@ -916,11 +1090,87 @@ export default function MacGallery({ windowId }) {
               </div>
             </div>
 
-            {/* Top Right Information Overlay */}
+            {/* Top Right Information Overlay — desktop */}
             <div className="absolute top-4 right-4 text-right">
               <p className={`text-[12px] font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>{getImageName(selected)}</p>
               <p className={`text-[10px] mt-0.5 ${isDarkMode ? "text-white/60" : "text-gray-500"}`}>{selectedIndex + 1} of {displayImages.length}</p>
             </div>
+              </>
+            )}
+
+            {/* Lock screen picker — mobile sheet */}
+            {isMobile && showLockScreenOptions && (
+              <>
+                <button
+                  type="button"
+                  className="absolute inset-0 z-[80] bg-black/50"
+                  onClick={() => setShowLockScreenOptions(false)}
+                  aria-label="Close lock screen options"
+                />
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  className="absolute inset-x-0 bottom-0 z-[90] max-h-[85vh] overflow-y-auto rounded-t-2xl bg-[#2c2c2e] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/25" />
+                  <h3 className="text-[17px] font-semibold text-center text-white mb-4">Set as Lock Screen</h3>
+                  <div className="flex gap-3 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setTempDepthMode(false)}
+                      className={`flex-1 rounded-xl overflow-hidden border-2 ${!tempDepthMode ? "border-[#007AFF]" : "border-white/10"}`}
+                    >
+                      <div className="aspect-[9/16] bg-black">
+                        <img src={selected} className="w-full h-full object-cover" alt="Normal" />
+                      </div>
+                      <div className="py-2 text-center text-[14px] font-medium text-white">Normal</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTempDepthMode(true)}
+                      className={`flex-1 rounded-xl overflow-hidden border-2 ${tempDepthMode ? "border-[#007AFF]" : "border-white/10"}`}
+                    >
+                      <div className="aspect-[9/16] bg-black relative">
+                        <img src={selected} className="w-full h-full object-cover" alt="Depth" />
+                      </div>
+                      <div className="py-2 text-center text-[14px] font-medium text-white flex items-center justify-center gap-1">
+                        <BsLayers size={12} /> Depth
+                      </div>
+                    </button>
+                  </div>
+                  {tempDepthMode && (
+                    <div className="mb-4 px-1">
+                      <input
+                        type="range"
+                        min="5"
+                        max="50"
+                        value={depthSliderValue}
+                        onChange={(e) => setDepthSliderValue(Number(e.target.value))}
+                        className="w-full h-1 rounded-full accent-[#007AFF]"
+                      />
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowLockScreenOptions(false)}
+                      className="flex-1 rounded-xl bg-white/10 py-3 text-[17px] font-semibold text-white"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLockscreen(tempDepthMode)}
+                      className="flex-1 rounded-xl bg-[#007AFF] py-3 text-[17px] font-semibold text-white"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </motion.div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

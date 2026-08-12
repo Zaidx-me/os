@@ -1,5 +1,10 @@
 import React, { useState } from "react";
 import { useAppStore } from "../store/Appstore";
+import {
+  phoneRecents,
+  phoneFavourites,
+  defaultMemoji,
+} from "../zaidos/content/systemContacts.ts";
 import { 
   Phone, 
   MessageSquare, 
@@ -70,7 +75,7 @@ const TrafficLights = ({ windowId }) => {
 
 export default function PhoneApp({ windowId }) {
   const isDarkMode = useAppStore((s) => s.isDarkMode);
-  const [selectedContactId, setSelectedContactId] = useState("chris");
+  const [selectedContactId, setSelectedContactId] = useState("zaid");
   const [searchQuery, setSearchQuery] = useState("");
   const [showDialer, setShowDialer] = useState(false);
   const [dialedNumber, setDialedNumber] = useState("");
@@ -104,110 +109,8 @@ export default function PhoneApp({ windowId }) {
     return lightPart || "bg-gray-200";
   };
 
-  // Initial Seed Contacts
-  const [contacts, setContacts] = useState([
-    {
-      id: "chris",
-      name: "Chris",
-      avatar: "/icons/PngItem_4082636.png",
-      avatarBg: "bg-red-100 dark:bg-red-950/60",
-      device: "mobile",
-      type: "mobile",
-      time: "Yesterday",
-      dateLabel: "Yesterday",
-      isOutgoing: false,
-      email: "chris@icloud.com",
-      history: [
-        { type: "Incoming Call", time: "Yesterday - 1:45 PM", duration: "10 mins 15 secs" }
-      ]
-    },
-    {
-      id: "guillermo",
-      name: "Guillermo Castillo",
-      avatar: "/icons/PngItem_6452863.png",
-      avatarBg: "bg-orange-200 dark:bg-orange-950/60",
-      device: "iPhone",
-      type: "mobile",
-      time: "9:30 AM",
-      dateLabel: "Today",
-      isOutgoing: true,
-      email: "guillermo.c@apple.com",
-      history: [
-        { type: "Outgoing Call", time: "Today - 9:30 AM", duration: "31 seconds" },
-        { type: "Incoming Call", time: "Yesterday - 4:15 PM", duration: "2 mins 40 secs" },
-        { type: "Missed Call", time: "Monday - 11:02 AM", duration: "Missed" }
-      ]
-    },
-    {
-      id: "rigo",
-      name: "Rigo Rangel",
-      avatar: "/icons/PngItem_5031003.png",
-      avatarBg: "bg-sky-100 dark:bg-sky-950/60",
-      device: "mobile",
-      type: "mobile",
-      time: "Yesterday",
-      dateLabel: "Yesterday",
-      isOutgoing: false,
-      email: "rigo.rangel@icloud.com",
-      history: [
-        { type: "Incoming Call", time: "Yesterday - 5:20 PM", duration: "4 mins 12 secs" },
-        { type: "Outgoing Call", time: "3/28/25 - 10:15 AM", duration: "1 min 5 secs" }
-      ]
-    },
-    {
-      id: "brian",
-      name: "Brian",
-      avatar: "/icons/PngItem_4409921.png",
-      avatarBg: "bg-amber-100 dark:bg-amber-950/60",
-      device: "mobile",
-      type: "mobile",
-      time: "3/30/25",
-      dateLabel: "3/30/25",
-      isOutgoing: false,
-      email: "brian@apple.com",
-      history: [
-        { type: "Incoming Call", time: "3/30/25 - 2:00 PM", duration: "45 seconds" }
-      ]
-    },
-    {
-      id: "mayuri",
-      name: "Mayuri",
-      avatar: "/icons/PngItem_4608119.png",
-      avatarBg: "bg-purple-100 dark:bg-purple-950/60",
-      device: "mobile",
-      type: "mobile",
-      time: "3/30/25",
-      dateLabel: "3/30/25",
-      isOutgoing: false,
-      email: "mayuri@yahoo.com",
-      history: [
-        { type: "Incoming Call", time: "3/30/25 - 9:15 AM", duration: "1 min 22 secs" }
-      ]
-    },
-    {
-      id: "liz",
-      name: "Liz Dizon",
-      avatar: "/icons/PngItem_4082636.png",
-      avatarBg: "bg-rose-200 dark:bg-rose-950/60",
-      device: "iPhone",
-      type: "mobile",
-      time: "3/29/25",
-      dateLabel: "3/29/25",
-      isOutgoing: false,
-      email: "liz.dizon@hotmail.com",
-      history: [
-        { type: "Incoming Call", time: "3/29/25 - 6:40 PM", duration: "5 mins 8 secs" }
-      ]
-    }
-  ]);
-
-  // Favourites list
-  const favourites = [
-    { id: "chris", name: "Chris", avatar: "/icons/PngItem_4082636.png", bgClass: "bg-red-100 dark:bg-red-950/60", iconType: "phone" },
-    { id: "brian", name: "Brian", avatar: "/icons/PngItem_4409921.png", bgClass: "bg-amber-100 dark:bg-amber-950/60", iconType: "message" },
-    { id: "mayuri", name: "Mayuri", avatar: "/icons/PngItem_4608119.png", bgClass: "bg-purple-100 dark:bg-purple-950/60", iconType: "message" },
-    { id: "rigo_fav", name: "Rigo", avatar: "/icons/PngItem_5031003.png", bgClass: "bg-sky-100 dark:bg-sky-950/60", iconType: "video" }
-  ];
+  const [contacts] = useState([...phoneRecents]);
+  const favourites = [...phoneFavourites];
 
   // Handle contact selection
   const handleSelectContact = (contact) => {
@@ -228,7 +131,7 @@ export default function PhoneApp({ windowId }) {
   // Place mock call
   const handlePlaceCall = (contactInfo) => {
     let name = "Unknown";
-    let avatar = "/icons/PngItem_5031003.png";
+    let avatar = defaultMemoji;
     let bg = "linear-gradient(135deg, #757f9a 0%, #d7dde8 100%)";
 
     if (contactInfo) {
@@ -342,7 +245,7 @@ export default function PhoneApp({ windowId }) {
                 if (matched) {
                   handleSelectContact(matched);
                 } else {
-                  const fallback = contacts.find(c => c.id === "chris");
+                  const fallback = contacts.find(c => c.id === "zaid");
                   if (fallback) handleSelectContact(fallback);
                 }
               }}

@@ -869,6 +869,18 @@
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
 }
 
+/* Mail — single-column inbox / detail navigation */
+.mobile-app-embedded .mail-container {
+  flex-direction: column;
+}
+
+.mobile-app-embedded .mail-container > section,
+.mobile-app-embedded .mail-container > main {
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: 0 !important;
+}
+
 .mobile-app-embedded header .w-44 {
   width: 100% !important;
   max-width: 12rem;

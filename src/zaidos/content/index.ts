@@ -11,3 +11,4 @@ export * from './site';
 export * from './wallpapers';
 export * from './articles';
 export * from './validation';
+export * from './systemContacts';

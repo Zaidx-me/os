@@ -1,10 +1,16 @@
 import React, { useState } from "react";
 import { useAppStore } from "../store/Appstore";
+import { useIsMobile } from "../hooks/useIsMobile.js";
+import {
+  mailInbox,
+  ownerDisplayName,
+  defaultMemoji,
+} from "../zaidos/content/systemContacts.ts";
 import { 
   Inbox, Send, FileText, Ban, Trash2, Archive, Folder, RotateCcw, 
   Filter, MoreHorizontal, User, ShoppingCart, MessageSquare, Megaphone,
   SquarePen, Reply, ReplyAll, Forward, FolderInput, Flag, Search, Sparkles,
-  Paperclip, CornerUpLeft, MapPin, ChevronRight, X
+  Paperclip, CornerUpLeft, MapPin, ChevronRight, X, ChevronLeft
 } from "lucide-react";
 
 // Traffic lights component inside Mail Sidebar
@@ -61,121 +67,38 @@ const TrafficLights = ({ windowId }) => {
 
 export default function Mail({ windowId }) {
   const isDarkMode = useAppStore((s) => s.isDarkMode);
+  const isMobile = useIsMobile();
   const [selectedMailbox, setSelectedMailbox] = useState("inbox");
   const [activeCategory, setActiveCategory] = useState("primary");
-  const [selectedEmailId, setSelectedEmailId] = useState(3); // Default selected Orkun email
+  const [selectedEmailId, setSelectedEmailId] = useState(3);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [mobileScreen, setMobileScreen] = useState("list");
 
-  // Mock Mailbox counts
   const mailboxCounts = { inbox: 2 };
-
-  // Mock Emails
-  const emails = [
-    {
-      id: 1,
-      sender: "Xiaomeng Zhong",
-      avatar: "/icons/PngItem_5031003.png",
-      subject: "Dinner at the Ricos'",
-      date: "3/24/25",
-      excerpt: "Dear Danny, Thanks again for the delicious evening. It was so much fun making and eating...",
-      isUnread: true,
-      hasAttachment: true,
-      category: "primary",
-      content: `Hello Danny,\n\nThanks again for the delicious evening. It was so much fun making and eating dinner with you and the rest of the crew! Let's do it again next month.\n\nBest,\nXiaomeng`
-    },
-    {
-      id: 2,
-      sender: "Jenny Court",
-      avatar: "/icons/PngItem_4082636.png",
-      subject: "Walkthrough",
-      date: "3/20/25",
-      excerpt: "Hi Danny and Ashley, I've just completed a walkthrough of 212 Opal and wanted to share...",
-      isUnread: true,
-      category: "primary",
-      content: `Hi Danny and Ashley,\n\nI've just completed a walkthrough of 212 Opal and wanted to share the findings report with you. Everything looks structurally sound, and the layout works perfectly.\n\nCheers,\nJenny`
-    },
-    {
-      id: 3,
-      sender: "Orkun Kucuksevim",
-      avatar: "/icons/PngItem_4608119.png",
-      subject: "Day trip idea",
-      date: "3/17/25",
-      excerpt: "Hello Danny, Here's more info on that park I was telling you about. Definitely go if you have the...",
-      isUnread: false,
-      isReplied: true,
-      category: "primary",
-      hasMap: true,
-      content: `Hello Danny,\n\nHere's more info on that park I was telling you about. Definitely go if you have the chance!`
-    },
-    {
-      id: 4,
-      sender: "Po-Chun Yeh",
-      avatar: "/icons/PngItem_6304991.png",
-      subject: "Lunch call?",
-      date: "3/14/25",
-      excerpt: "Hey Danny, Think you'll be free for a lunchtime chat sometime soon? I've got Thursday, Marc...",
-      isUnread: false,
-      category: "primary",
-      content: `Hey Danny,\n\nThink you'll be free for a lunchtime chat sometime soon? I've got Thursday, March 20th open, or we could do early next week. Let me know what works.\n\nBest,\nPo-Chun`
-    },
-    {
-      id: 5,
-      sender: "Antonio Manriquez",
-      avatar: "/icons/PngItem_6452863.png",
-      subject: "Pick up from airport?",
-      date: "3/10/25",
-      excerpt: "Hi Danny! Hope all's well with you. I'm coming home tomorrow and was wondering if you mig...",
-      isUnread: false,
-      category: "primary",
-      content: `Hi Danny!\n\nHope all's well with you. I'm coming home tomorrow on flight AA204 and was wondering if you might be free to pick me up around 4 PM? Let me know.\n\nThanks,\nAntonio`
-    },
-    {
-      id: 6,
-      sender: "Rich Dinh",
-      avatar: "/icons/PngItem_4608119.png",
-      subject: "National Parks in Southern California",
-      date: "3/6/25",
-      excerpt: "Hi Danny, I can't wait for our upcoming Joshua Tree National Park trip. Check out this guide a...",
-      isUnread: false,
-      category: "primary",
-      content: `Hi Danny,\n\nI can't wait for our upcoming Joshua Tree National Park trip. Check out this guide and let me know which trails you want to hike first.\n\nTalk soon,\nRich`
-    },
-    {
-      id: 7,
-      sender: "Elena Lanot",
-      avatar: "/icons/PngItem_5031003.png",
-      subject: "Interpretation job follow-up",
-      date: "3/3/25",
-      excerpt: "Hey Danny, Thanks much for taking time to meet with me last week—super cool to hear a...",
-      isUnread: false,
-      category: "primary",
-      content: `Hey Danny,\n\nThanks much for taking time to meet with me last week—super cool to hear about your interpretation work. Let's stay in touch.\n\nWarmly,\nElena`
-    },
-    {
-      id: 8,
-      sender: "Rigo Rangel",
-      avatar: "/icons/PngItem_6304991.png",
-      subject: "Fun memories",
-      date: "2/21/25",
-      excerpt: "Check out this photo of the group from last summer. Can't believe it has been a year already...",
-      isUnread: false,
-      hasAttachment: true,
-      category: "primary",
-      content: `Hi Danny,\n\nCheck out this photo of the group from last summer. Can't believe it has been a year already! Looking forward to seeing everyone again soon.\n\nBest,\nRigo`
-    }
-  ];
+  const emails = [...mailInbox];
 
   const selectedEmail = emails.find(e => e.id === selectedEmailId) || emails[0];
+  const unreadCount = emails.filter((e) => e.isUnread).length;
+
+  const openEmail = (id) => {
+    setSelectedEmailId(id);
+    if (isMobile) setMobileScreen("detail");
+  };
+
+  const showList = !isMobile || mobileScreen === "list";
+  const showDetail = !isMobile || mobileScreen === "detail";
 
   return (
     <div 
-      className={`mail-container flex h-full w-full select-none text-[13px] rounded-xl overflow-hidden font-sans ${
+      className={`mail-container flex h-full w-full select-none font-sans ${
+        isMobile ? "text-[15px] rounded-none" : "text-[13px] rounded-xl"
+      } overflow-hidden ${
         isDarkMode ? "bg-[#1E1E1E] text-white" : "bg-[#F6F6F6] text-gray-800"
       }`}
     >
       
-      {/* 1. Left Sidebar (Mailboxes) */}
-      {isSidebarOpen && (
+      {/* 1. Left Sidebar (Mailboxes) — desktop only */}
+      {!isMobile && isSidebarOpen && (
         <aside className={`w-[200px] flex flex-col shrink-0 border-r rounded-xl overflow-hidden ${
           isDarkMode ? "border-white/10 bg-[#1E1E1E] text-white" : "border-[#E5E5E5] bg-[#F6F6F6] text-black"
         } transition-all duration-300`}>
@@ -293,11 +216,35 @@ export default function Mail({ windowId }) {
       )}
 
       {/* 2. Middle Pane (Message List) */}
-      <section className={`w-[280px] flex flex-col shrink-0 border-r rounded-xl overflow-hidden ${
-        isDarkMode ? "border-white/10 bg-[#1E1E1E]" : "border-[#E5E5E5] bg-white"
+      {showList && (
+      <section className={`flex flex-col shrink-0 overflow-hidden ${
+        isMobile
+          ? "flex-1 w-full min-w-0 border-0"
+          : `w-[280px] border-r rounded-xl ${isDarkMode ? "border-white/10 bg-[#1E1E1E]" : "border-[#E5E5E5] bg-white"}`
       }`}>
         
         {/* Header toolbar */}
+        {isMobile ? (
+          <div className={`shrink-0 border-b ${isDarkMode ? "border-white/10 bg-[#1E1E1E]" : "border-black/[0.06] bg-[#F6F6F6]"}`}>
+            <div className="flex items-end justify-between px-4 pt-3 pb-2">
+              <div>
+                <h1 className="text-[34px] font-bold leading-none tracking-tight text-gray-900 dark:text-white">
+                  Inbox
+                </h1>
+                <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-1">
+                  {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-[#007AFF] text-white shadow-sm active:scale-95 transition-transform"
+                title="New Message"
+              >
+                <SquarePen size={18} />
+              </button>
+            </div>
+          </div>
+        ) : (
         <div className="window-drag-handle h-14 flex items-center px-4 shrink-0 justify-between border-b border-black/[0.04] dark:border-white/[0.04]">
           {!isSidebarOpen && (
             <button 
@@ -313,7 +260,7 @@ export default function Mail({ windowId }) {
           )}
           <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
             <div className="font-bold text-[17px] leading-tight truncate text-gray-900 dark:text-white">Inbox</div>
-            <span className="text-[10px] text-gray-400 leading-none mt-0.5">Primary • 35 messages</span>
+            <span className="text-[10px] text-gray-400 leading-none mt-0.5">Primary • {emails.length} messages</span>
           </div>
           <div className="flex items-center gap-1">
             <button className={`p-1.5 rounded-lg transition ${isDarkMode ? "hover:bg-white/5 text-gray-300" : "hover:bg-black/5 text-gray-600"}`}>
@@ -324,9 +271,12 @@ export default function Mail({ windowId }) {
             </button>
           </div>
         </div>
+        )}
 
         {/* Category Pills Bar */}
-        <div className="px-3.5 py-2 shrink-0 flex items-center gap-1.5 bg-black/[0.02] dark:bg-white/[0.02] border-b border-black/[0.04] dark:border-white/[0.04]">
+        <div className={`shrink-0 flex items-center gap-1.5 border-b overflow-x-auto hide-scrollbar ${
+          isMobile ? "px-3 py-2.5" : "px-3.5 py-2 bg-black/[0.02] dark:bg-white/[0.02]"
+        } ${isDarkMode ? "border-white/[0.06]" : "border-black/[0.06]"}`}>
           <button 
             onClick={() => setActiveCategory("primary")}
             className={`flex items-center gap-1.5 px-4 h-[26px] rounded-full text-[11px] font-semibold transition ${
@@ -361,58 +311,108 @@ export default function Mail({ windowId }) {
         {/* Email feed list */}
         <div className="flex-1 overflow-y-auto notes-no-scrollbar" style={{ scrollbarWidth: "none" }}>
           {emails.map(email => {
-            const isSelected = selectedEmailId === email.id;
             return (
               <div
                 key={email.id}
-                onClick={() => setSelectedEmailId(email.id)}
-                className={`px-4 py-3 cursor-pointer border-b transition-colors relative ${
+                onClick={() => openEmail(email.id)}
+                className={`cursor-pointer border-b transition-colors relative ${
+                  isMobile ? "px-4 py-3.5 flex gap-3 items-start" : "px-4 py-3"
+                } ${
                   isDarkMode ? "border-white/10" : "border-black/[0.08]"
                 } ${
-                  isSelected 
+                  !isMobile && selectedEmailId === email.id
                     ? "bg-[#007AFF] text-white" 
                     : isDarkMode 
                       ? "hover:bg-white/5 bg-[#1E1E1E]" 
-                      : "hover:bg-black/[0.01] bg-white"
+                      : "hover:bg-black/[0.02] bg-white"
                 }`}
               >
+                {isMobile && (
+                  <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-100 shrink-0 border border-black/5 dark:border-white/10">
+                    <img src={email.avatar} alt="" className="w-full h-full object-contain" />
+                  </div>
+                )}
 
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[12.5px] truncate pr-2">{email.sender}</span>
-                  <span className={`text-[12px] font-medium shrink-0 ${isSelected ? "text-white/80" : "text-gray-400"}`}>
+                <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`font-semibold truncate ${
+                    isMobile ? "text-[16px]" : "font-bold text-[12.5px]"
+                  } ${!isMobile && selectedEmailId === email.id ? "text-white" : ""}`}>
+                    {email.sender}
+                  </span>
+                  <span className={`text-[13px] shrink-0 ${
+                    !isMobile && selectedEmailId === email.id ? "text-white/80 font-medium" : "text-gray-400 font-normal"
+                  }`}>
                     {email.date}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1 mt-0.5">
                   {email.isReplied && (
-                    <CornerUpLeft size={11} className={isSelected ? "text-white/80" : "text-gray-400"} />
+                    <CornerUpLeft size={11} className={!isMobile && selectedEmailId === email.id ? "text-white/80" : "text-gray-400"} />
                   )}
-                  <span className={`font-semibold text-[11.5px] truncate ${
-                    isSelected ? "text-white" : isDarkMode ? "text-white/90" : "text-gray-900"
+                  <span className={`truncate ${
+                    isMobile ? "text-[15px] font-normal" : "font-semibold text-[11.5px]"
+                  } ${
+                    !isMobile && selectedEmailId === email.id ? "text-white" : isDarkMode ? "text-white/90" : "text-gray-900"
                   }`}>
                     {email.subject}
                   </span>
                   {email.hasAttachment && (
-                    <Paperclip size={11} className={`ml-auto ${isSelected ? "text-white/80" : "text-gray-400"}`} />
+                    <Paperclip size={11} className={`ml-auto shrink-0 ${!isMobile && selectedEmailId === email.id ? "text-white/80" : "text-gray-400"}`} />
+                  )}
+                  {isMobile && email.isUnread && (
+                    <span className="ml-auto w-2.5 h-2.5 rounded-full bg-[#007AFF] shrink-0" />
                   )}
                 </div>
 
-                <p className={`text-[11px] leading-snug truncate mt-0.5 line-clamp-2 ${
-                  isSelected ? "text-white/90" : isDarkMode ? "text-gray-400" : "text-gray-500"
+                <p className={`leading-snug truncate mt-0.5 ${
+                  isMobile ? "text-[14px] line-clamp-2" : "text-[11px] line-clamp-2"
+                } ${
+                  !isMobile && selectedEmailId === email.id ? "text-white/90" : isDarkMode ? "text-gray-400" : "text-gray-500"
                 }`}>
                   {email.excerpt}
                 </p>
+                </div>
               </div>
             );
           })}
         </div>
       </section>
+      )}
 
       {/* 3. Right Pane (Email Content Viewer) */}
-      <main className={`flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1E1E1E] rounded-xl overflow-hidden`}>
+      {showDetail && (
+      <main className={`flex-1 flex flex-col min-w-0 overflow-hidden ${
+        isMobile ? "w-full bg-white dark:bg-black" : "bg-white dark:bg-[#1E1E1E] rounded-xl"
+      }`}>
         
-        {/* Navigation Toolbar */}
+        {isMobile ? (
+          <header className={`shrink-0 flex items-center justify-between px-2 py-2 border-b ${
+            isDarkMode ? "border-white/10 bg-[#1c1c1e]" : "border-black/[0.08] bg-[#f6f6f6]"
+          }`}>
+            <button
+              type="button"
+              onClick={() => setMobileScreen("list")}
+              className="flex min-h-11 items-center gap-0.5 rounded-lg px-2 text-[15px] font-medium text-[#007AFF] active:bg-black/5 dark:active:bg-white/10"
+            >
+              <ChevronLeft size={22} strokeWidth={2.25} />
+              Inbox
+            </button>
+            <div className="flex items-center gap-1">
+              <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full text-[#007AFF] active:bg-black/5 dark:active:bg-white/10" title="Archive">
+                <Archive size={20} />
+              </button>
+              <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full text-[#007AFF] active:bg-black/5 dark:active:bg-white/10" title="Delete">
+                <Trash2 size={20} />
+              </button>
+              <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full text-[#007AFF] active:bg-black/5 dark:active:bg-white/10" title="Reply">
+                <Reply size={20} />
+              </button>
+            </div>
+          </header>
+        ) : (
+        /* Navigation Toolbar — desktop */
         <header className={`window-drag-handle h-11 flex items-center justify-between px-4 shrink-0 border-b select-none ${
           isDarkMode ? "border-white/10 bg-[#2C2C2E]" : "border-[#E5E5E5] bg-[#F3F3F3]"
         }`}>
@@ -492,47 +492,55 @@ export default function Mail({ windowId }) {
             <Search size={14} />
           </button>
         </header>
+        )}
 
-        {/* Subheader summary stats */}
+        {/* Subheader summary stats — desktop only */}
+        {!isMobile && (
         <div className={`px-6 py-2 border-b flex items-center justify-between bg-black/[0.01] dark:bg-white/[0.01] ${
           isDarkMode ? "border-white/5" : "border-black/[0.03]"
         }`}>
           <span className="text-[11px] text-gray-400 font-medium">1 Message</span>
           
-          {/* Smart Summarize AI Button */}
           <button className="flex items-center gap-1 px-3 py-1 rounded-full border border-blue-500/20 text-blue-500 bg-blue-500/[0.05] hover:bg-blue-500/[0.1] transition font-medium text-[11px] shadow-xs">
             <Sparkles size={11} />
             <span>Summarize</span>
           </button>
         </div>
+        )}
 
         {/* Email Content Frame */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 notes-no-scrollbar" style={{ scrollbarWidth: "none" }}>
+        <div className={`flex-1 overflow-y-auto notes-no-scrollbar ${
+          isMobile ? "px-4 py-4 space-y-4" : "px-8 py-6 space-y-6"
+        }`} style={{ scrollbarWidth: "none" }}>
           
           {/* Sender Details Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 p-0.5 border border-black/5 dark:border-white/10 shadow-xs">
+          <div className={`flex items-start justify-between gap-3 ${isMobile ? "flex-col" : ""}`}>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`rounded-full overflow-hidden bg-gray-100 shrink-0 border border-black/5 dark:border-white/10 shadow-xs ${
+                isMobile ? "w-12 h-12" : "w-10 h-10 p-0.5"
+              }`}>
                 <img src={selectedEmail.avatar} alt={selectedEmail.sender} className="w-full h-full object-contain" />
               </div>
-              <div>
-                <h2 className="font-bold text-[14px] leading-tight">{selectedEmail.sender}</h2>
-                <div className="font-semibold text-[13px] text-gray-800 dark:text-gray-200 mt-0.5">{selectedEmail.subject}</div>
-                <div className="text-[11.5px] text-gray-500 mt-0.5">
+              <div className="min-w-0">
+                <h2 className={`font-bold leading-tight ${isMobile ? "text-[17px]" : "text-[14px]"}`}>{selectedEmail.sender}</h2>
+                <div className={`font-semibold mt-0.5 ${isMobile ? "text-[15px]" : "text-[13px]"} text-gray-800 dark:text-gray-200`}>{selectedEmail.subject}</div>
+                <div className={`text-gray-500 mt-0.5 ${isMobile ? "text-[13px]" : "text-[11.5px]"}`}>
                   <span className="font-medium">To: </span>
-                  <span className="font-mono">doc.en_us.08@icloud.com</span>
+                  <span>{ownerDisplayName}</span>
                 </div>
               </div>
             </div>
-            <div className="text-right shrink-0">
-              <span className="text-[11px] text-gray-400 font-medium">March 17, 2025 at 6:37 PM</span>
+            <div className={`shrink-0 ${isMobile ? "text-left w-full pl-[3.75rem]" : "text-right"}`}>
+              <span className={`text-gray-400 font-medium ${isMobile ? "text-[13px]" : "text-[11px]"}`}>{selectedEmail.date}</span>
             </div>
           </div>
 
           <div className="h-px bg-black/[0.05] dark:bg-white/[0.05]" />
 
           {/* Email Body Text */}
-          <div className="text-[13px] leading-relaxed space-y-4 whitespace-pre-line text-gray-700 dark:text-gray-300">
+          <div className={`leading-relaxed space-y-4 whitespace-pre-line text-gray-700 dark:text-gray-300 ${
+            isMobile ? "text-[16px]" : "text-[13px]"
+          }`}>
             {selectedEmail.content}
           </div>
 
@@ -600,9 +608,9 @@ export default function Mail({ windowId }) {
               <div className="flex items-center justify-between text-[11px] text-gray-400">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 p-0.5">
-                    <img src="/icons/PngItem_4409921.png" alt="Danny Rico" className="w-full h-full object-contain" />
+                    <img src={defaultMemoji} alt={ownerDisplayName} className="w-full h-full object-contain" />
                   </div>
-                  <span className="font-bold text-gray-500">Danny Rico</span>
+                  <span className="font-bold text-gray-500">{ownerDisplayName}</span>
                 </div>
                 <span>11:09 AM</span>
               </div>
@@ -611,6 +619,7 @@ export default function Mail({ windowId }) {
 
         </div>
       </main>
+      )}
 
     </div>
   );

@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useAppStore } from "../store/Appstore";
+import {
+  systemContacts,
+  contactsSeedVersion,
+  legacyContactIds,
+  defaultMemoji,
+} from "../zaidos/content/systemContacts.ts";
 import { 
   MessageSquare, 
   Phone, 
@@ -66,120 +72,9 @@ const TrafficLights = ({ windowId }) => {
   );
 };
 
-const defaultContacts = [
-  {
-    id: "antonio",
-    firstName: "Antonio",
-    lastName: "Manriquez",
-    avatar: "/icons/PngItem_6452863.png",
-    avatarBg: "bg-orange-100 dark:bg-orange-950/40",
-    gradient: "from-[#ff9f0a]/80 to-[#ff3b30]/80",
-    phone: "(919) 555-0192",
-    email: "antonio.m@icloud.com",
-    workEmail: "amanriquez@trioceramics.com",
-    address: "124 Market St, San Francisco CA 94102",
-    birthday: "Jan 12",
-    notes: "Met at the ceramics workshop."
-  },
-  {
-    id: "magico",
-    firstName: "Magico",
-    lastName: "Martinez",
-    avatar: "/icons/PngItem_5031003.png",
-    avatarBg: "bg-emerald-100 dark:bg-emerald-950/40",
-    gradient: "from-[#30d158]/80 to-[#116928]/80",
-    phone: "(919) 555-0143",
-    email: "magico.m@icloud.com",
-    workEmail: "mmartinez@apple.com",
-    address: "455 Cupertino Way, Cupertino CA 95014",
-    birthday: "Mar 05",
-    notes: "App designer."
-  },
-  {
-    id: "graham",
-    firstName: "Graham",
-    lastName: "McBride",
-    avatar: "/icons/PngItem_4409921.png",
-    avatarBg: "bg-purple-100 dark:bg-purple-950/40",
-    gradient: "from-[#bf5af2]/80 to-[#5e5ce6]/80",
-    phone: "(919) 555-0177",
-    email: "graham@icloud.com",
-    workEmail: "gmcbride@trioceramics.com",
-    address: "789 Pine St, Seattle WA 98101",
-    birthday: "Jul 19",
-    notes: "Exhibition art coordinator."
-  },
-  {
-    id: "jay",
-    firstName: "Jay",
-    lastName: "Mung",
-    avatar: "/icons/PngItem_4608119.png",
-    avatarBg: "bg-sky-100 dark:bg-sky-950/40",
-    gradient: "from-[#0a84ff]/80 to-[#0040dd]/80",
-    phone: "(919) 555-0128",
-    email: "jay.mung@icloud.com",
-    workEmail: "jmung@trioceramics.com",
-    address: "321 Oak Ave, Portland OR 97201",
-    birthday: "Nov 02",
-    notes: "Monstera collector."
-  },
-  {
-    id: "sarah",
-    firstName: "Sarah",
-    lastName: "Murguia",
-    avatar: "/icons/PngItem_4082636.png",
-    avatarBg: "bg-pink-100 dark:bg-pink-950/40",
-    gradient: "from-[#e46e88] to-[#993b50]",
-    phone: "(919) 555-2481",
-    email: "SarMurguia@icloud.com",
-    workEmail: "hello@trioceramics.com",
-    address: "2399 Elm St, Raleigh NC 27601",
-    birthday: "Sep 21",
-    notes: "Lead ceramic designer."
-  },
-  {
-    id: "ryan",
-    firstName: "Ryan",
-    lastName: "Notch",
-    avatar: "/icons/PngItem_5031003.png",
-    avatarBg: "bg-blue-100 dark:bg-blue-950/40",
-    gradient: "from-[#64d2ff]/80 to-[#0a84ff]/80",
-    phone: "(919) 555-0185",
-    email: "ryan.notch@icloud.com",
-    workEmail: "rnotch@trioceramics.com",
-    address: "567 Birch Rd, Asheville NC 28801",
-    birthday: "May 14",
-    notes: "Monstera delivery coordinator."
-  },
-  {
-    id: "aga",
-    firstName: "Aga",
-    lastName: "Orlova",
-    avatar: "/icons/PngItem_4608119.png",
-    avatarBg: "bg-rose-100 dark:bg-rose-950/40",
-    gradient: "from-[#ff6482]/80 to-[#ff2d55]/80",
-    phone: "(919) 555-0133",
-    email: "aga.orlova@icloud.com",
-    workEmail: "aorlova@trioceramics.com",
-    address: "890 Spruce St, Denver CO 80202",
-    birthday: "Dec 30",
-    notes: "Photographer."
-  },
-  {
-    id: "mayuri",
-    firstName: "Mayuri",
-    lastName: "Patel",
-    avatar: "/icons/PngItem_4082636.png",
-    avatarBg: "bg-amber-100 dark:bg-amber-950/40",
-    gradient: "from-[#ffd60a]/80 to-[#ff9f0a]/80",
-    phone: "(919) 555-0144",
-    email: "mayuri.patel@icloud.com",
-    workEmail: "mpatel@trioceramics.com",
-    address: "432 Cedar Ln, Raleigh NC 27603",
-    birthday: "Oct 08",
-    notes: "Monstera layout planner."
-  }
-];
+const defaultContacts = [...systemContacts];
+const CONTACTS_STORAGE_KEY = "os_contacts";
+const CONTACTS_VERSION_KEY = "os_contacts_version";
 
 const gradientOptions = [
   { name: "Pink/Rose", value: "from-[#e46e88] to-[#993b50]" },
@@ -195,11 +90,22 @@ export default function ContactsApp({ windowId }) {
   const isDarkMode = useAppStore((s) => s.isDarkMode);
   
   const [contacts, setContacts] = useState(() => {
-    const saved = localStorage.getItem("os_contacts");
-    return saved ? JSON.parse(saved) : defaultContacts;
+    const version = localStorage.getItem(CONTACTS_VERSION_KEY);
+    const saved = localStorage.getItem(CONTACTS_STORAGE_KEY);
+    const parsed = saved ? JSON.parse(saved) : null;
+    const hasLegacy = Array.isArray(parsed)
+      && parsed.some((c) => legacyContactIds.includes(c.id));
+
+    if (version !== contactsSeedVersion || hasLegacy) {
+      localStorage.setItem(CONTACTS_VERSION_KEY, contactsSeedVersion);
+      localStorage.removeItem(CONTACTS_STORAGE_KEY);
+      return defaultContacts;
+    }
+
+    return parsed ?? defaultContacts;
   });
 
-  const [selectedId, setSelectedId] = useState("graham");
+  const [selectedId, setSelectedId] = useState("zaid");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -219,7 +125,7 @@ export default function ContactsApp({ windowId }) {
   const [gradient, setGradient] = useState(gradientOptions[0].value);
 
   useEffect(() => {
-    localStorage.setItem("os_contacts", JSON.stringify(contacts));
+    localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
   }, [contacts]);
 
   // Filter contacts by search
@@ -284,7 +190,7 @@ export default function ContactsApp({ windowId }) {
         id: `contact_${Date.now()}`,
         firstName,
         lastName,
-        avatar: "/icons/PngItem_4082636.png", // default memoji
+        avatar: defaultMemoji,
         avatarBg: "bg-blue-100 dark:bg-blue-950/40",
         gradient,
         phone,
