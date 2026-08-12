@@ -1,6 +1,6 @@
 import { getAppIcon } from "./appIcons.js";
 
-/** macOS-style icons — local SVG/PNG only (no remote CDN). */
+/** macOS-style icons — delegates to the central app icon registry. */
 export const MAC_ICONS = {
   finder: getAppIcon("Finder"),
   safari: getAppIcon("Safari"),
@@ -22,14 +22,14 @@ export const MAC_ICONS = {
   preview: getAppIcon("PDFViewer"),
   terminal: getAppIcon("Terminal"),
   folder: getAppIcon("Finder"),
-  github: getAppIcon("Projects"),
-  linkedin: getAppIcon("Contact"),
-  appStore: getAppIcon("Settings"),
-  pages: getAppIcon("Resume"),
-  numbers: getAppIcon("Skills"),
-  keynote: getAppIcon("Chess"),
-  podcasts: getAppIcon("Music"),
-  tv: getAppIcon("Photos"),
+  github: getAppIcon("Github"),
+  linkedin: getAppIcon("linkedin"),
+  appStore: getAppIcon("AppStore"),
+  pages: getAppIcon("Pages"),
+  numbers: getAppIcon("Numbers"),
+  keynote: getAppIcon("Keynote"),
+  podcasts: getAppIcon("Podcasts"),
+  tv: getAppIcon("TV"),
 };
 
 export const ZAID_ICONS = {

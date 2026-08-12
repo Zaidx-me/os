@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUp, ChevronLeft, LayoutGrid, Mail } from "lucide-react";
+import { ArrowUp, ChevronLeft, Mail } from "lucide-react";
 import { site } from "../content/index.ts";
 import { matchChat } from "../lib/kb.js";
 import { fetchChatStatus, statusHint } from "../lib/apiStatus.js";
-import { formatChatResponse } from "../lib/formatChat.js";
+import { parseChatResponse } from "../lib/formatChat.js";
 
 const QUICK = ["Who are you?", "Show projects", "Your skills", "How to hire you?"];
 const STORAGE_KEY = "zaidos-chat-history";
@@ -33,20 +33,59 @@ function TypingIndicator() {
   );
 }
 
+function ThinkingBlock({ thinking }) {
+  const [open, setOpen] = useState(false);
+  if (!thinking?.trim()) return null;
+
+  return (
+    <div className="chat-thinking mb-2 border-b border-white/10 pb-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-1.5 text-left text-[12px] font-medium text-gray-400 active:text-gray-300"
+        aria-expanded={open}
+      >
+        <span className="text-[10px] opacity-70">{open ? "▾" : "▸"}</span>
+        Thinking
+      </button>
+      {open && (
+        <p className="chat-thinking-body mt-1.5 whitespace-pre-wrap break-words text-[12px] leading-relaxed text-gray-500">
+          {thinking}
+        </p>
+      )}
+    </div>
+  );
+}
+
 async function fetchLlm(messages) {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: messages.map((m) => ({
-        role: m.role === "user" ? "user" : "assistant",
-        content: m.content,
-      })),
-    }),
-  });
-  const data = await res.json();
-  if (res.ok && data.mode === "llm" && data.content) return { content: data.content, source: "llm" };
-  return null;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 50_000);
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: messages.map((m) => ({
+          role: m.role === "user" ? "user" : "assistant",
+          content: m.content,
+        })),
+      }),
+      signal: controller.signal,
+    });
+    const data = await res.json();
+    if (res.ok && data.mode === "llm" && data.content?.trim()) {
+      return {
+        content: data.content.trim(),
+        thinking: data.thinking ?? "",
+        source: "llm",
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 async function revealText(text, onChunk) {
@@ -59,7 +98,7 @@ async function revealText(text, onChunk) {
   }
 }
 
-export default function ChatApp({ onBack, onSwitcher }) {
+export default function ChatApp({ onBack }) {
   const [messages, setMessages] = useState(() => loadHistory());
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -101,18 +140,22 @@ export default function ChatApp({ onBack, onSwitcher }) {
 
       const history = [...messages, userMsg];
       let reply = null;
+      let thinking = "";
       let source = "kb";
 
       if (status.llm) {
         const llm = await fetchLlm(history);
-        if (llm) {
-          reply = formatChatResponse(llm.content);
+        if (llm?.content) {
+          reply = llm.content;
+          thinking = llm.thinking ?? "";
           source = llm.source;
         }
       }
 
       if (!reply) {
-        reply = formatChatResponse(matchChat(trimmed).response);
+        const kb = parseChatResponse(matchChat(trimmed).response);
+        reply = kb.content;
+        thinking = kb.thinking;
       }
 
       setTyping(false);
@@ -121,7 +164,7 @@ export default function ChatApp({ onBack, onSwitcher }) {
       setStreamingId(botId);
       setMessages((prev) => [
         ...prev,
-        { id: botId, role: "bot", content: "", source, ts: Date.now() },
+        { id: botId, role: "bot", content: "", thinking, source, ts: Date.now() },
       ]);
 
       await revealText(reply, (partial) => {
@@ -209,16 +252,6 @@ export default function ChatApp({ onBack, onSwitcher }) {
               <Mail size={18} />
             </button>
           )}
-          {onSwitcher && (
-            <button
-              type="button"
-              onClick={onSwitcher}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-white active:bg-white/10"
-              aria-label="App switcher"
-            >
-              <LayoutGrid size={18} />
-            </button>
-          )}
         </div>
       </div>
 
@@ -242,6 +275,7 @@ export default function ChatApp({ onBack, onSwitcher }) {
 
         {messages.map((m, i) => {
           const isUser = m.role === "user";
+          const botParts = isUser ? null : parseChatResponse(m.content, m.thinking);
           const showTime =
             i === 0 ||
             (messages[i - 1] && m.ts - messages[i - 1].ts > 5 * 60 * 1000);
@@ -258,8 +292,11 @@ export default function ChatApp({ onBack, onSwitcher }) {
                     isUser ? "chat-bubble--user" : "chat-bubble--bot"
                   } ${m.id === streamingId && !m.content ? "min-h-[2.25rem]" : ""}`}
                 >
+                  {!isUser && botParts?.thinking && (
+                    <ThinkingBlock thinking={botParts.thinking} />
+                  )}
                   <p className="whitespace-pre-wrap break-words">
-                    {(isUser ? m.content : formatChatResponse(m.content)) ||
+                    {(isUser ? m.content : botParts?.content) ||
                       (m.id === streamingId ? "…" : "")}
                   </p>
                   {!isUser && m.content && m.source && (

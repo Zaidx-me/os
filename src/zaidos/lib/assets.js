@@ -75,10 +75,10 @@ export function listOptimizedWallpaperPaths() {
 export const APP_ICON = (id) => `/icons/whitesur/${id}.svg`;
 
 export const DOCK_ICONS = {
-  finder: APP_ICON("files"),
-  launchpad: APP_ICON("settings"),
-  trash: "/icons/trash.png",
-  trashFull: "/icons/trash.png",
-  github: APP_ICON("projects"),
-  linkedin: APP_ICON("contact"),
+  finder: "/icons/system/finder.png",
+  launchpad: "/icons/system/launchpad.png",
+  trash: "/icons/system/trash.png",
+  trashFull: "/icons/system/trash.png",
+  github: "/icons/system/github.png",
+  linkedin: "/icons/system/linkedin.png",
 };

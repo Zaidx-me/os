@@ -23,13 +23,54 @@
 }
 
 .mobile-lock-time {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Compact Display",
+    system-ui,
+    sans-serif;
+  font-size: clamp(5.25rem, 22vw, 6.5rem);
+  font-weight: 200;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+  color: rgba(255, 255, 255, 0.98);
+  -webkit-font-smoothing: antialiased;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.28);
+}
+
+.mobile-lock-time-colon {
+  display: inline-block;
+  margin: 0 0.02em;
+  font-weight: 100;
+  opacity: 0.95;
+}
+
+.mobile-lock-ampm {
+  margin-left: 0.35rem;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: clamp(1.25rem, 4.5vw, 1.65rem);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
 }
 
 .mobile-lock-date {
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: clamp(1.15rem, 4.2vw, 1.35rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.28);
+}
+
+.mobile-lock-home-bar {
+  width: 134px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .mobile-live-card {
@@ -173,17 +214,32 @@
 }
 
 .ios-status-bar {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  min-height: calc(env(safe-area-inset-top) + 1.35rem);
 }
 
 .ios-status-time {
-  min-width: 4rem;
+  min-width: 3.35rem;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
 }
 
 .ios-status-trailing {
-  width: 66px;
-  justify-content: flex-end;
+  align-items: center;
+  opacity: 0.98;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ios-status-trailing:active:not(:disabled) {
+  opacity: 0.72;
+}
+
+.ios-status-trailing svg {
+  display: block;
 }
 
 .ios-home-indicator {

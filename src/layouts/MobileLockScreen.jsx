@@ -4,12 +4,28 @@ import IosStatusBar from "../components/mobile/IosStatusBar.jsx";
 import { DEFAULT_LOCK_WALLPAPER, resolveLockWallpaper } from "../zaidos/lib/assets.js";
 import { enterFullscreen, hideMobileBrowserChrome } from "../zaidos/lib/fullscreen.js";
 
-function formatClock(d) {
-  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+function formatLockDate(d) {
+  return d.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 }
 
-function formatDate(d) {
-  return d.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+function formatLockTimeParts(d) {
+  const parts = new Intl.DateTimeFormat([], {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: undefined,
+  }).formatToParts(d);
+
+  let hour = "";
+  let minute = "";
+  let dayPeriod = "";
+
+  for (const part of parts) {
+    if (part.type === "hour") hour = part.value;
+    if (part.type === "minute") minute = part.value;
+    if (part.type === "dayPeriod") dayPeriod = part.value;
+  }
+
+  return { hour, minute, dayPeriod };
 }
 
 export default function MobileLockScreen({ goNext }) {
@@ -18,9 +34,12 @@ export default function MobileLockScreen({ goNext }) {
   const [unlocking, setUnlocking] = useState(false);
   const startRef = useRef(null);
   const wallpaper = resolveLockWallpaper(localStorage.getItem("lockscreen_wallpaper"));
+  const { hour, minute, dayPeriod } = formatLockTimeParts(now);
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 30_000);
+    const tick = () => setNow(new Date());
+    tick();
+    const id = setInterval(tick, 10_000);
     return () => clearInterval(id);
   }, []);
 
@@ -36,7 +55,11 @@ export default function MobileLockScreen({ goNext }) {
     <div
       data-testid="mobile-lock"
       className="mobile-lock absolute inset-0 z-50 flex flex-col overflow-hidden touch-none select-none"
-      style={{ transform: dragY ? `translateY(${-Math.min(dragY, 120)}px)` : undefined, opacity: unlocking ? 0 : 1, transition: unlocking ? "opacity 0.2s ease, transform 0.25s ease" : undefined }}
+      style={{
+        transform: dragY ? `translateY(${-Math.min(dragY, 120)}px)` : undefined,
+        opacity: unlocking ? 0 : 1,
+        transition: unlocking ? "opacity 0.2s ease, transform 0.25s ease" : undefined,
+      }}
       onPointerDown={(e) => {
         startRef.current = { y: e.clientY, t: Date.now() };
       }}
@@ -61,22 +84,29 @@ export default function MobileLockScreen({ goNext }) {
       }}
     >
       <LazyWallpaper src={wallpaper || DEFAULT_LOCK_WALLPAPER} className="absolute inset-0" cover>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-black/45" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/5 to-black/50" aria-hidden />
       </LazyWallpaper>
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <IosStatusBar />
 
-        <div className="flex flex-1 flex-col items-center justify-center px-6 pb-32">
-          <p className="mobile-lock-date text-[18px] font-medium text-white/90">{formatDate(now)}</p>
-          <p className="mobile-lock-time mt-1 text-[72px] font-light leading-none tracking-tight text-white">
-            {formatClock(now)}
-          </p>
+        <div className="mobile-lock-clock-block flex flex-col items-center px-6 pt-[clamp(2.5rem,11vh,5rem)]">
+          <p className="mobile-lock-date">{formatLockDate(now)}</p>
+          <div className="mobile-lock-time-row mt-1 flex items-baseline justify-center">
+            <span className="mobile-lock-time" aria-label={`${hour}:${minute}`}>
+              {hour}
+              <span className="mobile-lock-time-colon">:</span>
+              {minute}
+            </span>
+            {dayPeriod ? <span className="mobile-lock-ampm">{dayPeriod}</span> : null}
+          </div>
         </div>
 
+        <div className="flex-1" aria-hidden />
+
         <div className="mobile-lock-hint pointer-events-none pb-[max(2rem,env(safe-area-inset-bottom))] text-center">
-          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/50" />
-          <p className="text-[13px] font-medium text-white/75">Swipe up to unlock</p>
+          <div className="mobile-lock-home-bar mx-auto mb-3" />
+          <p className="text-[15px] font-normal text-white/80">Swipe up to open</p>
         </div>
       </div>
     </div>

@@ -4,7 +4,6 @@ import LazyWallpaper from "../components/LazyWallpaper.jsx";
 import IosStatusBar from "../components/mobile/IosStatusBar.jsx";
 import MobileFloatingBack from "../components/mobile/MobileFloatingBack.jsx";
 import MobileHomePages from "../components/mobile/MobileHomePages.jsx";
-import MobileAppSwitcher from "../components/mobile/MobileAppSwitcher.jsx";
 import MobileControlCenterSheet from "../components/mobile/MobileControlCenterSheet.jsx";
 import MobileWelcomeScreen from "../components/mobile/MobileWelcomeScreen.jsx";
 import { DEFAULT_DESKTOP_WALLPAPER, resolveWallpaper } from "../zaidos/lib/assets.js";
@@ -17,7 +16,7 @@ import { hideMobileBrowserChrome, enterFullscreen } from "../zaidos/lib/fullscre
 const EDGE_BACK_PX = 28;
 const EDGE_BACK_DX = 72;
 
-function MobileAppView({ appId, appPayload, onBack, onSwitcher }) {
+function MobileAppView({ appId, appPayload, onBack }) {
   const meta = getMobileApp(appId);
   if (!meta) return null;
   const { Component } = meta;
@@ -30,8 +29,6 @@ function MobileAppView({ appId, appPayload, onBack, onSwitcher }) {
       <Component file={appPayload ?? { id: "new", name: "untitled.txt", content: "" }} />
     ) : appId === "PDFViewer" ? (
       <Component file={appPayload ?? { id: "pdf", name: "document.pdf", url: "" }} />
-    ) : appId === "ZaidGPT" ? (
-      <Component onBack={onBack} onSwitcher={onSwitcher} />
     ) : (
       <Component onBack={onBack} />
     );
@@ -83,18 +80,11 @@ export default function MobileShell({
 }) {
   const [activeApp, setActiveApp] = useState(null);
   const [appPayload, setAppPayload] = useState(null);
-  const [recentApps, setRecentApps] = useState([]);
   const [homePage, setHomePage] = useState(0);
-  const [switcherOpen, setSwitcherOpen] = useState(false);
   const [controlCenterOpen, setControlCenterOpen] = useState(false);
   const [wallpaper, setWallpaper] = useState(() =>
     resolveWallpaper(localStorage.getItem("desktop_wallpaper")),
   );
-
-  const pushRecent = useCallback((id) => {
-    if (!id) return;
-    setRecentApps((prev) => [id, ...prev.filter((x) => x !== id)].slice(0, 6));
-  }, []);
 
   useEffect(() => {
     if (peek) return;
@@ -104,31 +94,26 @@ export default function MobileShell({
   useEffect(() => {
     if (peek || !launchApp) return;
     setActiveApp(launchApp);
-    pushRecent(launchApp);
     onLaunchConsumed?.();
-  }, [peek, launchApp, pushRecent, onLaunchConsumed]);
+  }, [peek, launchApp, onLaunchConsumed]);
 
   useEffect(() => {
     const onOpenBrowser = () => {
       setActiveApp("Safari");
-      pushRecent("Safari");
     };
     const onOpenApp = (e) => {
       const id = e.detail?.appId ?? null;
       if (!id || id === "Launchpad") return;
       setAppPayload(null);
       setActiveApp(id);
-      if (id) pushRecent(id);
     };
     const onOpenEditor = (e) => {
       setAppPayload(e.detail?.file ?? null);
       setActiveApp("TextEdit");
-      pushRecent("TextEdit");
     };
     const onOpenPdf = (e) => {
       setAppPayload(e.detail?.file ?? null);
       setActiveApp("PDFViewer");
-      pushRecent("PDFViewer");
     };
     window.addEventListener("zaidos:open-browser", onOpenBrowser);
     window.addEventListener("zaidos:open-app", onOpenApp);
@@ -140,7 +125,7 @@ export default function MobileShell({
       window.removeEventListener("zaidos:open-editor", onOpenEditor);
       window.removeEventListener("zaidos:open-pdf", onOpenPdf);
     };
-  }, [pushRecent]);
+  }, []);
 
   useEffect(() => {
     const syncWallpaper = (value) => {
@@ -158,29 +143,22 @@ export default function MobileShell({
     };
   }, []);
 
-  const openApp = useCallback(
-    (id) => {
-      if (!id || id === "Launchpad") return;
-      enterFullscreen();
-      hideMobileBrowserChrome();
-      setAppPayload(null);
-      setActiveApp(id);
-      pushRecent(id);
-      setSwitcherOpen(false);
-    },
-    [pushRecent],
-  );
+  const openApp = useCallback((id) => {
+    if (!id || id === "Launchpad") return;
+    enterFullscreen();
+    hideMobileBrowserChrome();
+    setAppPayload(null);
+    setActiveApp(id);
+  }, []);
 
   const closeApp = useCallback(() => {
     setActiveApp(null);
     setAppPayload(null);
-    setSwitcherOpen(false);
     setControlCenterOpen(false);
   }, []);
 
-  const switcherApps = recentApps.length > 0 ? recentApps : MOBILE_HOME_APPS.slice(0, 4).map((a) => a.id);
-  const showFloatingBack = Boolean(activeApp) && activeApp !== "ZaidGPT" && !switcherOpen;
   const activeMeta = activeApp ? getMobileApp(activeApp) : null;
+  const showFloatingBack = Boolean(activeApp) && activeApp !== "ZaidGPT";
 
   if (peek) {
     return (
@@ -212,7 +190,6 @@ export default function MobileShell({
                 appId={activeApp}
                 appPayload={appPayload}
                 onBack={closeApp}
-                onSwitcher={() => setSwitcherOpen(true)}
               />
             </motion.div>
           ) : (
@@ -241,17 +218,6 @@ export default function MobileShell({
         </AnimatePresence>
 
         <AnimatePresence>
-          {switcherOpen && (
-            <MobileAppSwitcher
-              apps={switcherApps}
-              activeApp={activeApp}
-              onSelect={openApp}
-              onClose={() => setSwitcherOpen(false)}
-            />
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
           {controlCenterOpen && <MobileControlCenterSheet onClose={() => setControlCenterOpen(false)} />}
         </AnimatePresence>
 
@@ -259,7 +225,6 @@ export default function MobileShell({
           <MobileFloatingBack
             title={activeMeta?.title ?? ""}
             onBack={closeApp}
-            onSwitcher={() => setSwitcherOpen(true)}
           />
         )}
 

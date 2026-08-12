@@ -1,7 +1,7 @@
-import { ChevronLeft, LayoutGrid } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 /** Fixed top bar at shell root — full-width chrome matching native app headers. */
-export default function MobileFloatingBack({ title = "", onBack, onSwitcher }) {
+export default function MobileFloatingBack({ title = "", onBack }) {
   return (
     <header
       data-testid="mobile-floating-back"
@@ -22,19 +22,7 @@ export default function MobileFloatingBack({ title = "", onBack, onSwitcher }) {
         {title}
       </p>
 
-      {onSwitcher ? (
-        <button
-          type="button"
-          data-testid="mobile-app-switcher"
-          onClick={onSwitcher}
-          className="mobile-app-chrome-btn flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-700 active:bg-black/5 dark:text-gray-200 dark:active:bg-white/10"
-          aria-label="App switcher"
-        >
-          <LayoutGrid size={20} strokeWidth={2} aria-hidden />
-        </button>
-      ) : (
-        <span className="h-11 w-11 shrink-0" aria-hidden />
-      )}
+      <span className="h-11 w-11 shrink-0" aria-hidden />
     </header>
   );
 }

@@ -5,9 +5,10 @@ import {
   parseMessages,
   truncateHistory,
 } from "../lib/chat-prompt.js";
-import { formatChatResponse } from "../lib/format-chat-response.js";
+import { parseChatResponse, isLeakedThinking } from "../lib/format-chat-response.js";
 
-const LLM_TIMEOUT_MS = 15_000;
+const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS) || 45_000;
+const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS) || 1024;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const chatRouter = Router();
@@ -50,8 +51,8 @@ chatRouter.post("/", async (req, res) => {
       body: JSON.stringify({
         model,
         messages: [{ role: "system", content: systemPrompt }, ...truncateHistory(messages)],
-        max_tokens: 400,
-        temperature: 0.35,
+        max_tokens: LLM_MAX_TOKENS,
+        temperature: 0.2,
       }),
       signal: controller.signal,
     });
@@ -63,13 +64,40 @@ chatRouter.post("/", async (req, res) => {
     }
 
     const data = await llmRes.json();
-    const raw = data.choices?.[0]?.message?.content?.trim();
-    const content = formatChatResponse(raw);
-    if (!content || content.includes(systemPrompt.slice(0, 40))) {
+    const choice = data.choices?.[0];
+    const message = choice?.message;
+    const raw = message?.content?.trim();
+    const finishReason = choice?.finish_reason;
+    const apiThinking =
+      message?.reasoning_content ??
+      message?.reasoning ??
+      choice?.message?.reasoning ??
+      null;
+    const parsed = parseChatResponse(raw, apiThinking);
+    const answer = parsed.content?.trim() ?? "";
+    const rejected =
+      !answer ||
+      answer.includes(systemPrompt.slice(0, 40)) ||
+      isLeakedThinking(raw) ||
+      isLeakedThinking(answer) ||
+      (finishReason === "length" && answer.length < 80);
+
+    if (rejected) {
+      console.warn(
+        "chat: rejected LLM reply",
+        finishReason ?? "unknown",
+        `raw=${raw?.length ?? 0}`,
+        `answer=${answer.length}`,
+      );
       return res.status(502).json({ mode: "kb", error: "Empty LLM response" });
     }
 
-    return res.json({ mode: "llm", content });
+    return res.json({
+      mode: "llm",
+      content: answer,
+      thinking: parsed.thinking || undefined,
+      finishReason,
+    });
   } catch (err) {
     console.error("chat: failure:", err instanceof Error ? err.message : "unknown");
     return res.status(502).json({ mode: "kb", error: "LLM unavailable" });

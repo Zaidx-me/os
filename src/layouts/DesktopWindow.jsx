@@ -26,6 +26,7 @@ import GlassWideRemindersWidget from "../components/widgets/GlassWideRemindersWi
 import { FiX } from "react-icons/fi";
 import LazyWallpaper from "../components/LazyWallpaper.jsx";
 import { resolveWallpaper, DEFAULT_DESKTOP_WALLPAPER } from "../zaidos/lib/assets.js";
+import { FINDER_ICONS } from "../zaidos/lib/appIcons.js";
 
 export default function Desktop({ setStage, isLocked = false }) {
   const windows = useAppStore((s) => s.windows);
@@ -448,12 +449,9 @@ export default function Desktop({ setStage, isLocked = false }) {
     if (item.type === "folder") {
       return (
         <img
-          src="https://s3.macosicons.com/macosicons/icons/GecwaBmkFQ/lowResPngFile_c3ef21fe8fabfd9d23fcc3ab3134dcf9_GecwaBmkFQ.png"
+          src={FINDER_ICONS.folder}
           alt="folder"
           className="w-14 h-14 drop-shadow-lg object-contain"
-          onError={(e) => {
-            e.target.src = 'https://s3-new.macosicons.com/macosicons/parse/MacOS_Default_Folder_icon_GecwaBmkFQ_lowResPng-6d37abc4ac.png';
-          }}
         />
       );
     }
@@ -462,7 +460,7 @@ export default function Desktop({ setStage, isLocked = false }) {
     if (isPdf) {
       return (
         <img
-          src="https://s3.macosicons.com/macosicons/icons/ayIhAsqzsY/lowResPngFile_55b757e27580fefb9bd856a23abf6d0f_low_res_Pdf_Document.png"
+          src={FINDER_ICONS.pdf}
           alt="pdf"
           className="w-14 h-14 drop-shadow-lg object-contain"
         />
@@ -473,7 +471,7 @@ export default function Desktop({ setStage, isLocked = false }) {
     if (isTxt) {
       return (
         <img
-          src="https://s3.macosicons.com/macosicons/icons/aExwB3ULuk/lowResPngFile_a819aac512e7261fee3310f1bbdaada7_aExwB3ULuk.png"
+          src={FINDER_ICONS.document}
           alt="txt"
           className="w-14 h-14 drop-shadow-lg object-contain"
         />
