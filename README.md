@@ -21,6 +21,15 @@ npm run optimize:wallpapers
 
 Copy `.env.example` → `.env` for API keys (`LLM_API_KEY`, `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, etc.).
 
+### Contact email (Resend + Cloudflare DNS)
+
+1. Verify `zaidx.me` in [Resend](https://resend.com/domains) and add the SPF/DKIM records to your Cloudflare DNS zone.
+2. Set env vars:
+   - `RESEND_API_KEY` — from Resend dashboard
+   - `RESEND_FROM=ZaidOS <hello@zaidx.me>` — must use a verified `@zaidx.me` address (leave unset only for sandbox testing)
+   - `CONTACT_TO_EMAIL` — inbox that receives form submissions
+3. Optional inbound mail: in Cloudflare → **Email Routing**, forward `hello@zaidx.me` → your Gmail so you can receive replies at the same address you send from.
+
 ## Deploy (Vercel)
 
 1. Connect this repo to Vercel
