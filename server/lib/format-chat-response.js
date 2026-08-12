@@ -178,3 +178,59 @@ export function isLeakedThinking(text) {
 export function formatChatResponse(raw) {
   return parseChatResponse(raw).content;
 }
+
+/**
+ * Resolve a visitor-facing answer from standard and reasoning-model payloads.
+ * Reasoning models (e.g. Nemotron) often leave message.content empty and put
+ * the trace in reasoning_content — or over-filtering strips the whole reply.
+ */
+export function resolveLlmReply(raw, apiThinking) {
+  const parsed = parseChatResponse(raw, apiThinking);
+  let content = parsed.content?.trim() ?? "";
+  let thinking = parsed.thinking?.trim() ?? "";
+
+  if (content) {
+    return { content, thinking };
+  }
+
+  if (raw?.trim()) {
+    const fromRaw = parseChatResponse(raw);
+    if (fromRaw.content?.trim()) {
+      return {
+        content: fromRaw.content.trim(),
+        thinking: [thinking, fromRaw.thinking].filter(Boolean).join("\n\n"),
+      };
+    }
+  }
+
+  const reasoningText = apiThinking?.trim() ? String(apiThinking).trim() : "";
+  if (reasoningText) {
+    const fromReasoning = parseChatResponse(reasoningText);
+    if (fromReasoning.content?.trim()) {
+      return {
+        content: fromReasoning.content.trim(),
+        thinking: [thinking, fromReasoning.thinking].filter(Boolean).join("\n\n"),
+      };
+    }
+
+    const paragraphs = reasoningText.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
+    for (let i = paragraphs.length - 1; i >= 0; i--) {
+      const candidate = cleanChatText(paragraphs[i]);
+      if (candidate.length >= 12 && !looksLikeLeakedThinking(candidate)) {
+        return {
+          content: candidate,
+          thinking: [thinking, ...paragraphs.slice(0, i)].filter(Boolean).join("\n\n"),
+        };
+      }
+    }
+  }
+
+  if (raw?.trim()) {
+    const simplified = cleanChatText(raw);
+    if (simplified.length >= 12 && !simplified.includes("Output rules (mandatory)")) {
+      return { content: simplified, thinking };
+    }
+  }
+
+  return { content: "", thinking };
+}

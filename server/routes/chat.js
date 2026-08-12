@@ -5,12 +5,20 @@ import {
   parseMessages,
   truncateHistory,
 } from "../lib/chat-prompt.js";
-import { parseChatResponse, isLeakedThinking } from "../lib/format-chat-response.js";
+import { isLeakedThinking, resolveLlmReply } from "../lib/format-chat-response.js";
 import { getResendFrom, isResendConfigured, resendErrorMessage } from "../lib/resend-config.js";
 
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS) || 45_000;
 const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS) || 1024;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isReasoningModel(model) {
+  return /nemotron|deepseek-r1|reasoner|\bo1\b|\bo3\b|-think|thinking|qwq/i.test(model ?? "");
+}
+
+function effectiveMaxTokens(model) {
+  return isReasoningModel(model) ? Math.max(LLM_MAX_TOKENS, 2048) : LLM_MAX_TOKENS;
+}
 
 export const chatRouter = Router();
 
@@ -52,7 +60,7 @@ chatRouter.post("/", async (req, res) => {
       body: JSON.stringify({
         model,
         messages: [{ role: "system", content: systemPrompt }, ...truncateHistory(messages)],
-        max_tokens: LLM_MAX_TOKENS,
+        max_tokens: effectiveMaxTokens(model),
         temperature: 0.2,
       }),
       signal: controller.signal,
@@ -74,20 +82,19 @@ chatRouter.post("/", async (req, res) => {
       message?.reasoning ??
       choice?.message?.reasoning ??
       null;
-    const parsed = parseChatResponse(raw, apiThinking);
-    const answer = parsed.content?.trim() ?? "";
+    const { content: answer, thinking } = resolveLlmReply(raw, apiThinking);
     const rejected =
       !answer ||
       answer.includes(systemPrompt.slice(0, 40)) ||
-      isLeakedThinking(raw) ||
-      isLeakedThinking(answer) ||
-      (finishReason === "length" && answer.length < 80);
+      (isLeakedThinking(answer) && answer.length < 100) ||
+      (finishReason === "length" && answer.length < 30);
 
     if (rejected) {
       console.warn(
         "chat: rejected LLM reply",
         finishReason ?? "unknown",
         `raw=${raw?.length ?? 0}`,
+        `reasoning=${apiThinking ? String(apiThinking).length : 0}`,
         `answer=${answer.length}`,
       );
       return res.status(502).json({ mode: "kb", error: "Empty LLM response" });
@@ -96,7 +103,7 @@ chatRouter.post("/", async (req, res) => {
     return res.json({
       mode: "llm",
       content: answer,
-      thinking: parsed.thinking || undefined,
+      thinking: thinking || undefined,
       finishReason,
     });
   } catch (err) {

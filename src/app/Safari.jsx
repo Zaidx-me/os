@@ -18,9 +18,7 @@ const HOME_URL = "https://www.google.com/webhp?igu=1";
 
 const FAVORITES = [
   { id: "google", label: "Google", url: HOME_URL, gradient: "from-[#4285F4] to-[#1a73e8]" },
-  { id: "github", label: "GitHub", url: "https://github.com", gradient: "from-[#24292f] to-[#0d1117]" },
   { id: "zaidx", label: "zaidx.me", url: site.siteUrl, gradient: "from-[#059669] to-[#047857]" },
-  { id: "mdn", label: "MDN", url: "https://developer.mozilla.org", gradient: "from-[#f97316] to-[#ea580c]" },
 ];
 
 function isGoogleUrl(url) {
@@ -222,7 +220,7 @@ function StartPage({ isDarkMode, onNavigate }) {
           <h2 className={`mb-3 text-[11px] font-semibold uppercase tracking-widest ${isDarkMode ? "text-gray-500" : "text-gray-400"}`}>
             Favorites
           </h2>
-          <div className="grid grid-cols-4 gap-4 sm:grid-cols-4">
+          <div className="mx-auto grid max-w-xs grid-cols-2 gap-4">
             {FAVORITES.map((item) => (
               <button
                 key={item.id}

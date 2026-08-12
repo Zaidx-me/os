@@ -71,18 +71,23 @@ async function fetchLlm(messages) {
         })),
       }),
       signal: controller.signal,
+      cache: "no-store",
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (res.ok && data.mode === "llm" && data.content?.trim()) {
       return {
         content: data.content.trim(),
         thinking: data.thinking ?? "",
         source: "llm",
+        llmAvailable: true,
       };
     }
-    return null;
+    if (res.status === 501) {
+      return { llmAvailable: false };
+    }
+    return { llmAvailable: true };
   } catch {
-    return null;
+    return { llmAvailable: null };
   } finally {
     window.clearTimeout(timeout);
   }
@@ -103,7 +108,13 @@ export default function ChatApp({ onBack }) {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [streamingId, setStreamingId] = useState(null);
-  const [status, setStatus] = useState({ llm: false, resend: false, offline: true, api: false });
+  const [status, setStatus] = useState({
+    llm: false,
+    resend: false,
+    offline: false,
+    api: false,
+    loading: true,
+  });
   const [emailOpen, setEmailOpen] = useState(false);
   const [visitorEmail, setVisitorEmail] = useState("");
   const [emailState, setEmailState] = useState(null);
@@ -114,9 +125,23 @@ export default function ChatApp({ onBack }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-100)));
   }, [messages]);
 
-  useEffect(() => {
-    fetchChatStatus().then(setStatus);
+  const refreshStatus = useCallback(() => {
+    return fetchChatStatus().then(setStatus);
   }, []);
+
+  useEffect(() => {
+    void refreshStatus();
+    const onOnline = () => void refreshStatus();
+    const onFocus = () => void refreshStatus();
+    window.addEventListener("online", onOnline);
+    window.addEventListener("focus", onFocus);
+    const interval = window.setInterval(() => void refreshStatus(), 60_000);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(interval);
+    };
+  }, [refreshStatus]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -143,13 +168,16 @@ export default function ChatApp({ onBack }) {
       let thinking = "";
       let source = "kb";
 
-      if (status.llm) {
-        const llm = await fetchLlm(history);
-        if (llm?.content) {
-          reply = llm.content;
-          thinking = llm.thinking ?? "";
-          source = llm.source;
-        }
+      const llm = await fetchLlm(history);
+      if (llm?.content) {
+        reply = llm.content;
+        thinking = llm.thinking ?? "";
+        source = llm.source;
+        setStatus((prev) => ({ ...prev, llm: true, offline: false, api: true, loading: false }));
+      } else if (llm?.llmAvailable === false) {
+        setStatus((prev) => ({ ...prev, llm: false, offline: false, api: true, loading: false }));
+      } else if (llm?.llmAvailable === null) {
+        void refreshStatus();
       }
 
       if (!reply) {
@@ -176,7 +204,7 @@ export default function ChatApp({ onBack }) {
       setStreamingId(null);
       inputRef.current?.focus();
     },
-    [messages, status.llm, typing],
+    [messages, typing, refreshStatus],
   );
 
   async function emailTranscript(e) {
@@ -231,7 +259,9 @@ export default function ChatApp({ onBack }) {
           <div className="min-w-0">
             <p className="truncate text-[15px] font-semibold text-white">ZaidGPT</p>
             <p className="text-[11px] text-gray-400">
-              {status.llm ? (
+              {status.loading ? (
+                <span className="text-gray-400">Connecting…</span>
+              ) : status.llm ? (
                 <span className="text-green-400">● Live AI · {status.model ?? "gpt-4o-mini"}</span>
               ) : status.offline ? (
                 <span className="text-amber-400">API offline</span>

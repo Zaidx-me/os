@@ -112,9 +112,10 @@ export default function AppWindow({ window: win }) {
   };
 
   return (
-    <div style={minimizedStyle}>
+    <div style={minimizedStyle} data-app-window={win.appId}>
       <Rnd
         ref={rndRef}
+        data-app-window={win.appId}
         size={{ width: windowState.width, height: windowState.height }}
         position={{ x: windowState.x, y: windowState.y }}
         minWidth={300}
@@ -165,6 +166,8 @@ export default function AppWindow({ window: win }) {
           {isVisible && (
             <motion.div
               key={win.id}
+              data-app-window={win.appId}
+              onContextMenu={(e) => e.stopPropagation()}
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ 
                 opacity: 1, 
