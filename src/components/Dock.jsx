@@ -20,7 +20,7 @@ import Launchpad from "../app/Launchpad";
 
 import { GlassSurface } from "./ui/glass-surface";
 
-import { DOCK_ICONS, APP_ICON } from "../zaidos/lib/assets.js";
+import { APP_ICON } from "../zaidos/lib/assets.js";
 import { getAppIcon } from "../zaidos/lib/appIcons.js";
 
 const getWindowTitle = (win) => {
@@ -123,10 +123,10 @@ export default function Dock() {
     { id: "Music", label: "Music", icon: getAppIcon("Music"), comp: <Spotify /> },
     { id: "Settings", label: "Settings", icon: getAppIcon("Settings"), comp: <Settings /> },
     { divider: true },
-    { id: "Github", label: "GitHub", icon: DOCK_ICONS.github, url: "https://github.com/zaidx-me" },
-    { id: "linkedin", label: "LinkedIn", icon: DOCK_ICONS.linkedin, url: "https://linkedin.com/in/zaidx-me" },
+    { id: "Github", label: "GitHub", icon: getAppIcon("Github"), url: "https://github.com/zaidx-me" },
+    { id: "linkedin", label: "LinkedIn", icon: getAppIcon("linkedin"), url: "https://linkedin.com/in/zaidx-me" },
     { divider: true },
-    { id: "Trash", label: "Trash", icon: hasTrashedItems ? DOCK_ICONS.trashFull : DOCK_ICONS.trash, comp: <Trash /> },
+    { id: "Trash", label: "Trash", icon: getAppIcon("Trash"), comp: <Trash /> },
   ];
 
   // Check if an app is currently open

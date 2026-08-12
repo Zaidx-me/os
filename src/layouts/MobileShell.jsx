@@ -1,17 +1,15 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import LazyWallpaper from "../components/LazyWallpaper.jsx";
-import IosAppIcon from "../components/mobile/IosAppIcon.jsx";
-import IosHomeIndicator from "../components/mobile/IosHomeIndicator.jsx";
 import IosStatusBar from "../components/mobile/IosStatusBar.jsx";
 import MobileFloatingBack from "../components/mobile/MobileFloatingBack.jsx";
 import MobileHomePages from "../components/mobile/MobileHomePages.jsx";
 import MobileAppSwitcher from "../components/mobile/MobileAppSwitcher.jsx";
 import MobileControlCenterSheet from "../components/mobile/MobileControlCenterSheet.jsx";
+import MobileWelcomeScreen from "../components/mobile/MobileWelcomeScreen.jsx";
 import { DEFAULT_DESKTOP_WALLPAPER, resolveWallpaper } from "../zaidos/lib/assets.js";
 import {
   getMobileApp,
-  MOBILE_DOCK_IDS,
   MOBILE_HOME_APPS,
 } from "../zaidos/mobile/registry.js";
 
@@ -75,7 +73,13 @@ function MobileAppView({ appId, appPayload, onBack, onSwitcher }) {
   );
 }
 
-export default function MobileShell({ peek = false, launchApp = null, onLaunchConsumed }) {
+export default function MobileShell({
+  peek = false,
+  launchApp = null,
+  onLaunchConsumed,
+  welcomeOpen = false,
+  onWelcomeDismiss,
+}) {
   const [activeApp, setActiveApp] = useState(null);
   const [appPayload, setAppPayload] = useState(null);
   const [recentApps, setRecentApps] = useState([]);
@@ -166,7 +170,6 @@ export default function MobileShell({ peek = false, launchApp = null, onLaunchCo
     setControlCenterOpen(false);
   }, []);
 
-  const dockApps = MOBILE_DOCK_IDS.map((id) => getMobileApp(id)).filter(Boolean);
   const switcherApps = recentApps.length > 0 ? recentApps : MOBILE_HOME_APPS.slice(0, 4).map((a) => a.id);
   const showFloatingBack = Boolean(activeApp) && activeApp !== "ZaidGPT" && !switcherOpen;
   const activeMeta = activeApp ? getMobileApp(activeApp) : null;
@@ -216,7 +219,7 @@ export default function MobileShell({ peek = false, launchApp = null, onLaunchCo
               <IosStatusBar onOpenControlCenter={() => setControlCenterOpen(true)} />
               <main
                 data-testid="mobile-home"
-                className="mobile-home flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+                className="mobile-home flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
               >
                 <MobileHomePages
                   apps={MOBILE_HOME_APPS}
@@ -225,23 +228,6 @@ export default function MobileShell({ peek = false, launchApp = null, onLaunchCo
                   onOpenApp={openApp}
                 />
               </main>
-
-              <nav data-testid="mobile-dock" className="ios-dock pointer-events-none fixed inset-x-0 z-[60] px-4" aria-label="Dock">
-                <div className="ios-dock-inner pointer-events-auto mx-auto flex max-w-[18rem] items-end justify-between gap-2 px-3 py-1.5">
-                  {dockApps.map((app) => (
-                    <button
-                      key={app.id}
-                      type="button"
-                      data-testid={app.id === "Safari" ? "mobile-nav-browser" : `mobile-dock-${app.id.toLowerCase()}`}
-                      onClick={() => openApp(app.id)}
-                      className="ios-dock-icon-btn active:scale-[0.92]"
-                      aria-label={app.title}
-                    >
-                      <IosAppIcon src={app.icon} title={app.title} appId={app.id} size={46} />
-                    </button>
-                  ))}
-                </div>
-              </nav>
             </motion.div>
           )}
         </AnimatePresence>
@@ -269,7 +255,16 @@ export default function MobileShell({ peek = false, launchApp = null, onLaunchCo
           />
         )}
 
-        <IosHomeIndicator variant={activeApp ? "dark" : "light"} />
+        <AnimatePresence>
+          {welcomeOpen && !activeApp && (
+            <MobileWelcomeScreen
+              onContinue={() => {
+                sessionStorage.setItem("zaidos_session_welcome", "true");
+                onWelcomeDismiss?.();
+              }}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

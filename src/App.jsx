@@ -20,6 +20,7 @@ export default function App() {
   const [stage, setStage] = useState(null);
   const [skippedSetup, setSkippedSetup] = useState(false);
   const [mobileLaunchApp, setMobileLaunchApp] = useState(null);
+  const [mobileWelcomeOpen, setMobileWelcomeOpen] = useState(false);
   const inactivityTimerRef = useRef(null);
   const isDarkMode = useAppStore((s) => s.isDarkMode);
   const openApp = useAppStore((s) => s.openApp);
@@ -27,20 +28,22 @@ export default function App() {
 
   const handleUnlock = useCallback(() => {
     setStage("desktop");
-    const onboardingDone = localStorage.getItem("zaidos_onboarding_done") === "true";
-    if (onboardingDone) {
+    if (isMobile) {
+      const welcomeDone = sessionStorage.getItem("zaidos_session_welcome") === "true";
+      setMobileWelcomeOpen(!welcomeDone);
       setMobileLaunchApp(null);
       return;
     }
+    const onboardingDone = localStorage.getItem("zaidos_onboarding_done") === "true";
+    if (onboardingDone) return;
     localStorage.setItem("zaidos_onboarding_done", "true");
-    if (isMobile) {
-      setMobileLaunchApp("About");
-    } else {
-      window.setTimeout(() => openApp("About", <AboutApp />), 150);
-    }
+    window.setTimeout(() => openApp("About", <AboutApp />), 150);
   }, [isMobile, openApp]);
 
   useEffect(() => {
+    if (localStorage.getItem("os_dark_mode") === null) {
+      localStorage.setItem("os_dark_mode", "true");
+    }
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
     } else {
@@ -116,7 +119,7 @@ export default function App() {
 
     if (mobile) {
       if (!setupCompleted) localStorage.setItem("setup_completed", "true");
-      setStage(savedState === "desktop" ? "desktop" : "lock");
+      setStage("power");
       return;
     }
 
@@ -187,17 +190,33 @@ export default function App() {
 
   return (
       <div className="relative w-screen h-screen overflow-hidden bg-black">
-        {stage === "power" && <PowerScreen goNext={() => {
-          const setupCompleted = localStorage.getItem("setup_completed") === "true";
-          if (setupCompleted) {
-            setStage("lock");
-          } else {
-            setStage("setup");
-          }
-        }} />}
-        {stage === "restart" && <PowerScreen autoBoot={true} goNext={() => {
-          setStage("lock");
-        }} />}
+        {stage === "power" && (
+          <PowerScreen
+            autoBoot={isMobile}
+            mobile={isMobile}
+            goNext={() => {
+              if (isMobile) {
+                setStage("lock");
+                return;
+              }
+              const setupCompleted = localStorage.getItem("setup_completed") === "true";
+              if (setupCompleted) {
+                setStage("lock");
+              } else {
+                setStage("setup");
+              }
+            }}
+          />
+        )}
+        {stage === "restart" && (
+          <PowerScreen
+            autoBoot={true}
+            mobile={isMobile}
+            goNext={() => {
+              setStage("lock");
+            }}
+          />
+        )}
         {stage === "setup" && <SetupScreen 
           goNext={(lang) => {
             localStorage.setItem('setup_lang', lang || "English (UK)");
@@ -249,6 +268,8 @@ export default function App() {
                 <MobileShell
                   launchApp={mobileLaunchApp}
                   onLaunchConsumed={() => setMobileLaunchApp(null)}
+                  welcomeOpen={mobileWelcomeOpen}
+                  onWelcomeDismiss={() => setMobileWelcomeOpen(false)}
                 />
               )}
             </>

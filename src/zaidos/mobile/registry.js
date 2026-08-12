@@ -1,6 +1,5 @@
 import { lazy } from "react";
 import { getAppIcon, MOBILE_HIDDEN_APP_IDS } from "../lib/appIcons.js";
-import { MAC_ICONS, ZAID_ICONS } from "../lib/macIcons.js";
 
 const lazyDefault = (loader) => lazy(() => loader().then((m) => ({ default: m.default })));
 
@@ -44,26 +43,28 @@ const APP_DEFS = {
   Music: { title: "Music", icon: getAppIcon("Music"), Component: lazyDefault(() => import("../../app/Spotify.jsx")) },
   Settings: { title: "Settings", icon: getAppIcon("Settings"), Component: lazyDefault(() => import("../../app/Settings.jsx")) },
   Trash: { title: "Trash", icon: getAppIcon("Trash"), Component: lazyDefault(() => import("../../app/Trash.jsx")) },
-  About: { title: "About", icon: ZAID_ICONS.about, Component: lazyDefault(() => import("../apps/About.jsx")) },
-  Projects: { title: "Projects", icon: ZAID_ICONS.projects, Component: lazyDefault(() => import("../apps/Projects.jsx")) },
-  Articles: { title: "Articles", icon: ZAID_ICONS.articles, Component: lazyDefault(() => import("../apps/Articles.jsx")) },
-  Experience: { title: "Experience", icon: ZAID_ICONS.experience, Component: lazyDefault(() => import("../apps/Experience.jsx")) },
-  Resume: { title: "Resume", icon: ZAID_ICONS.resume, Component: lazyDefault(() => import("../apps/Resume.jsx")) },
-  Chess: { title: "Chess", icon: ZAID_ICONS.chess, Component: lazyDefault(() => import("../apps/Chess.jsx")) },
-  Skills: { title: "Skills", icon: ZAID_ICONS.skills, Component: lazyDefault(() => import("../apps/Skills.jsx")) },
-  ZaidGPT: { title: "ZaidGPT", icon: ZAID_ICONS.chat, Component: lazyDefault(() => import("../apps/Chat.jsx")) },
-  Contact: { title: "Contact", icon: ZAID_ICONS.contact, Component: lazyDefault(() => import("../apps/Contact.jsx")) },
-  Terminal: { title: "Terminal", icon: ZAID_ICONS.terminal, Component: lazyDefault(() => import("../apps/Terminal.jsx")) },
+  About: { title: "About", icon: getAppIcon("About"), Component: lazyDefault(() => import("../apps/About.jsx")) },
+  Projects: { title: "Projects", icon: getAppIcon("Projects"), Component: lazyDefault(() => import("../apps/Projects.jsx")) },
+  Articles: { title: "Articles", icon: getAppIcon("Articles"), Component: lazyDefault(() => import("../apps/Articles.jsx")) },
+  Experience: { title: "Experience", icon: getAppIcon("Experience"), Component: lazyDefault(() => import("../apps/Experience.jsx")) },
+  Resume: { title: "Resume", icon: getAppIcon("Resume"), Component: lazyDefault(() => import("../apps/Resume.jsx")) },
+  Chess: { title: "Chess", icon: getAppIcon("Chess"), Component: lazyDefault(() => import("../apps/Chess.jsx")) },
+  Skills: { title: "Skills", icon: getAppIcon("Skills"), Component: lazyDefault(() => import("../apps/Skills.jsx")) },
+  ZaidGPT: { title: "ZaidGPT", icon: getAppIcon("ZaidGPT"), Component: lazyDefault(() => import("../apps/Chat.jsx")) },
+  Contact: { title: "Contact", icon: getAppIcon("Contact"), Component: lazyDefault(() => import("../apps/Contact.jsx")) },
+  Terminal: { title: "Terminal", icon: getAppIcon("Terminal"), Component: lazyDefault(() => import("../apps/Terminal.jsx")) },
   TextEdit: { title: "TextEdit", icon: getAppIcon("TextEdit"), Component: lazyDefault(() => import("../../app/TextEdit.jsx")) },
   PDFViewer: { title: "Preview", icon: getAppIcon("PDFViewer"), Component: lazyDefault(() => import("../../app/PDFViewer.jsx")) },
 };
 
 function defsToApps(ids) {
+  const seen = new Set();
   return ids
     .map((id) => {
-      if (MOBILE_HIDDEN_APP_IDS.has(id)) return null;
+      if (MOBILE_HIDDEN_APP_IDS.has(id) || seen.has(id)) return null;
       const def = APP_DEFS[id];
       if (!def) return null;
+      seen.add(id);
       return { id, ...def };
     })
     .filter(Boolean);
@@ -73,11 +74,12 @@ export const MOBILE_APPS = Object.entries(APP_DEFS)
   .filter(([id]) => !MOBILE_HIDDEN_APP_IDS.has(id))
   .map(([id, def]) => ({ id, ...def }));
 
-/** iOS dock — primary system apps (not duplicated on home). */
-export const MOBILE_DOCK_IDS = ["Phone", "Safari", "Messages", "Music"];
-
 /** System apps on home page 2 (Launchpad is desktop-only). */
 const MOBILE_SYSTEM_PAGE_IDS = [
+  "Phone",
+  "Safari",
+  "Messages",
+  "Music",
   "Photos",
   "Mail",
   "Maps",

@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import { songs } from "../constants/songs";
 
+function readDarkMode() {
+  const stored = localStorage.getItem("os_dark_mode");
+  if (stored === null) return true;
+  return stored === "true";
+}
+
 // Create persistent audio instance
 export const audioInstance = new Audio('https://pagallworlds.com/wp-content/uploads/2023/06/I-Wanna-Be-Yours-Slowed-Reverb.mp3');
 
@@ -9,7 +15,7 @@ export const useAppStore = create((set, get) => ({
   maxZ: 1,
   isLocked: false,
   isAudioPlaying: false,
-  isDarkMode: localStorage.getItem('os_dark_mode') === 'true',
+  isDarkMode: readDarkMode(),
   currentTrack: songs[1], // Wanna Be Yours as default
   setCurrentTrack: (track) => set({ currentTrack: track }),
   nextTrack: () => set((state) => {

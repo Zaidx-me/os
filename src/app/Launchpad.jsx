@@ -20,6 +20,7 @@ import TerminalApp from "../zaidos/apps/Terminal.jsx";
 import AboutApp from "../zaidos/apps/About.jsx";
 import ProjectsApp from "../zaidos/apps/Projects.jsx";
 import { useOpenApp } from "../zaidos/lib/openApp.js";
+import { getAppIcon } from "../zaidos/lib/appIcons.js";
 
 // Traffic lights component
 const TrafficLights = ({ windowId }) => {
@@ -112,156 +113,32 @@ export default function Launchpad({ windowId }) {
   };
 
   const allApps = [
-    {
-      appId: "Finder",
-      label: "Finder",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Finder_Icon_macOS_Big_Sur.png",
-      comp: <Finder />,
-    },
-    {
-      appId: "Safari",
-      label: "Safari",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/Safari__MacOS_Tahoe__utug9Rt8g6_lowResPng-e86f84b6e9.png",
-      comp: <Safari />,
-    },
-    {
-      appId: "Messages",
-      label: "Messages",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Messages_macOS_Golden_Gate_ow94O6GAvP-2934473a5d.png",
-      comp: <Messages />,
-    },
-    {
-      appId: "Mail",
-      label: "Mail",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Mail_macOS_Golden_Gate_3BIjmD3GZM-ae5977fd03.png",
-      comp: <Mail />,
-    },
-    {
-      appId: "Maps",
-      label: "Maps",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Maps_macOS_Golden_Gate_jOxvDFgSHw-b6ceac8cd4.png",
-      comp: <Maps />,
-    },
-    {
-      appId: "Photos",
-      label: "Photos",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Photos_macOS_Golden_Gate_mxVHKSuSHM-06d7e83102.png",
-      comp: <MacGallery />,
-    },
-    {
-      appId: "FaceTime",
-      label: "FaceTime",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Facetime_macOS_Golden_Gate_Qxnt8DtlwP-e0839d42d8.png",
-      comp: <FaceTime />,
-    },
-    {
-      appId: "Phone",
-      label: "Phone",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Phone_macOS_Golden_Gate_NWKA493TFf-bffc4d8efc.png",
-      comp: <PhoneApp />,
-    },
-    {
-      appId: "Calendar",
-      label: "Calendar",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/Calender_25y2FI4DUz_lowResPng-d649f6c721.png",
-      comp: <CalendarApp />,
-    },
-    {
-      appId: "Contacts",
-      label: "Contacts",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Contacts_macOS_Golden_Gate_oKWnz3UDu6-20ba74faaf.png",
-      comp: <ContactsApp />,
-    },
-    {
-      appId: "Notes",
-      label: "Notes",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/Notes__MacOS_Tahoe__Tn8SuaHtAM_lowResPng-632fb908b1.png",
-      comp: <Blogs />,
-    },
-    {
-      appId: "Reminders",
-      label: "Reminders",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Reminders_macOS_Golden_Gate_EVBkfKEpyn-b296bae148.png",
-      comp: <RemindersApp />,
-    },
-    {
-      appId: "Music",
-      label: "Music",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Music_macOS_Golden_Gate_LJox0IObSI-d626e3640a.png",
-      comp: <Spotify />,
-    },
-    {
-      appId: "Podcasts",
-      label: "Podcasts",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Podcasts_macOS_Golden_Gate_PLHwgdc3Fl-4abdcae811.png",
-    },
-    {
-      appId: "TV",
-      label: "TV",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_TV_macOS_Golden_Gate_j8weRAj4mw-f0424494f0.png",
-    },
-    {
-      appId: "AppStore",
-      label: "App Store",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/App_Store__MacOS_Tahoe__ZTpqalXxE3_lowResPng-b755fc1237.png",
-    },
-    {
-      appId: "Pages",
-      label: "Pages",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/Pages__Apple_Creative_Studio__hHeqYyTXZ3_lowResPng-7a5fbcd210.png",
-    },
-    {
-      appId: "Numbers",
-      label: "Numbers",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/Numbers__Apple_Creative_Studio__pfooNXbNnX_lowResPng-665922f586.png",
-    },
-    {
-      appId: "Keynote",
-      label: "Keynote",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/Keynote__Apple_Creative_Studio__SlTcHVkQP5_lowResPng-aac0878b95.png",
-    },
-    {
-      appId: "Terminal",
-      label: "Terminal",
-      icon: "https://s3.macosicons.com/macosicons/icons/terminal/lowResPngFile.png",
-      comp: <TerminalApp />,
-    },
-    {
-      appId: "About",
-      label: "About",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/MacOS_Default_Folder_icon_GecwaBmkFQ_lowResPng-6d37abc4ac.png",
-      comp: <AboutApp />,
-    },
-    {
-      appId: "Projects",
-      label: "Projects",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/MacOS_Default_Folder_icon_GecwaBmkFQ_lowResPng-6d37abc4ac.png",
-      comp: <ProjectsApp />,
-    },
-    {
-      appId: "Settings",
-      label: "Settings",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/low_res_Settings_macOS_Golden_Gate_iR77bVvZBc-502ef0dc70.png",
-      comp: <Settings />,
-    },
-    {
-      appId: "Github",
-      label: "GitHub",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/GitHub_mm0mJOQEAS_lowResPng-6e5b90d2c7.png",
-      url: "https://github.com/zaidx-me",
-    },
-    {
-      appId: "linkedin",
-      label: "LinkedIn",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/LinkedIn_ZcwY6Altec_lowResPng-59b3305d8f.png",
-      url: "https://linkedin.com/in/zaidx-me",
-    },
-    {
-      appId: "Trash",
-      label: "Trash",
-      icon: "https://s3-new.macosicons.com/macosicons/parse/Bin_Empty_Tahoe_x2cZW1cg7Y_lowResPng-cc516d2e3c.png",
-      comp: <Trash />,
-    }
+    { appId: "Finder", label: "Finder", icon: getAppIcon("Finder"), comp: <Finder /> },
+    { appId: "Safari", label: "Safari", icon: getAppIcon("Safari"), comp: <Safari /> },
+    { appId: "Messages", label: "Messages", icon: getAppIcon("Messages"), comp: <Messages /> },
+    { appId: "Mail", label: "Mail", icon: getAppIcon("Mail"), comp: <Mail /> },
+    { appId: "Maps", label: "Maps", icon: getAppIcon("Maps"), comp: <Maps /> },
+    { appId: "Photos", label: "Photos", icon: getAppIcon("Photos"), comp: <MacGallery /> },
+    { appId: "FaceTime", label: "FaceTime", icon: getAppIcon("FaceTime"), comp: <FaceTime /> },
+    { appId: "Phone", label: "Phone", icon: getAppIcon("Phone"), comp: <PhoneApp /> },
+    { appId: "Calendar", label: "Calendar", icon: getAppIcon("Calendar"), comp: <CalendarApp /> },
+    { appId: "Contacts", label: "Contacts", icon: getAppIcon("Contacts"), comp: <ContactsApp /> },
+    { appId: "Notes", label: "Notes", icon: getAppIcon("Notes"), comp: <Blogs /> },
+    { appId: "Reminders", label: "Reminders", icon: getAppIcon("Reminders"), comp: <RemindersApp /> },
+    { appId: "Music", label: "Music", icon: getAppIcon("Music"), comp: <Spotify /> },
+    { appId: "Podcasts", label: "Podcasts", icon: getAppIcon("Podcasts") },
+    { appId: "TV", label: "TV", icon: getAppIcon("TV") },
+    { appId: "AppStore", label: "App Store", icon: getAppIcon("AppStore") },
+    { appId: "Pages", label: "Pages", icon: getAppIcon("Pages") },
+    { appId: "Numbers", label: "Numbers", icon: getAppIcon("Numbers") },
+    { appId: "Keynote", label: "Keynote", icon: getAppIcon("Keynote") },
+    { appId: "Terminal", label: "Terminal", icon: getAppIcon("Terminal"), comp: <TerminalApp /> },
+    { appId: "About", label: "About", icon: getAppIcon("About"), comp: <AboutApp /> },
+    { appId: "Projects", label: "Projects", icon: getAppIcon("Projects"), comp: <ProjectsApp /> },
+    { appId: "Settings", label: "Settings", icon: getAppIcon("Settings"), comp: <Settings /> },
+    { appId: "Github", label: "GitHub", icon: getAppIcon("Github"), url: "https://github.com/zaidx-me" },
+    { appId: "linkedin", label: "LinkedIn", icon: getAppIcon("linkedin"), url: "https://linkedin.com/in/zaidx-me" },
+    { appId: "Trash", label: "Trash", icon: getAppIcon("Trash"), comp: <Trash /> },
   ];
 
   const getAppsByList = (names) => {
@@ -281,21 +158,21 @@ export default function Launchpad({ windowId }) {
       title: "Productivity",
       actionLabel: "Show All",
       actionLabelActive: "Collapse",
-      apps: getAppsByList(["Notes", "Reminders", "Calendar", "Mail", "Pages", "Numbers", "Keynote"]),
+      apps: getAppsByList(["Reminders", "Mail", "Pages", "Numbers", "Keynote", "Terminal"]),
     },
     {
       id: "creativity",
       title: "Creativity",
       actionLabel: "Show All",
       actionLabelActive: "Collapse",
-      apps: getAppsByList(["Photos", "Music", "Podcasts", "TV", "Messages", "FaceTime"]),
+      apps: getAppsByList(["Podcasts", "TV", "Messages", "FaceTime"]),
     },
     {
       id: "info",
       title: "Information & Reading",
       actionLabel: "Show All",
       actionLabelActive: "Collapse",
-      apps: getAppsByList(["Maps", "Contacts", "Phone", "Settings", "Github", "linkedin", "Finder", "Trash"]),
+      apps: getAppsByList(["Maps", "Contacts", "Phone", "Settings", "About", "Projects", "Github", "linkedin", "Finder", "Trash"]),
     },
   ];
 
@@ -312,7 +189,7 @@ export default function Launchpad({ windowId }) {
           <TrafficLights windowId={windowId} />
           <div className="flex items-center gap-2">
             <img 
-              src="https://s3-new.macosicons.com/macosicons/parse/App_Store__MacOS_Tahoe__ZTpqalXxE3_lowResPng-b755fc1237.png"
+              src={getAppIcon("AppStore")} 
               alt="App Store icon" 
               className="w-5 h-5 object-contain"
             />
@@ -358,7 +235,7 @@ export default function Launchpad({ windowId }) {
               <div className="grid grid-cols-5 gap-y-5 justify-items-center">
                 {displayApps.map((app) => (
                   <div 
-                    key={app.appId} 
+                    key={`${cat.id}-${app.appId}`} 
                     onClick={() => handleLaunch(app)}
                     className="flex flex-col items-center gap-1.5 cursor-pointer group text-center"
                   >

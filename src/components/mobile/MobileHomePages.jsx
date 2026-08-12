@@ -1,46 +1,63 @@
-import { useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import IosAppIcon from "./IosAppIcon.jsx";
 import LiveProjectsWidget from "./LiveProjectsWidget.jsx";
 import { paginateHomeApps } from "../../zaidos/mobile/registry.js";
 
-const SWIPE_THRESHOLD = 50;
-
 export default function MobileHomePages({ apps, page, onPageChange, onOpenApp }) {
   const pages = paginateHomeApps();
-  const dragRef = useRef({ x: 0, moved: false });
+  const trackRef = useRef(null);
+  const scrollRaf = useRef(null);
 
-  const goPage = (next) => {
-    onPageChange(Math.max(0, Math.min(pages.length - 1, next)));
-  };
+  const goPage = useCallback(
+    (next) => {
+      onPageChange(Math.max(0, Math.min(pages.length - 1, next)));
+    },
+    [onPageChange, pages.length],
+  );
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const width = track.clientWidth;
+    if (!width) return;
+    track.scrollTo({ left: page * width, behavior: "smooth" });
+  }, [page]);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || pages.length <= 1) return;
+
+    const onScroll = () => {
+      if (scrollRaf.current) cancelAnimationFrame(scrollRaf.current);
+      scrollRaf.current = requestAnimationFrame(() => {
+        const width = track.clientWidth;
+        if (!width) return;
+        const next = Math.round(track.scrollLeft / width);
+        if (next !== page) onPageChange(next);
+      });
+    };
+
+    track.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      track.removeEventListener("scroll", onScroll);
+      if (scrollRaf.current) cancelAnimationFrame(scrollRaf.current);
+    };
+  }, [page, pages.length, onPageChange]);
 
   return (
     <div className="mobile-home-pages flex min-h-0 flex-1 flex-col">
       <div
-        className="relative min-h-0 flex-1 overflow-hidden"
-        onPointerDown={(e) => {
-          dragRef.current = { x: e.clientX, moved: false };
-        }}
-        onPointerMove={(e) => {
-          if (Math.abs(e.clientX - dragRef.current.x) > 10) dragRef.current.moved = true;
-        }}
-        onPointerUp={(e) => {
-          if (!dragRef.current.moved) return;
-          const dx = e.clientX - dragRef.current.x;
-          if (dx < -SWIPE_THRESHOLD) goPage(page + 1);
-          else if (dx > SWIPE_THRESHOLD) goPage(page - 1);
-        }}
+        ref={trackRef}
+        className="mobile-home-track relative min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden"
       >
-        <div
-          className="flex h-full transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${page * 100}%)` }}
-        >
+        <div className="flex h-full min-h-0 w-max min-w-full">
           {pages.map((pageApps, pageIndex) => (
             <div
               key={pageIndex}
-              className="mobile-home-page flex h-full w-full shrink-0 flex-col overflow-y-auto overscroll-contain px-1 pt-1"
+              className="mobile-home-page flex h-full min-h-0 w-full min-w-full flex-[0_0_100%] snap-start snap-always flex-col overflow-y-auto overscroll-y-contain px-1 pt-1"
             >
               {pageIndex === 0 && <LiveProjectsWidget />}
-              <div className="grid grid-cols-4 gap-x-3 gap-y-5 pb-2">
+              <div className="grid grid-cols-4 gap-x-3 gap-y-5 pb-4">
                 {pageApps.map((app) => (
                   <button
                     key={app.id}
@@ -66,7 +83,7 @@ export default function MobileHomePages({ apps, page, onPageChange, onOpenApp })
       </div>
 
       {pages.length > 1 && (
-        <div className="mobile-page-dots flex shrink-0 items-center justify-center gap-[6px] pb-1 pt-2">
+        <div className="mobile-page-dots flex shrink-0 items-center justify-center gap-[6px] pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-2">
           {pages.map((_, i) => (
             <button
               key={i}

@@ -168,7 +168,7 @@ export default function ChatApp({ onBack, onSwitcher }) {
       data-testid="app-content-chat"
       className="chat-app relative flex h-full min-h-0 flex-col bg-[#000000]"
     >
-      <div className="chat-app-header flex shrink-0 items-center gap-2 border-b border-white/10 bg-[#1c1c1e]/95 px-2 py-2 backdrop-blur-xl">
+      <div className="chat-app-header flex shrink-0 items-center gap-2 border-b border-white/10 bg-[#1c1c1e]/95 px-2 pb-2 pt-[max(0.35rem,env(safe-area-inset-top))] backdrop-blur-xl">
         {onBack && (
           <button
             type="button"
