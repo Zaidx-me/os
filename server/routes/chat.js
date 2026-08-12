@@ -6,6 +6,7 @@ import {
   truncateHistory,
 } from "../lib/chat-prompt.js";
 import { parseChatResponse, isLeakedThinking } from "../lib/format-chat-response.js";
+import { getResendFrom, isResendConfigured, resendErrorMessage } from "../lib/resend-config.js";
 
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS) || 45_000;
 const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS) || 1024;
@@ -17,7 +18,7 @@ chatRouter.get("/status", (_req, res) => {
   const hasKey = Boolean(process.env.LLM_API_KEY?.trim());
   res.json({
     llm: hasKey,
-    resend: Boolean(process.env.RESEND_API_KEY && process.env.CONTACT_TO_EMAIL),
+    resend: isResendConfigured(),
     model: process.env.LLM_MODEL ?? "gpt-4o-mini",
     api: true,
   });
@@ -129,7 +130,7 @@ chatRouter.post("/email", async (req, res) => {
 
   try {
     const resend = new Resend(apiKey);
-    const from = process.env.RESEND_FROM ?? "ZaidOS Portfolio <onboarding@resend.dev>";
+    const from = getResendFrom();
     const { error } = await resend.emails.send({
       from,
       to,
@@ -141,7 +142,7 @@ chatRouter.post("/email", async (req, res) => {
 
     if (error) {
       console.error("chat/email: resend refused:", error.message);
-      return res.status(500).json({ error: "Could not send email." });
+      return res.status(500).json({ error: resendErrorMessage(error) });
     }
 
     return res.json({ ok: true });

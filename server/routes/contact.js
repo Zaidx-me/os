@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { Resend } from "resend";
+import { getResendFrom, isResendConfigured, resendErrorMessage } from "../lib/resend-config.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_LENGTHS = { name: 100, subject: 200, message: 10_000 };
@@ -34,8 +35,8 @@ export const contactRouter = Router();
 
 contactRouter.get("/status", (_req, res) => {
   res.json({
-    resend: Boolean(process.env.RESEND_API_KEY && process.env.CONTACT_TO_EMAIL),
-    to: Boolean(process.env.CONTACT_TO_EMAIL),
+    resend: isResendConfigured(),
+    to: Boolean(process.env.CONTACT_TO_EMAIL?.trim()),
   });
 });
 
@@ -72,7 +73,7 @@ contactRouter.post("/", async (req, res) => {
 
   try {
     const resend = new Resend(apiKey);
-    const from = process.env.RESEND_FROM ?? "ZaidOS Portfolio <onboarding@resend.dev>";
+    const from = getResendFrom();
     const { data, error } = await resend.emails.send({
       from,
       to,
@@ -84,7 +85,7 @@ contactRouter.post("/", async (req, res) => {
 
     if (error) {
       console.error("contact: resend refused:", error.message);
-      return res.status(500).json({ error: "Message could not be sent. Try again later." });
+      return res.status(500).json({ error: resendErrorMessage(error) });
     }
 
     console.log("contact: accepted", data ? `id=${data.id}` : "");

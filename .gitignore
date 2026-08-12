@@ -63,3 +63,7 @@ public/images/*
 !public/images/optimized/
 !public/images/optimized/**
 !public/images/lockscreen-opt.webp
+.env
+.env.local
+.env.*.local
+!.env.example
